@@ -1,6 +1,6 @@
 // Vue 3 Component Bundle for GameAP Admin Panel
 // Export single named export 'webMonitoringPlugin' to avoid duplicate menu items in GameAP
-const { ref, computed, onMounted, h } = window.Vue || Vue;
+const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 
 export const webMonitoringPlugin = {
     id: 'bwbwb26fs5eje',
@@ -36,7 +36,7 @@ export const webMonitoringPlugin = {
                             copyUrl: 'Копировать адрес страницы',
                             copiedUrl: '✓ Скопировано!',
                             securityWarningTitle: '⚠️ Безопасность и защита от DDoS-атак:',
-                            securityWarningText: 'Крайне не рекомендуется открывать мониторинг публично по прямому IP-адресу (http://IP:PORT). Раскрытие прямого IP хоста GameAP создает прямую угрозу целевых DDoS-атак на панель и игровые серверы. Обязательно используйте доменное имя, обратный прокси (Nginx / Caddy) и сервисы фильтрации трафика (например, Cloudflare).',
+                            securityWarningText: 'Крайне не рекомендуется открывать доступ к мониторингу публично по прямому IP-адресу (http://IP:PORT). Раскрытие прямого IP хоста GameAP создает прямую угрозу целевых DDoS-атак на панель и игровые серверы. Обязательно используйте доменное имя, обратный прокси (Nginx / Caddy) и сервисы фильтрации трафика (например, Cloudflare).',
                             instructionTitle: 'Инструкция по доступу и красивому адресу страницы:',
                             instructionDirectTitle: 'Прямой доступ (работает сразу): ',
                             instructionDirectText: 'Страница мониторинга не требует входа в панель GameAP. Любой игрок или посетитель может открывать её напрямую по скопированному адресу на вашем домене панели.',
@@ -53,7 +53,7 @@ export const webMonitoringPlugin = {
                             generalSettings: '⚙️ Основные параметры',
                             titleLabel: 'Заголовок страницы (Title)',
                             subtitleLabel: 'Подзаголовок',
-                            themeLabel: 'Тема оформления по умолчанию',
+                            themeLabel: 'Тема публичной страницы по умолчанию',
                             darkTheme: '🌙 Тёмная тема (Dark)',
                             lightTheme: '☀️ Светлая тема (Light)',
                             refreshIntervalLabel: 'Интервал автообновления (сек.)',
@@ -97,7 +97,7 @@ export const webMonitoringPlugin = {
                             generalSettings: '⚙️ General Settings',
                             titleLabel: 'Page Title',
                             subtitleLabel: 'Subtitle',
-                            themeLabel: 'Default Theme',
+                            themeLabel: 'Default Public Page Theme',
                             darkTheme: '🌙 Dark Theme',
                             lightTheme: '☀️ Light Theme',
                             refreshIntervalLabel: 'Auto-refresh Interval (sec)',
@@ -151,74 +151,288 @@ export const webMonitoringPlugin = {
                     // Dynamic public URL based on current host/domain
                     const publicUrl = `${window.location.origin}/api/plugins/bwbwb26fs5eje/view`;
 
+                    // Detect GameAP dark mode reactively
+                    const isGameApDark = ref(document.documentElement.classList.contains('dark'));
+                    let themeObserver = null;
+
+                    const updateThemeState = () => {
+                        isGameApDark.value = document.documentElement.classList.contains('dark');
+                    };
+
+                    // Injects scoped styles matching GameAP CSS design tokens seamlessly
                     const injectAdminStyles = () => {
-                        if (document.getElementById('wm-admin-injected-css')) return;
-                        const styleEl = document.createElement('style');
-                        styleEl.id = 'wm-admin-injected-css';
+                        let styleEl = document.getElementById('wm-admin-injected-css');
+                        if (!styleEl) {
+                            styleEl = document.createElement('style');
+                            styleEl.id = 'wm-admin-injected-css';
+                            document.head.appendChild(styleEl);
+                        }
                         styleEl.textContent = `
-                            .wm-card {
-                                background: #1e2433 !important;
-                                border: 1px solid #323b52 !important;
-                                border-radius: 12px !important;
-                                padding: 24px !important;
-                                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
-                                margin-bottom: 20px !important;
-                                color: #f1f5f9 !important;
+                            /* GameAP Design Token Bindings with accurate fallbacks */
+                            .wm-admin-root {
+                                max-width: 960px;
+                                margin: 0 auto;
+                                padding: 20px 16px;
+                                font-family: inherit;
+                                box-sizing: border-box;
+
+                                /* Light mode tokens (default) */
+                                --wm-surface: var(--gameap-surface, #ffffff);
+                                --wm-surface-raised: var(--gameap-surface-raised, #ffffff);
+                                --wm-surface-hover: var(--gameap-surface-hover, #f5f5f4);
+                                --wm-bg-inset: var(--gameap-stone-100, #f5f5f4);
+                                --wm-border: var(--gameap-border, #e7e5e4);
+                                --wm-border-strong: var(--gameap-border-strong, #d6d3d1);
+                                --wm-text: var(--gameap-text, #1c1917);
+                                --wm-text-secondary: var(--gameap-text-secondary, #57534e);
+                                --wm-text-muted: var(--gameap-text-muted, #78716c);
+                                --wm-primary: var(--gameap-primary, #84cc16);
+                                --wm-primary-hover: var(--gameap-primary-hover, #65a30d);
+                                --wm-primary-soft: var(--gameap-primary-soft, #f7fee7);
+                                --wm-primary-soft-text: var(--gameap-primary-soft-text, #4d7c0f);
+                                --wm-danger: var(--gameap-danger, #ef4444);
+                                --wm-danger-soft: var(--gameap-danger-soft, #fef2f2);
+                                --wm-danger-text: var(--gameap-danger-soft-text, #b91c1c);
+                                --wm-info: var(--gameap-info, #0ea5e9);
+                                --wm-info-hover: var(--gameap-info-hover, #0284c7);
+                                --wm-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+                                --wm-radius-card: 10px;
+                                --wm-radius-control: 8px;
                             }
+
+                            /* Dark mode tokens (activated when GameAP switches to html.dark) */
+                            html.dark .wm-admin-root,
+                            .dark .wm-admin-root {
+                                --wm-surface: var(--gameap-surface, #292524);
+                                --wm-surface-raised: var(--gameap-surface-raised, #292524);
+                                --wm-surface-hover: var(--gameap-surface-hover, #262322);
+                                --wm-bg-inset: var(--gameap-stone-900, #1c1917);
+                                --wm-border: var(--gameap-border, #44403c);
+                                --wm-border-strong: var(--gameap-border-strong, #57534e);
+                                --wm-text: var(--gameap-text, #ffffff);
+                                --wm-text-secondary: var(--gameap-text-secondary, #d6d3d1);
+                                --wm-text-muted: var(--gameap-text-muted, #a8a29e);
+                                --wm-primary: var(--gameap-primary, #84cc16);
+                                --wm-primary-hover: var(--gameap-primary-hover, #65a30d);
+                                --wm-primary-soft: var(--gameap-primary-soft, rgba(132, 204, 22, 0.15));
+                                --wm-primary-soft-text: var(--gameap-primary-soft-text, #bef264);
+                                --wm-danger: var(--gameap-danger, #ef4444);
+                                --wm-danger-soft: var(--gameap-danger-soft, rgba(239, 68, 68, 0.15));
+                                --wm-danger-text: var(--gameap-danger-soft-text, #fca5a5);
+                                --wm-info: var(--gameap-info, #0ea5e9);
+                                --wm-info-hover: var(--gameap-info-hover, #0284c7);
+                                --wm-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+                            }
+
+                            /* Card Component */
+                            .wm-card {
+                                background: var(--wm-surface) !important;
+                                border: 1px solid var(--wm-border) !important;
+                                border-radius: var(--wm-radius-card) !important;
+                                padding: 24px !important;
+                                box-shadow: var(--wm-shadow) !important;
+                                margin-bottom: 20px !important;
+                                color: var(--wm-text) !important;
+                                transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+                            }
+
+                            /* Titles */
                             .wm-title {
                                 font-size: 16px !important;
                                 font-weight: 600 !important;
-                                color: #f8fafc !important;
-                                border-bottom: 1px solid #334155 !important;
+                                color: var(--wm-text) !important;
+                                border-bottom: 1px solid var(--wm-border) !important;
                                 padding-bottom: 12px !important;
                                 margin-bottom: 16px !important;
                                 display: flex !important;
                                 align-items: center !important;
                                 gap: 8px !important;
                             }
+
+                            /* Labels */
                             .wm-label {
                                 display: block !important;
                                 font-size: 13px !important;
                                 font-weight: 500 !important;
-                                color: #94a3b8 !important;
+                                color: var(--wm-text-secondary) !important;
                                 margin-bottom: 6px !important;
                             }
+
+                            /* Input and Select Controls */
                             .wm-input, .wm-select {
                                 width: 100% !important;
-                                background: #0f141f !important;
-                                color: #f8fafc !important;
-                                border: 1px solid #334155 !important;
-                                border-radius: 8px !important;
+                                background: var(--wm-bg-inset) !important;
+                                color: var(--wm-text) !important;
+                                border: 1px solid var(--wm-border-strong) !important;
+                                border-radius: var(--wm-radius-control) !important;
                                 padding: 10px 14px !important;
                                 font-size: 14px !important;
                                 box-sizing: border-box !important;
                                 outline: none !important;
-                                transition: border-color 0.2s, box-shadow 0.2s !important;
+                                transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease !important;
                             }
                             .wm-input:focus, .wm-select:focus {
-                                border-color: #38bdf8 !important;
-                                box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+                                border-color: var(--wm-primary) !important;
+                                box-shadow: 0 0 0 3px var(--wm-primary-soft) !important;
                             }
+
+                            /* Textareas */
                             .wm-textarea {
                                 width: 100% !important;
-                                background: #0f141f !important;
-                                color: #38bdf8 !important;
-                                border: 1px solid #334155 !important;
-                                border-radius: 8px !important;
+                                background: var(--wm-bg-inset) !important;
+                                color: var(--wm-text) !important;
+                                border: 1px solid var(--wm-border-strong) !important;
+                                border-radius: var(--wm-radius-control) !important;
                                 padding: 12px 14px !important;
                                 font-size: 13px !important;
-                                font-family: 'JetBrains Mono', Consolas, monospace !important;
+                                font-family: 'JetBrains Mono', Consolas, Monaco, monospace !important;
                                 box-sizing: border-box !important;
                                 outline: none !important;
                                 line-height: 1.5 !important;
-                                transition: border-color 0.2s, box-shadow 0.2s !important;
+                                transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease !important;
                             }
                             .wm-textarea:focus {
-                                border-color: #38bdf8 !important;
-                                box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+                                border-color: var(--wm-primary) !important;
+                                box-shadow: 0 0 0 3px var(--wm-primary-soft) !important;
+                            }
+
+                            /* Header Buttons */
+                            .wm-btn-open {
+                                background: var(--wm-primary) !important;
+                                color: #ffffff !important;
+                                padding: 9px 18px !important;
+                                border-radius: var(--wm-radius-control) !important;
+                                font-weight: 500 !important;
+                                font-size: 14px !important;
+                                text-decoration: none !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                gap: 8px !important;
+                                border: none !important;
+                                cursor: pointer !important;
+                                transition: background-color 0.2s ease, transform 0.1s ease !important;
+                            }
+                            .wm-btn-open:hover {
+                                background: var(--wm-primary-hover) !important;
+                            }
+
+                            /* Save Button */
+                            .wm-btn-save {
+                                background: var(--wm-primary) !important;
+                                color: #ffffff !important;
+                                padding: 11px 26px !important;
+                                border-radius: var(--wm-radius-control) !important;
+                                font-weight: 600 !important;
+                                font-size: 14px !important;
+                                border: none !important;
+                                cursor: pointer !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                gap: 8px !important;
+                                box-shadow: 0 2px 8px var(--wm-primary-soft) !important;
+                                transition: all 0.2s ease !important;
+                            }
+                            .wm-btn-save:hover:not(:disabled) {
+                                background: var(--wm-primary-hover) !important;
+                                transform: translateY(-1px);
+                            }
+                            .wm-btn-save:disabled {
+                                opacity: 0.6 !important;
+                                cursor: not-allowed !important;
+                            }
+
+                            /* Public Link Row */
+                            .wm-direct-bar {
+                                margin-top: 16px;
+                                padding: 12px 16px;
+                                background: var(--wm-bg-inset);
+                                border-radius: var(--wm-radius-control);
+                                border: 1px solid var(--wm-border);
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                flex-wrap: wrap;
+                                gap: 10px;
+                            }
+
+                            .wm-direct-code {
+                                color: var(--wm-primary-soft-text);
+                                background: var(--wm-primary-soft);
+                                padding: 3px 8px;
+                                border-radius: 4px;
+                                font-size: 12px;
+                                font-family: monospace;
+                            }
+
+                            .wm-copy-btn {
+                                padding: 6px 14px;
+                                background: var(--wm-surface);
+                                color: var(--wm-text);
+                                font-size: 12px;
+                                font-weight: 500;
+                                border: 1px solid var(--wm-border-strong);
+                                border-radius: 6px;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            }
+                            .wm-copy-btn:hover {
+                                background: var(--wm-surface-hover);
+                                border-color: var(--wm-primary);
+                            }
+
+                            /* DDoS Callout */
+                            .wm-ddos-alert {
+                                margin-top: 14px;
+                                padding: 12px 16px;
+                                background: var(--wm-danger-soft);
+                                border: 1px solid var(--wm-danger);
+                                border-left: 4px solid var(--wm-danger);
+                                border-radius: var(--wm-radius-control);
+                                color: var(--wm-danger-text);
+                            }
+
+                            /* Instructions Card */
+                            .wm-instruction-box {
+                                margin-top: 14px;
+                                padding: 14px 16px;
+                                background: var(--wm-bg-inset);
+                                border: 1px solid var(--wm-border);
+                                border-left: 4px solid var(--wm-primary);
+                                border-radius: var(--wm-radius-control);
+                            }
+
+                            /* Server Visibility Checkbox Row */
+                            .wm-server-item {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+                                padding: 12px 16px;
+                                background: var(--wm-bg-inset);
+                                border-radius: var(--wm-radius-control);
+                                border: 1px solid var(--wm-border);
+                                cursor: pointer;
+                                transition: background-color 0.2s ease, border-color 0.2s ease;
+                            }
+                            .wm-server-item:hover {
+                                background: var(--wm-surface-hover);
+                                border-color: var(--wm-border-strong);
+                            }
+
+                            /* Preformatted code snippet */
+                            .wm-code-pre {
+                                margin-top: 10px;
+                                margin-bottom: 0;
+                                background: var(--wm-surface);
+                                border: 1px solid var(--wm-border-strong);
+                                border-radius: 6px;
+                                padding: 12px 14px;
+                                color: var(--wm-text);
+                                font-size: 12px;
+                                font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+                                overflow-x: auto;
+                                line-height: 1.45;
                             }
                         `;
-                        document.head.appendChild(styleEl);
                     };
 
                     // Load current settings and servers list
@@ -253,20 +467,31 @@ export const webMonitoringPlugin = {
                                 if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
                             }
                         } catch (err) {
-                            console.warn('Could not load settings:', err);
+                            console.warn('Could not load remote plugin settings:', err);
                         }
 
+                        // Load servers list for visibility checkboxes
                         loadingServers.value = true;
                         try {
-                            const srvRes = await fetch('/api/plugins/bwbwb26fs5eje/servers');
+                            const localCached = localStorage.getItem('web_monitoring_cached_servers');
+                            if (localCached) {
+                                try {
+                                    const parsed = JSON.parse(localCached);
+                                    if (Array.isArray(parsed) && parsed.length > 0) {
+                                        serversList.value = parsed;
+                                    }
+                                } catch (_) {}
+                            }
+
+                            const srvRes = await fetch('/plugins/web-monitoring/servers');
                             if (srvRes.ok) {
                                 const srvData = await srvRes.json();
-                                if (Array.isArray(srvData.servers) && srvData.servers.length > 0) {
+                                if (srvData.servers && srvData.servers.length > 0) {
                                     serversList.value = srvData.servers;
                                 }
                             }
 
-                            // Fallback to GameAP panel native /api/servers with auth token if plugin list is empty
+                            // Fallback to GameAP native /api/servers if plugin list is empty
                             if (serversList.value.length === 0) {
                                 try {
                                     const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
@@ -373,25 +598,36 @@ export const webMonitoringPlugin = {
                                 },
                                 body: JSON.stringify(payload)
                             });
-
                             if (res.ok) {
                                 saveSuccess.value = true;
-                                setTimeout(() => { saveSuccess.value = false; }, 3500);
+                                setTimeout(() => { saveSuccess.value = false; }, 4000);
                             } else {
-                                saveError.value = `${t('saveError')} (HTTP ${res.status})`;
+                                const errData = await res.json().catch(() => ({}));
+                                saveError.value = errData.message || `${t('saveError')} (HTTP ${res.status})`;
                             }
                         } catch (err) {
                             saveSuccess.value = true;
-                            setTimeout(() => { saveSuccess.value = false; }, 3500);
+                            setTimeout(() => { saveSuccess.value = false; }, 3000);
                         } finally {
                             saving.value = false;
                         }
                     };
 
-                    const copyPublicUrl = () => {
-                        navigator.clipboard.writeText(publicUrl);
-                        copied.value = true;
-                        setTimeout(() => { copied.value = false; }, 2000);
+                    const copyPublicUrl = async () => {
+                        try {
+                            await navigator.clipboard.writeText(publicUrl);
+                            copied.value = true;
+                            setTimeout(() => { copied.value = false; }, 2500);
+                        } catch (e) {
+                            const input = document.createElement('input');
+                            input.value = publicUrl;
+                            document.body.appendChild(input);
+                            input.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(input);
+                            copied.value = true;
+                            setTimeout(() => { copied.value = false; }, 2500);
+                        }
                     };
 
                     const toggleServer = (id) => {
@@ -406,47 +642,57 @@ export const webMonitoringPlugin = {
 
                     onMounted(() => {
                         loadData();
+                        updateThemeState();
+                        // Listen to GameAP light/dark theme switches on <html> element
+                        if (typeof MutationObserver !== 'undefined') {
+                            themeObserver = new MutationObserver(() => {
+                                updateThemeState();
+                            });
+                            themeObserver.observe(document.documentElement, {
+                                attributes: true,
+                                attributeFilter: ['class', 'data-theme']
+                            });
+                        }
                     });
 
-                    // Input style helpers
-                    const inputStyle = 'width: 100%; background: #0f141f !important; color: #f8fafc !important; border: 1px solid #334155 !important; border-radius: 8px !important; padding: 10px 14px !important; font-size: 14px !important; box-sizing: border-box !important; outline: none !important;';
-                    const textareaStyle = 'width: 100%; background: #0f141f !important; color: #38bdf8 !important; border: 1px solid #334155 !important; border-radius: 8px !important; padding: 12px 14px !important; font-size: 13px !important; font-family: monospace !important; box-sizing: border-box !important; outline: none !important; line-height: 1.5 !important;';
-                    const labelStyle = 'display: block; font-size: 13px; font-weight: 500; color: #94a3b8; margin-bottom: 6px;';
-                    const cardStyle = 'background: #1e2433; border: 1px solid #323b52; border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); margin-bottom: 20px; color: #f1f5f9;';
-                    const titleStyle = 'font-size: 16px; font-weight: 600; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;';
+                    onUnmounted(() => {
+                        if (themeObserver) {
+                            themeObserver.disconnect();
+                        }
+                    });
 
-                    return () => h('div', { style: 'max-width: 900px; margin: 0 auto; padding: 24px 16px; font-family: inherit;' }, [
-                        // Header card
-                        h('div', { class: 'wm-card', style: cardStyle }, [
+                    return () => h('div', { class: 'wm-admin-root' }, [
+                        // Header Card
+                        h('div', { class: 'wm-card' }, [
                             h('div', { style: 'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;' }, [
                                 h('div', [
-                                    h('h2', { style: 'font-size: 22px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 10px; margin: 0;' }, [
-                                        h('i', { class: 'fas fa-chart-line', style: 'color: #38bdf8;' }),
+                                    h('h2', { style: 'font-size: 22px; font-weight: 700; color: var(--wm-text); display: flex; align-items: center; gap: 10px; margin: 0;' }, [
+                                        h('i', { class: 'fas fa-chart-line', style: 'color: var(--wm-primary);' }),
                                         t('pluginTitle')
                                     ]),
-                                    h('p', { style: 'color: #94a3b8; font-size: 13px; margin: 6px 0 0 0;' }, t('pluginSubtitle'))
+                                    h('p', { style: 'color: var(--wm-text-muted); font-size: 13px; margin: 6px 0 0 0;' }, t('pluginSubtitle'))
                                 ]),
                                 h('div', { style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;' }, [
                                     // Language Switcher
                                     h('div', {
-                                        style: 'display: inline-flex; align-items: center; background: #0f141f; padding: 2px; border-radius: 8px; border: 1px solid #334155; gap: 2px;'
+                                        style: 'display: inline-flex; align-items: center; background: var(--wm-bg-inset); padding: 2px; border-radius: 8px; border: 1px solid var(--wm-border); gap: 2px;'
                                     }, [
                                         h('button', {
                                             type: 'button',
                                             onClick: () => setLang('ru'),
-                                            style: `padding: 6px 11px; font-size: 12px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: ${currentLang.value === 'ru' ? '#38bdf8' : 'transparent'}; color: ${currentLang.value === 'ru' ? '#0f172a' : '#94a3b8'};`
+                                            style: `padding: 6px 11px; font-size: 12px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: ${currentLang.value === 'ru' ? 'var(--wm-primary)' : 'transparent'}; color: ${currentLang.value === 'ru' ? '#ffffff' : 'var(--wm-text-muted)'};`
                                         }, '🇷🇺 RU'),
                                         h('button', {
                                             type: 'button',
                                             onClick: () => setLang('en'),
-                                            style: `padding: 6px 11px; font-size: 12px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: ${currentLang.value === 'en' ? '#38bdf8' : 'transparent'}; color: ${currentLang.value === 'en' ? '#0f172a' : '#94a3b8'};`
+                                            style: `padding: 6px 11px; font-size: 12px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: ${currentLang.value === 'en' ? 'var(--wm-primary)' : 'transparent'}; color: ${currentLang.value === 'en' ? '#ffffff' : 'var(--wm-text-muted)'};`
                                         }, '🇬🇧 EN')
                                     ]),
                                     // Open monitoring button
                                     h('a', {
                                         href: publicUrl,
                                         target: '_blank',
-                                        style: 'background: #4f46e5; color: #ffffff; padding: 9px 18px; border-radius: 8px; font-weight: 500; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;'
+                                        class: 'wm-btn-open'
                                     }, [
                                         h('i', { class: 'fas fa-external-link-alt' }),
                                         t('openMonitoring')
@@ -455,47 +701,43 @@ export const webMonitoringPlugin = {
                             ]),
 
                             // Direct link bar
-                            h('div', { style: 'margin-top: 16px; padding: 12px 16px; background: #0f141f; border-radius: 8px; border: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;' }, [
-                                h('div', { style: 'font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis;' }, [
-                                    h('span', { style: 'font-weight: 600; color: #cbd5e1;' }, t('publicUrlLabel')),
-                                    h('code', { style: 'color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 3px 8px; border-radius: 4px; font-size: 12px;' }, publicUrl)
+                            h('div', { class: 'wm-direct-bar' }, [
+                                h('div', { style: 'font-size: 13px; color: var(--wm-text-secondary); display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis;' }, [
+                                    h('span', { style: 'font-weight: 600; color: var(--wm-text);' }, t('publicUrlLabel')),
+                                    h('code', { class: 'wm-direct-code' }, publicUrl)
                                 ]),
                                 h('button', {
                                     onClick: copyPublicUrl,
-                                    style: 'padding: 6px 14px; background: #334155; color: #ffffff; font-size: 12px; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;'
+                                    class: 'wm-copy-btn'
                                 }, copied.value ? t('copiedUrl') : t('copyUrl'))
                             ]),
 
                             // Security Warning Callout
-                            h('div', {
-                                style: 'margin-top: 14px; padding: 12px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; border-radius: 8px;'
-                            }, [
+                            h('div', { class: 'wm-ddos-alert' }, [
                                 h('div', { style: 'display: flex; align-items: center; gap: 8px; margin-bottom: 6px;' }, [
-                                    h('i', { class: 'fas fa-shield-alt', style: 'color: #ef4444;' }),
-                                    h('span', { style: 'font-weight: 700; color: #fca5a5; font-size: 13px;' }, t('securityWarningTitle'))
+                                    h('i', { class: 'fas fa-shield-alt', style: 'color: var(--wm-danger); font-size: 15px;' }),
+                                    h('span', { style: 'font-weight: 700; font-size: 13px;' }, t('securityWarningTitle'))
                                 ]),
-                                h('p', { style: 'margin: 0; color: #fecaca; font-size: 12px; line-height: 1.5;' }, t('securityWarningText'))
+                                h('p', { style: 'margin: 0; font-size: 12.5px; line-height: 1.5;' }, t('securityWarningText'))
                             ]),
 
                             // Universal instruction card under the warning
-                            h('div', {
-                                style: 'margin-top: 14px; padding: 14px 16px; background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 4px solid #38bdf8; border-radius: 8px;'
-                            }, [
+                            h('div', { class: 'wm-instruction-box' }, [
                                 h('div', { style: 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;' }, [
-                                    h('i', { class: 'fas fa-info-circle', style: 'color: #38bdf8;' }),
-                                    h('span', { style: 'font-weight: 600; color: #f8fafc; font-size: 13px;' }, t('instructionTitle'))
+                                    h('i', { class: 'fas fa-info-circle', style: 'color: var(--wm-primary);' }),
+                                    h('span', { style: 'font-weight: 600; color: var(--wm-text); font-size: 13px;' }, t('instructionTitle'))
                                 ]),
-                                h('ul', { style: 'margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 12.5px; line-height: 1.6;' }, [
+                                h('ul', { style: 'margin: 0; padding-left: 20px; color: var(--wm-text-secondary); font-size: 12.5px; line-height: 1.6;' }, [
                                     h('li', [
-                                        h('strong', { style: 'color: #f1f5f9;' }, t('instructionDirectTitle')),
+                                        h('strong', { style: 'color: var(--wm-text);' }, t('instructionDirectTitle')),
                                         t('instructionDirectText')
                                     ]),
                                     h('li', [
-                                        h('strong', { style: 'color: #f1f5f9;' }, t('instructionServersTitle')),
+                                        h('strong', { style: 'color: var(--wm-text);' }, t('instructionServersTitle')),
                                         t('instructionServersText')
                                     ]),
                                     h('li', [
-                                        h('strong', { style: 'color: #f1f5f9;' }, t('instructionAliasTitle')),
+                                        h('strong', { style: 'color: var(--wm-text);' }, t('instructionAliasTitle')),
                                         t('instructionAliasText')
                                     ])
                                 ]),
@@ -504,21 +746,21 @@ export const webMonitoringPlugin = {
                                     h('button', {
                                         type: 'button',
                                         onClick: () => { selectedProxy.value = 'nginx'; },
-                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'nginx' ? '#38bdf8' : '#334155'}; background: ${selectedProxy.value === 'nginx' ? 'rgba(56, 189, 248, 0.15)' : '#0f141f'}; color: ${selectedProxy.value === 'nginx' ? '#38bdf8' : '#94a3b8'};`
+                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'nginx' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'nginx' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'nginx' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
                                     }, t('tabNginx')),
                                     h('button', {
                                         type: 'button',
                                         onClick: () => { selectedProxy.value = 'caddy'; },
-                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'caddy' ? '#38bdf8' : '#334155'}; background: ${selectedProxy.value === 'caddy' ? 'rgba(56, 189, 248, 0.15)' : '#0f141f'}; color: ${selectedProxy.value === 'caddy' ? '#38bdf8' : '#94a3b8'};`
+                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'caddy' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'caddy' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'caddy' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
                                     }, t('tabCaddy')),
                                     h('button', {
                                         type: 'button',
                                         onClick: () => { selectedProxy.value = 'apache'; },
-                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'apache' ? '#38bdf8' : '#334155'}; background: ${selectedProxy.value === 'apache' ? 'rgba(56, 189, 248, 0.15)' : '#0f141f'}; color: ${selectedProxy.value === 'apache' ? '#38bdf8' : '#94a3b8'};`
+                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'apache' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'apache' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'apache' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
                                     }, t('tabApache'))
                                 ]),
                                 h('pre', {
-                                    style: 'margin-top: 10px; margin-bottom: 0; background: #090d16; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px; color: #a5f3fc; font-size: 11.5px; font-family: monospace; overflow-x: auto; line-height: 1.4;'
+                                    class: 'wm-code-pre'
                                 }, selectedProxy.value === 'nginx' 
                                     ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/bwbwb26fs5eje/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
                                     : (selectedProxy.value === 'caddy'
@@ -529,131 +771,125 @@ export const webMonitoringPlugin = {
                             ])
                         ]),
 
-                        // General settings
-                        h('div', { class: 'wm-card', style: cardStyle }, [
-                            h('h3', { class: 'wm-title', style: titleStyle }, t('generalSettings')),
+                        // General Settings Card
+                        h('div', { class: 'wm-card' }, [
+                            h('h3', { class: 'wm-title' }, t('generalSettings')),
                             h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;' }, [
                                 h('div', [
-                                    h('label', { class: 'wm-label', style: labelStyle }, t('titleLabel')),
+                                    h('label', { class: 'wm-label' }, t('titleLabel')),
                                     h('input', {
                                         type: 'text',
                                         value: title.value,
                                         onInput: (e) => { title.value = e.target.value; },
-                                        class: 'wm-input',
-                                        style: inputStyle
+                                        class: 'wm-input'
                                     })
                                 ]),
                                 h('div', [
-                                    h('label', { class: 'wm-label', style: labelStyle }, t('subtitleLabel')),
+                                    h('label', { class: 'wm-label' }, t('subtitleLabel')),
                                     h('input', {
                                         type: 'text',
                                         value: subtitle.value,
                                         onInput: (e) => { subtitle.value = e.target.value; },
-                                        class: 'wm-input',
-                                        style: inputStyle
+                                        class: 'wm-input'
                                     })
                                 ]),
                                 h('div', [
-                                    h('label', { class: 'wm-label', style: labelStyle }, t('themeLabel')),
+                                    h('label', { class: 'wm-label' }, t('themeLabel')),
                                     h('select', {
                                         value: theme.value,
                                         onChange: (e) => { theme.value = e.target.value; },
-                                        class: 'wm-select',
-                                        style: inputStyle
+                                        class: 'wm-select'
                                     }, [
-                                        h('option', { value: 'dark', style: 'background: #0f141f; color: #fff;' }, t('darkTheme')),
-                                        h('option', { value: 'light', style: 'background: #0f141f; color: #fff;' }, t('lightTheme'))
+                                        h('option', { value: 'dark' }, t('darkTheme')),
+                                        h('option', { value: 'light' }, t('lightTheme'))
                                     ])
                                 ]),
                                 h('div', [
-                                    h('label', { class: 'wm-label', style: labelStyle }, t('refreshIntervalLabel')),
+                                    h('label', { class: 'wm-label' }, t('refreshIntervalLabel')),
                                     h('input', {
                                         type: 'number',
                                         min: '5',
                                         max: '300',
                                         value: refreshInterval.value,
                                         onInput: (e) => { refreshInterval.value = e.target.value; },
-                                        class: 'wm-input',
-                                        style: inputStyle
+                                        class: 'wm-input'
                                     })
                                 ])
                             ])
                         ]),
 
-                        // Server visibility checklist
-                        h('div', { class: 'wm-card', style: cardStyle }, [
-                            h('h3', { class: 'wm-title', style: titleStyle }, t('serversVisibility')),
-                            h('p', { style: 'font-size: 13px; color: #94a3b8; margin: 0 0 14px 0;' }, t('serversVisibilityHelp')),
+                        // Server Visibility Card
+                        h('div', { class: 'wm-card' }, [
+                            h('h3', { class: 'wm-title' }, t('serversVisibility')),
+                            h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 14px 0;' }, t('serversVisibilityHelp')),
                             loadingServers.value
-                                ? h('div', { style: 'color: #94a3b8; font-size: 13px; padding: 12px 0;' }, t('loadingServers'))
+                                ? h('div', { style: 'color: var(--wm-text-muted); font-size: 13px; padding: 12px 0;' }, t('loadingServers'))
                                 : serversList.value.length === 0
-                                    ? h('div', { style: 'color: #94a3b8; font-size: 13px; padding: 12px 0;' }, t('noServers'))
+                                    ? h('div', { style: 'color: var(--wm-text-muted); font-size: 13px; padding: 12px 0;' }, t('noServers'))
                                     : h('div', { style: 'display: flex; flex-direction: column; gap: 8px;' }, serversList.value.map(srv => {
                                         const isHidden = hiddenServers.value.includes(srv.id);
                                         const isOnline = srv.status === 'online';
                                         return h('label', {
                                             key: srv.id,
-                                            style: 'display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #0f141f; border-radius: 8px; border: 1px solid #334155; cursor: pointer; transition: border-color 0.2s;'
+                                            class: 'wm-server-item'
                                         }, [
                                             h('input', {
                                                 type: 'checkbox',
                                                 checked: !isHidden,
                                                 onChange: () => toggleServer(srv.id),
-                                                style: 'width: 18px; height: 18px; cursor: pointer; accent-color: #38bdf8;'
+                                                style: 'width: 18px; height: 18px; cursor: pointer; accent-color: var(--wm-primary);'
                                             }),
                                             h('div', { style: 'flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px;' }, [
-                                                h('span', { style: 'font-size: 14px; font-weight: 500; color: #f8fafc;' }, srv.name),
-                                                h('span', { style: 'font-size: 12px; color: #94a3b8; font-family: monospace;' }, `${srv.address}:${srv.port}`)
+                                                h('span', { style: 'font-size: 14px; font-weight: 500; color: var(--wm-text);' }, srv.name),
+                                                h('span', { style: 'font-size: 12px; color: var(--wm-text-muted); font-family: monospace;' }, `${srv.address}:${srv.port}`)
                                             ]),
                                             h('span', {
                                                 style: isOnline
-                                                    ? 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);'
-                                                    : 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2);'
+                                                    ? 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--wm-primary-soft); color: var(--wm-primary-soft-text); border: 1px solid var(--wm-primary);'
+                                                    : 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--wm-bg-inset); color: var(--wm-text-muted); border: 1px solid var(--wm-border-strong);'
                                             }, isOnline ? 'Online' : 'Offline')
                                         ]);
                                     }))
                         ]),
 
-                        // Custom CSS Editor
-                        h('div', { class: 'wm-card', style: cardStyle }, [
-                            h('h3', { class: 'wm-title', style: titleStyle }, t('customCss')),
-                            h('p', { style: 'font-size: 13px; color: #94a3b8; margin: 0 0 12px 0;' }, t('customCssHelp')),
+                        // Custom CSS Editor Card
+                        h('div', { class: 'wm-card' }, [
+                            h('h3', { class: 'wm-title' }, t('customCss')),
+                            h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 12px 0;' }, t('customCssHelp')),
                             h('textarea', {
                                 rows: 6,
                                 value: customCss.value,
                                 onInput: (e) => { customCss.value = e.target.value; },
                                 placeholder: t('customCssPlaceholder'),
-                                class: 'wm-textarea',
-                                style: textareaStyle
+                                class: 'wm-textarea'
                             })
                         ]),
 
-                        // Custom Header HTML
-                        h('div', { class: 'wm-card', style: cardStyle }, [
-                            h('h3', { class: 'wm-title', style: titleStyle }, t('customHeader')),
-                            h('p', { style: 'font-size: 13px; color: #94a3b8; margin: 0 0 12px 0;' }, t('customHeaderHelp')),
+                        // Custom Header HTML Card
+                        h('div', { class: 'wm-card' }, [
+                            h('h3', { class: 'wm-title' }, t('customHeader')),
+                            h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 12px 0;' }, t('customHeaderHelp')),
                             h('textarea', {
                                 rows: 4,
                                 value: customHeaderHtml.value,
                                 onInput: (e) => { customHeaderHtml.value = e.target.value; },
                                 placeholder: t('customHeaderPlaceholder'),
-                                class: 'wm-textarea',
-                                style: textareaStyle
+                                class: 'wm-textarea'
                             })
                         ]),
 
-                        // Save actions
+                        // Save Actions
                         h('div', { style: 'display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 10px;' }, [
                             h('button', {
                                 onClick: saveSettings,
                                 disabled: saving.value,
-                                style: 'background: #10b981; color: #ffffff; padding: 11px 26px; border-radius: 8px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); opacity: ' + (saving.value ? '0.6' : '1') + '; transition: all 0.2s;'
+                                class: 'wm-btn-save'
                             }, [
                                 h('i', { class: 'fas fa-save' }),
                                 saving.value ? t('savingBtn') : t('saveBtn')
                             ]),
-                            saveSuccess.value && h('span', { style: 'color: #4ade80; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;' }, t('saveSuccess')),
-                            saveError.value && h('span', { style: 'color: #f87171; font-size: 14px; font-weight: 500;' }, saveError.value)
+                            saveSuccess.value && h('span', { style: 'color: var(--wm-primary-soft-text); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;' }, t('saveSuccess')),
+                            saveError.value && h('span', { style: 'color: var(--wm-danger); font-size: 14px; font-weight: 500;' }, saveError.value)
                         ])
                     ]);
                 }
