@@ -3,6 +3,6 @@
 package main
 
 const (
-	PluginVersion = "0.0.1"
-	PluginRepoURL = "https://github.com/gameap/gameap"
+	PluginVersion = "1.0.0"
+	PluginRepoURL = "https://github.com/br1ckzzz/gameap_monitoring_plugin"
 )

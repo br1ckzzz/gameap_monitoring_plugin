@@ -154,7 +154,7 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 func RunDiagnostic(ctx context.Context) map[string]interface{} {
 	diag := make(map[string]interface{})
 	diag["plugin_id"] = "bwbwb26fs5eje"
-	diag["version"] = "0.0.1"
+	diag["version"] = PluginVersion
 
 	// Test serversRepo
 	serversInfo := make(map[string]interface{})
