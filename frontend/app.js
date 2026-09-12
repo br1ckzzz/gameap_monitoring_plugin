@@ -216,12 +216,14 @@ function initPreloadedData() {
 function getApiEndpoint(route) {
   const path = window.location.pathname || '';
   const idx = path.indexOf('/view');
+  const sep = route.includes('?') ? '&' : '?';
+  const actionName = route.replace(/^\//, '').split('?')[0];
   if (idx !== -1) {
     const base = path.substring(0, idx);
-    return `${base}${route}`;
+    return `${base}${route}${sep}action=${actionName}`;
   }
   // Fallbacks
-  return `/api/plugins/monitoring${route}`;
+  return `/api/plugins/monitoring${route}${sep}action=${actionName}`;
 }
 
 async function fetchServers() {
@@ -231,7 +233,8 @@ async function fetchServers() {
   
   let loadedData = null;
   const primaryEndpoint = getApiEndpoint('/servers');
-  const fallbackEndpoint = '/plugins/web-monitoring/servers';
+  const fallbackEndpoint = '/api/plugins/monitorine/servers';
+  const fallbackEndpoint2 = '/plugins/web-monitoring/servers';
 
   // Helper to attempt fetch from an endpoint
   async function tryFetch(url) {
@@ -256,9 +259,14 @@ async function fetchServers() {
   // 1. Try primary endpoint
   loadedData = await tryFetch(primaryEndpoint);
 
-  // 2. If primary failed, try fallback endpoint
+  // 2. If primary failed, try monitorine canonical endpoint
   if (!loadedData && primaryEndpoint !== fallbackEndpoint) {
     loadedData = await tryFetch(fallbackEndpoint);
+  }
+
+  // 3. Try legacy static plugin endpoint
+  if (!loadedData && primaryEndpoint !== fallbackEndpoint2) {
+    loadedData = await tryFetch(fallbackEndpoint2);
   }
 
   // 3. Fallback to preloaded INITIAL_DATA if present

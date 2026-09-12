@@ -59,6 +59,13 @@ func (p *WebMonitoringPlugin) GetHTTPRoutes(
 	return &pluginproto.GetHTTPRoutesResponse{
 		Routes: []*pluginproto.HTTPRoute{
 			{
+				Path:         "/",
+				Methods:      []string{"GET", "POST"},
+				RequiresAuth: false,
+				AdminOnly:    false,
+				Description:  "Root fallback route for GameAP Base32 path normalization",
+			},
+			{
 				Path:         "/servers",
 				Methods:      []string{"GET"},
 				RequiresAuth: false,
@@ -124,155 +131,46 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 		}, nil
 	}
 
-	switch req.Path {
-	case "/servers":
-		data, fetchErr := FetchPublicServers(ctx)
-		if fetchErr != nil {
-			if logger != nil {
-				logger.Error("Failed to fetch servers", "error", fetchErr.Error())
-			}
-			// Return HTTP 200 with error details so GameAP doesn't block the response with "plugin error"
-			return &pluginproto.HTTPResponse{
-				StatusCode: int32(http.StatusOK),
-				Headers: map[string]string{
-					"Content-Type":                "application/json",
-					"Access-Control-Allow-Origin": "*",
-					"Cache-Control":               "no-cache, no-store, must-revalidate",
-				},
-				Body: []byte(fmt.Sprintf(`{"success":false,"error":%q,"total_servers":0,"online_count":0,"servers":[]}`, fetchErr.Error())),
-			}, nil
-		}
-
-		return &pluginproto.HTTPResponse{
-			StatusCode: int32(http.StatusOK),
-			Headers: map[string]string{
-				"Content-Type":                "application/json",
-				"Access-Control-Allow-Origin": "*",
-				"Cache-Control":               "no-cache, no-store, must-revalidate",
-			},
-			Body: data,
-		}, nil
-
-	case "/view":
-		pageContent := string(indexHTML)
-
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					if logger != nil {
-						logger.Warn("Failed applying view customizations", "recover", r)
-					}
-				}
-			}()
-
-			settings := GetSettings(ctx)
-
-			if settings != nil {
-				if settings.Title != "" {
-					pageContent = strings.Replace(pageContent, "<title>Мониторинг игровых серверов | GameAP</title>", "<title>"+template.HTMLEscapeString(settings.Title)+" | GameAP</title>", 1)
-					pageContent = strings.Replace(pageContent, "GameAP Servers", template.HTMLEscapeString(settings.Title), 1)
-				}
-				if settings.Subtitle != "" {
-					pageContent = strings.Replace(pageContent, "Онлайн мониторинг игровых серверов", template.HTMLEscapeString(settings.Subtitle), 1)
-				}
-				if settings.CustomHeaderHTML != "" {
-					pageContent = strings.Replace(pageContent, "<!-- CUSTOM_HEADER -->", settings.CustomHeaderHTML, 1)
-				}
-				if settings.CustomCSS != "" {
-					customStyleTag := "<style id=\"admin-custom-css\">\n" + settings.CustomCSS + "\n</style>\n</head>"
-					pageContent = strings.Replace(pageContent, "</head>", customStyleTag, 1)
-				}
-				if settings.Theme == "light" {
-					pageContent = strings.Replace(pageContent, "<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">", 1)
+	targetPath := req.Path
+	if targetPath == "/" || targetPath == "" {
+		if req.QueryParams != nil {
+			if actions, ok := req.QueryParams["action"]; ok && len(actions.Values) > 0 {
+				switch actions.Values[0] {
+				case "servers":
+					return p.handleServers(ctx)
+				case "settings":
+					return p.handleSettings(ctx, req)
+				case "diagnostic":
+					return p.handleDiagnostic(ctx)
+				case "view":
+					return p.handleView(ctx)
 				}
 			}
-
-			// Dynamically set footer version link to PluginVersion
-			pageContent = strings.Replace(pageContent, "v1.0.0", "v"+PluginVersion, 1)
-		}()
-
-		if pageContent == "" {
-			pageContent = string(indexHTML)
 		}
 
-		return &pluginproto.HTTPResponse{
-			StatusCode: int32(http.StatusOK),
-			Headers: map[string]string{
-				"Content-Type":  "text/html; charset=utf-8",
-				"Cache-Control": "no-cache, no-store, must-revalidate",
-			},
-			Body: []byte(pageContent),
-		}, nil
-
-	case "/settings":
 		if req.Method == "POST" {
-			var newSettings PluginSettings
-			if jsonErr := json.Unmarshal(req.Body, &newSettings); jsonErr != nil {
-				return &pluginproto.HTTPResponse{
-					StatusCode: int32(http.StatusOK),
-					Headers: map[string]string{
-						"Content-Type":                "application/json",
-						"Access-Control-Allow-Origin": "*",
-					},
-					Body: []byte(fmt.Sprintf(`{"success":false,"error":"invalid json: %s"}`, jsonErr.Error())),
-				}, nil
-			}
-			if saveErr := SaveSettings(ctx, &newSettings); saveErr != nil {
-				return &pluginproto.HTTPResponse{
-					StatusCode: int32(http.StatusOK),
-					Headers: map[string]string{
-						"Content-Type":                "application/json",
-						"Access-Control-Allow-Origin": "*",
-					},
-					Body: []byte(fmt.Sprintf(`{"success":false,"error":%q}`, saveErr.Error())),
-				}, nil
-			}
-			return &pluginproto.HTTPResponse{
-				StatusCode: int32(http.StatusOK),
-				Headers: map[string]string{
-					"Content-Type":                "application/json",
-					"Access-Control-Allow-Origin": "*",
-				},
-				Body: []byte(`{"success":true}`),
-			}, nil
+			return p.handleSettings(ctx, req)
 		}
 
-		// GET /settings
-		settings := GetSettings(ctx)
-		bytes, err := json.Marshal(settings)
-		if err != nil {
-			return &pluginproto.HTTPResponse{
-				StatusCode: int32(http.StatusOK),
-				Headers: map[string]string{
-					"Content-Type":                "application/json",
-					"Access-Control-Allow-Origin": "*",
-				},
-				Body: []byte(fmt.Sprintf(`{"error":"failed to marshal settings: %s"}`, err.Error())),
-			}, nil
+		if req.Headers != nil {
+			accept := req.Headers["Accept"]
+			if strings.Contains(accept, "application/json") && !strings.Contains(accept, "text/html") {
+				return p.handleServers(ctx)
+			}
 		}
-		return &pluginproto.HTTPResponse{
-			StatusCode: int32(http.StatusOK),
-			Headers: map[string]string{
-				"Content-Type":                "application/json",
-				"Access-Control-Allow-Origin": "*",
-				"Cache-Control":               "no-cache, no-store, must-revalidate",
-			},
-			Body: bytes,
-		}, nil
 
+		return p.handleView(ctx)
+	}
+
+	switch targetPath {
+	case "/servers":
+		return p.handleServers(ctx)
+	case "/view":
+		return p.handleView(ctx)
+	case "/settings":
+		return p.handleSettings(ctx, req)
 	case "/diagnostic":
-		diag := RunDiagnostic(ctx)
-		bytes, _ := json.MarshalIndent(diag, "", "  ")
-		return &pluginproto.HTTPResponse{
-			StatusCode: int32(http.StatusOK),
-			Headers: map[string]string{
-				"Content-Type":                "application/json",
-				"Access-Control-Allow-Origin": "*",
-				"Cache-Control":               "no-cache, no-store, must-revalidate",
-			},
-			Body: bytes,
-		}, nil
-
+		return p.handleDiagnostic(ctx)
 	default:
 		return &pluginproto.HTTPResponse{
 			StatusCode: int32(http.StatusNotFound),
@@ -282,4 +180,156 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 			Body: []byte(`{"error":"not found"}`),
 		}, nil
 	}
+}
+
+func (p *WebMonitoringPlugin) handleServers(ctx context.Context) (*pluginproto.HTTPResponse, error) {
+	data, fetchErr := FetchPublicServers(ctx)
+	if fetchErr != nil {
+		if logger != nil {
+			logger.Error("Failed to fetch servers", "error", fetchErr.Error())
+		}
+		// Return HTTP 200 with error details so GameAP doesn't block the response with "plugin error"
+		return &pluginproto.HTTPResponse{
+			StatusCode: int32(http.StatusOK),
+			Headers: map[string]string{
+				"Content-Type":                "application/json",
+				"Access-Control-Allow-Origin": "*",
+				"Cache-Control":               "no-cache, no-store, must-revalidate",
+			},
+			Body: []byte(fmt.Sprintf(`{"success":false,"error":%q,"total_servers":0,"online_count":0,"servers":[]}`, fetchErr.Error())),
+		}, nil
+	}
+
+	return &pluginproto.HTTPResponse{
+		StatusCode: int32(http.StatusOK),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Cache-Control":               "no-cache, no-store, must-revalidate",
+		},
+		Body: data,
+	}, nil
+}
+
+func (p *WebMonitoringPlugin) handleView(ctx context.Context) (*pluginproto.HTTPResponse, error) {
+	pageContent := string(indexHTML)
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if logger != nil {
+					logger.Warn("Failed applying view customizations", "recover", r)
+				}
+			}
+		}()
+
+		settings := GetSettings(ctx)
+
+		if settings != nil {
+			if settings.Title != "" {
+				pageContent = strings.Replace(pageContent, "<title>Мониторинг игровых серверов | GameAP</title>", "<title>"+template.HTMLEscapeString(settings.Title)+" | GameAP</title>", 1)
+				pageContent = strings.Replace(pageContent, "GameAP Servers", template.HTMLEscapeString(settings.Title), 1)
+			}
+			if settings.Subtitle != "" {
+				pageContent = strings.Replace(pageContent, "Онлайн мониторинг игровых серверов", template.HTMLEscapeString(settings.Subtitle), 1)
+			}
+			if settings.CustomHeaderHTML != "" {
+				pageContent = strings.Replace(pageContent, "<!-- CUSTOM_HEADER -->", settings.CustomHeaderHTML, 1)
+			}
+			if settings.CustomCSS != "" {
+				customStyleTag := "<style id=\"admin-custom-css\">\n" + settings.CustomCSS + "\n</style>\n</head>"
+				pageContent = strings.Replace(pageContent, "</head>", customStyleTag, 1)
+			}
+			if settings.Theme == "light" {
+				pageContent = strings.Replace(pageContent, "<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">", 1)
+			}
+		}
+
+		// Dynamically set footer version link to PluginVersion
+		pageContent = strings.Replace(pageContent, "v1.0.0", "v"+PluginVersion, 1)
+	}()
+
+	if pageContent == "" {
+		pageContent = string(indexHTML)
+	}
+
+	return &pluginproto.HTTPResponse{
+		StatusCode: int32(http.StatusOK),
+		Headers: map[string]string{
+			"Content-Type":  "text/html; charset=utf-8",
+			"Cache-Control": "no-cache, no-store, must-revalidate",
+		},
+		Body: []byte(pageContent),
+	}, nil
+}
+
+func (p *WebMonitoringPlugin) handleSettings(ctx context.Context, req *pluginproto.HTTPRequest) (*pluginproto.HTTPResponse, error) {
+	if req != nil && req.Method == "POST" {
+		var newSettings PluginSettings
+		if jsonErr := json.Unmarshal(req.Body, &newSettings); jsonErr != nil {
+			return &pluginproto.HTTPResponse{
+				StatusCode: int32(http.StatusOK),
+				Headers: map[string]string{
+					"Content-Type":                "application/json",
+					"Access-Control-Allow-Origin": "*",
+				},
+				Body: []byte(fmt.Sprintf(`{"success":false,"error":"invalid json: %s"}`, jsonErr.Error())),
+			}, nil
+		}
+		if saveErr := SaveSettings(ctx, &newSettings); saveErr != nil {
+			return &pluginproto.HTTPResponse{
+				StatusCode: int32(http.StatusOK),
+				Headers: map[string]string{
+					"Content-Type":                "application/json",
+					"Access-Control-Allow-Origin": "*",
+				},
+				Body: []byte(fmt.Sprintf(`{"success":false,"error":%q}`, saveErr.Error())),
+			}, nil
+		}
+		return &pluginproto.HTTPResponse{
+			StatusCode: int32(http.StatusOK),
+			Headers: map[string]string{
+				"Content-Type":                "application/json",
+				"Access-Control-Allow-Origin": "*",
+			},
+			Body: []byte(`{"success":true}`),
+		}, nil
+	}
+
+	// GET /settings
+	settings := GetSettings(ctx)
+	bytes, err := json.Marshal(settings)
+	if err != nil {
+		return &pluginproto.HTTPResponse{
+			StatusCode: int32(http.StatusOK),
+			Headers: map[string]string{
+				"Content-Type":                "application/json",
+				"Access-Control-Allow-Origin": "*",
+			},
+			Body: []byte(fmt.Sprintf(`{"error":"failed to marshal settings: %s"}`, err.Error())),
+		}, nil
+	}
+	return &pluginproto.HTTPResponse{
+		StatusCode: int32(http.StatusOK),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Cache-Control":               "no-cache, no-store, must-revalidate",
+		},
+		Body: bytes,
+	}, nil
+}
+
+func (p *WebMonitoringPlugin) handleDiagnostic(ctx context.Context) (*pluginproto.HTTPResponse, error) {
+	diag := RunDiagnostic(ctx)
+	bytes, _ := json.MarshalIndent(diag, "", "  ")
+	return &pluginproto.HTTPResponse{
+		StatusCode: int32(http.StatusOK),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Cache-Control":               "no-cache, no-store, must-revalidate",
+		},
+		Body: bytes,
+	}, nil
 }

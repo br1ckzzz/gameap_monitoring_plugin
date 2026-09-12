@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.1',
+    version: '1.0.2',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.1',
+                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.2',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             copyUrl: 'Копировать адрес страницы',
@@ -74,7 +74,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.1',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.2',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             copyUrl: 'Copy Page URL',
@@ -455,16 +455,22 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
-                            const sRes = await fetch('/api/plugins/monitoring/settings');
-                            if (sRes.ok) {
-                                const data = await sRes.json();
-                                if (data.title) title.value = data.title;
-                                if (data.subtitle) subtitle.value = data.subtitle;
-                                if (data.theme) theme.value = data.theme;
-                                if (data.refresh_interval) refreshInterval.value = data.refresh_interval;
-                                if (data.custom_css !== undefined) customCss.value = data.custom_css;
-                                if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
-                                if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
+                            const sEndpoints = ['/api/plugins/monitoring/settings?action=settings', '/api/plugins/monitorine/settings'];
+                            for (const sUrl of sEndpoints) {
+                                try {
+                                    const sRes = await fetch(sUrl);
+                                    if (sRes.ok) {
+                                        const data = await sRes.json();
+                                        if (data.title) title.value = data.title;
+                                        if (data.subtitle) subtitle.value = data.subtitle;
+                                        if (data.theme) theme.value = data.theme;
+                                        if (data.refresh_interval) refreshInterval.value = data.refresh_interval;
+                                        if (data.custom_css !== undefined) customCss.value = data.custom_css;
+                                        if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
+                                        if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
+                                        break;
+                                    }
+                                } catch (_) {}
                             }
                         } catch (err) {
                             console.warn('Could not load remote plugin settings:', err);
@@ -529,7 +535,7 @@ export const webMonitoringPlugin = {
                                                     connect_url: cUrl
                                                 };
                                             });
-                                            autoSyncServers(serversList.value);
+                                            updateServerListCache(serversList.value);
                                         }
                                     }
                                 } catch (e) {
@@ -543,10 +549,9 @@ export const webMonitoringPlugin = {
                         }
                     };
 
-                    const autoSyncServers = async (servers) => {
+                    const updateServerListCache = async (servers) => {
                         if (!servers || servers.length === 0) return;
                         try {
-                            localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(servers));
                             const payload = {
                                 title: title.value,
                                 subtitle: subtitle.value,
@@ -558,13 +563,22 @@ export const webMonitoringPlugin = {
                                 cached_servers: servers
                             };
                             localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
-                            await fetch('/api/plugins/monitoring/settings', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            });
+                            localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(servers));
+                            const sEndpoints = ['/api/plugins/monitoring/settings?action=settings', '/api/plugins/monitorine/settings'];
+                            for (const sUrl of sEndpoints) {
+                                try {
+                                    const r = await fetch(sUrl, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(payload)
+                                    });
+                                    if (r.ok) break;
+                                } catch (_) {}
+                            }
                         } catch (_) {}
                     };
+
+                    const autoSyncServers = updateServerListCache;
 
                     const saveSettings = async () => {
                         saving.value = true;
@@ -591,19 +605,29 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
-                            const res = await fetch('/api/plugins/monitoring/settings', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify(payload)
-                            });
-                            if (res.ok) {
+                            const sEndpoints = ['/api/plugins/monitoring/settings?action=settings', '/api/plugins/monitorine/settings'];
+                            let res = null;
+                            for (const sUrl of sEndpoints) {
+                                try {
+                                    const r = await fetch(sUrl, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+                                    if (r.ok) {
+                                        res = r;
+                                        break;
+                                    }
+                                } catch (_) {}
+                            }
+                            if (res && res.ok) {
                                 saveSuccess.value = true;
                                 setTimeout(() => { saveSuccess.value = false; }, 4000);
                             } else {
-                                const errData = await res.json().catch(() => ({}));
-                                saveError.value = errData.message || `${t('saveError')} (HTTP ${res.status})`;
+                                const errData = res ? await res.json().catch(() => ({})) : {};
+                                saveError.value = errData.message || `${t('saveError')} (HTTP ${res ? res.status : 'ERR'})`;
                             }
                         } catch (err) {
                             saveSuccess.value = true;
