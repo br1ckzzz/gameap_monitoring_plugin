@@ -5,6 +5,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/br1ckzzz/gameap_monitoring_plugin/releases"><img src="https://img.shields.io/github/v/release/br1ckzzz/gameap_monitoring_plugin?label=version&color=blue" alt="Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go" alt="Go 1.23+"></a>
+  <a href="https://webassembly.org"><img src="https://img.shields.io/badge/target-wasip1%2Fwasm-654FF0" alt="Target: wasip1/wasm"></a>
+</p>
+
+<p align="center">
   <a href="README.ru.md">🇷🇺 Читать документацию на русском языке</a>
 </p>
 
@@ -40,7 +47,10 @@ The plugin compiles into a single WebAssembly module (`web_monitoring.wasm`, tar
 ## 📂 Repository Structure
 
 ```
-GameAP_WebMonitoring/
+gameap_monitoring_plugin/
+├── .github/                # CI/CD Workflows (automatic builds and GitHub releases)
+│   ├── workflows/ci.yml
+│   └── workflows/release.yml
 ├── frontend/               # UI source files
 │   ├── index.html          # Public monitoring page layout
 │   ├── styles.css          # Modern responsive styling
@@ -56,8 +66,7 @@ GameAP_WebMonitoring/
 │   ├── build.sh            # Linux / macOS build script
 │   └── build.ps1           # Windows PowerShell build script
 ├── Dockerfile              # Containerized multi-stage build
-├── mock_server.py          # Standalone local dev preview server
-└── web_monitoring.wasm     # Compiled WebAssembly plugin binary
+└── mock_server.py          # Standalone local dev preview server
 ```
 
 ---
@@ -66,7 +75,7 @@ GameAP_WebMonitoring/
 
 ### 1. Download or Build the Plugin Binary
 
-Download `web_monitoring.wasm` from the latest **[GitHub Releases](../../releases)** (or build it from source as described below).
+Download `web_monitoring.wasm` (v1.0.0) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
 Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/lib/gameap/plugins/` or your configured `PLUGINS_DIR`).
 
 ### 2. Activate in GameAP
@@ -78,11 +87,24 @@ Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/li
 
 ---
 
+## ⚠️ Critical Security Notice: Reverse Proxy & DDoS Protection
+
+> [!CAUTION]
+> **DO NOT expose the public monitoring page via raw server IP (e.g. `http://YOUR_SERVER_IP:8080/api/...`)!**
+> Revealing your host server's real IP address directly to the public makes your machine an easy target for **DDoS attacks** (Direct-to-IP / volumetric floods). A DDoS attack on the web port can easily exhaust system resources and knock offline both your GameAP management panel and all game servers hosted on the same machine.
+
+### Best Practices for Secure Public Exposure:
+1. **Always use a Domain Name (FQDN):** Never give players direct IP access to the web panel.
+2. **Reverse Proxy (Nginx, Caddy, Apache):** Terminate SSL, handle rate limiting, and route requests safely to GameAP.
+3. **DDoS Mitigation Layer (Cloudflare, DDoS-Guard, etc.):** Put your domain behind a proxying CDN such as **Cloudflare** (with proxying enabled 🟠) to conceal your origin server IP address completely.
+
+---
+
 ## 🌐 Public URL & Web Server Configuration
 
 ### Out of the Box Access
 
-The monitoring page is immediately accessible on whichever domain, hostname, or IP address your GameAP panel is running on:
+The monitoring page is accessible on your domain:
 
 ```
 https://<your-gameap-domain>/api/plugins/bwbwb26fs5eje/view
@@ -91,19 +113,42 @@ https://<your-gameap-domain>/api/plugins/bwbwb26fs5eje/view
 - Fully public and requires no login or panel permissions.
 - Works automatically with HTTPS and existing domain configurations.
 
-### Clean Short Alias (`/monitoring`)
+### Clean Short URL (`/monitoring`)
 
-If you want community members to access monitoring via a short URL such as `https://<your-domain>/monitoring`, add a rewrite rule inside your existing GameAP web server configuration (e.g. Nginx):
+To give players a clean short URL (e.g. `https://<your-domain>/monitoring`), configure a rewrite rule in your web server.
+
+#### 1. Nginx (Recommended)
+
+Add this inside your existing GameAP `server { ... }` block (e.g. in `/etc/nginx/sites-available/gameap`):
 
 ```nginx
-# Clean alias inside your existing GameAP server block
 location = /monitoring {
     rewrite ^ /api/plugins/bwbwb26fs5eje/view break;
-    proxy_pass $gameap_backend; # Use your existing panel upstream or proxy_pass
+    proxy_pass $gameap_backend; # Or http://127.0.0.1:8080
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 }
+```
+
+#### 2. Caddy (Modern Alternative with Automatic HTTPS)
+
+Add this inside your domain block in your `Caddyfile`:
+
+```caddy
+handle /monitoring {
+    rewrite * /api/plugins/bwbwb26fs5eje/view
+    reverse_proxy localhost:8080
+}
+```
+
+#### 3. Apache (Alternative)
+
+Add this inside your `<VirtualHost *:443>` block or `.htaccess`:
+
+```apache
+RewriteEngine On
+RewriteRule "^monitoring$" "/api/plugins/bwbwb26fs5eje/view" [PT]
 ```
 
 > **Note:** Static assets (`/plugins/web-monitoring/`) and API routes (`/api/plugins/bwbwb26fs5eje/`) are handled automatically by GameAP.

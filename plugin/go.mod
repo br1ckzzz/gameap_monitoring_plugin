@@ -1,4 +1,4 @@
-module github.com/gameap-plugins/web-monitoring
+module github.com/br1ckzzz/gameap_monitoring_plugin
 
 go 1.27
 

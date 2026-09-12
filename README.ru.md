@@ -5,6 +5,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/br1ckzzz/gameap_monitoring_plugin/releases"><img src="https://img.shields.io/github/v/release/br1ckzzz/gameap_monitoring_plugin?label=версия&color=blue" alt="Версия"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Лицензия-MIT-green.svg" alt="Лицензия: MIT"></a>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go" alt="Go 1.23+"></a>
+  <a href="https://webassembly.org"><img src="https://img.shields.io/badge/таргет-wasip1%2Fwasm-654FF0" alt="Таргет: wasip1/wasm"></a>
+</p>
+
+<p align="center">
   <a href="README.md">🇬🇧 Read documentation in English</a>
 </p>
 
@@ -28,25 +35,28 @@
   - Индикаторы статуса серверов (Online / Offline).
   - Фильтрация по играм (Counter-Strike 2, CS 1.6, Minecraft, Rust, Team Fortress 2 и др.).
   - Живой поиск по названию, игре или IP-адресу.
-  - Копирование IP в один клик и кнопки прямого подключения (`steam://connect`).
-- ⏱️ **Автоматическое обновление:** опрос серверов в реальном времени с таймером обратного отсчета и кнопкой принудительного обновления.
-- ⚙️ **Интеграция с панелью управления GameAP:**
-  - Управление видимостью серверов (возможность скрыть служебные или приватные серверы).
-  - Настройка заголовков, темы по умолчанию и интервалов обновления.
-  - Встроенные редакторы Custom CSS и Custom HTML для шапки (вставка виджетов Discord, Telegram, баннеров и логотипов без перекомпиляции плагина).
+  - Быстрое копирование IP-адреса в буфер и ссылки быстрого запуска `steam://connect`.
+- ⏱️ **Автообновление и таймер:** периодическое обновление данных с обратным отсчётом и возможностью ручной перезагрузки.
+- ⚙️ **Управление в панели GameAP:**
+  - Настройка видимости каждого сервера (скрытие приватных или тестовых серверов).
+  - Смена заголовка, описания, темы по умолчанию и интервала опроса.
+  - Встроенный редактор Custom CSS и Custom Header HTML (для виджетов Discord, Telegram, логотипов и баннеров без пересборки плагина).
 
 ---
 
 ## 📂 Структура репозитория
 
 ```
-GameAP_WebMonitoring/
+gameap_monitoring_plugin/
+├── .github/                # GitHub Actions (автосборка и релизы на GitHub)
+│   ├── workflows/ci.yml
+│   └── workflows/release.yml
 ├── frontend/               # Исходные файлы веб-интерфейса
 │   ├── index.html          # Разметка публичной страницы мониторинга
-│   ├── styles.css          # Стили оформления
-│   ├── app.js              # Клиентская логика, поиск, фильтры и переводы
-│   └── admin_bundle.js     # Компонент для панели администрирования GameAP (Vue 3)
-├── plugin/                 # Исходный код плагина на Go (WebAssembly/WASI)
+│   ├── styles.css          # Стили оформления страницы
+│   ├── app.js              # Клиентская логика, таймеры, фильтры
+│   └── admin_bundle.js     # Компонент для панели администратора GameAP (Vue 3)
+├── plugin/                 # Исходный код на Go (WebAssembly/WASI)
 │   ├── main.go             # Регистрация плагина в GameAP SDK
 │   ├── handler.go          # HTTP-роуты и отдача веб-страниц
 │   ├── monitor.go          # Безопасное получение статусов серверов
@@ -56,8 +66,7 @@ GameAP_WebMonitoring/
 │   ├── build.sh            # Сборка для Linux / macOS
 │   └── build.ps1           # Сборка для Windows (PowerShell)
 ├── Dockerfile              # Мультистейдж-сборка в Docker
-├── mock_server.py          # Локальный сервер для предпросмотра
-└── web_monitoring.wasm     # Скомпилированный WebAssembly модуль
+└── mock_server.py          # Локальный сервер для предпросмотра
 ```
 
 ---
@@ -65,7 +74,7 @@ GameAP_WebMonitoring/
 ## 🚀 Установка
 
 ### 1. Скачивание или сборка плагина
-Скачайте готовый файл `web_monitoring.wasm` со страницы **[GitHub Releases](../../releases)** (либо соберите его из исходников согласно инструкции ниже).
+Скачайте готовый файл `web_monitoring.wasm` (v1.0.0) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
 Поместите файл `web_monitoring.wasm` в каталог плагинов GameAP (по умолчанию `/var/lib/gameap/plugins/` или директорию, указанную в `PLUGINS_DIR`).
 
 ### 2. Активация плагина
@@ -76,28 +85,61 @@ GameAP_WebMonitoring/
 
 ---
 
+## ⚠️ Важное предупреждение: Безопасность и защита от DDoS-атак
+
+> [!CAUTION]
+> **НЕ предоставляйте публичный доступ к мониторингу напрямую по «сырому» IP-адресу сервера (например, `http://IP_СЕРВЕРА:8080/api/...`)!**
+> Публикация прямого IP-адреса хост-машины делает ваш сервер открытой мишенью для **целевых DDoS-атак** (прямой флуд по IP в обход систем фильтрации). Мощный флуд по веб-порту перегружает сетевой стек и процессор хоста, из-за чего перестанет отвечать не только панель GameAP, но и **все запущенные на сервере игровые серверы**.
+
+### Рекомендации по безопасной публикации:
+1. **Используйте доменное имя (FQDN):** Никогда не распространяйте прямые IP-адреса для веб-доступа к панели.
+2. **Обратный прокси (Nginx, Caddy, Apache):** Настройте веб-сервер для проксирования запросов на локальный порт GameAP и терминации SSL (HTTPS).
+3. **Защита от DDoS (Cloudflare, DDoS-Guard, StormWall):** Подключите ваш домен через сервис защиты от атак (в Cloudflare обязательно включите «оранжевое облако» 🟠 Proxy). Это скроет реальный IP-адрес вашей машины от злоумышленников.
+
+---
+
 ## 🌐 Доступ по URL и настройка веб-сервера
 
 ### Прямой доступ из коробки
-Страница мониторинга сразу готова к открытию на любом домене, хосте или IP-адресе, где развернута ваша панель GameAP:
+Страница мониторинга доступна по адресу вашего домена:
 ```
 https://<домен-вашей-панели>/api/plugins/bwbwb26fs5eje/view
 ```
-- Страница полностью открыта для посетителей и не требует авторизации.
-- Корректно работает через HTTPS и существующие настройки домена.
+- Страница открыта для посетителей и не требует авторизации.
+- Корректно работает через HTTPS.
 
-### Короткий псевдоним (алиас `/monitoring`)
-Если вы хотите, чтобы игроки переходили по короткой ссылке вида `https://<домен>/monitoring`, добавьте правило rewrite в конфигурацию вашего веб-сервера (Nginx) внутри блока вашей панели GameAP:
+### Красивый короткий URL (`/monitoring`)
+Чтобы игроки переходили по красивой короткой ссылке вида `https://<домен>/monitoring`, добавьте правило в настройки вашего веб-сервера:
+
+#### 1. Nginx (Основной вариант)
+Внутри конфигурационного блока `server { ... }` вашего сайта GameAP (например, в `/etc/nginx/sites-available/gameap`):
 
 ```nginx
-# Короткий алиас для мониторинга в блоке вашей панели GameAP
 location = /monitoring {
     rewrite ^ /api/plugins/bwbwb26fs5eje/view break;
-    proxy_pass $gameap_backend; # ваш существующий upstream или proxy_pass панели
+    proxy_pass $gameap_backend; # Или http://127.0.0.1:8080
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 }
+```
+
+#### 2. Caddy (Современная альтернатива с автоматическим HTTPS)
+В блоке вашего домена в `Caddyfile`:
+
+```caddy
+handle /monitoring {
+    rewrite * /api/plugins/bwbwb26fs5eje/view
+    reverse_proxy localhost:8080
+}
+```
+
+#### 3. Apache (Альтернатива)
+В секции `<VirtualHost *:443>` или файле `.htaccess`:
+
+```apache
+RewriteEngine On
+RewriteRule "^monitoring$" "/api/plugins/bwbwb26fs5eje/view" [PT]
 ```
 
 > **Примечание:** Статические файлы (`/plugins/web-monitoring/`) и маршруты API (`/api/plugins/bwbwb26fs5eje/`) обрабатываются панелью GameAP автоматически.

@@ -5,7 +5,7 @@ const { ref, computed, onMounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'bwbwb26fs5eje',
     name: 'GameAP WebMonitoring',
-    version: '0.0.1',
+    version: '1.0.0',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,19 +30,26 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v0.0.1',
+                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.0',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             copyUrl: 'Копировать адрес страницы',
                             copiedUrl: '✓ Скопировано!',
-                            instructionTitle: 'Инструкция по доступу и адресам страницы:',
+                            securityWarningTitle: '⚠️ Безопасность и защита от DDoS-атак:',
+                            securityWarningText: 'Крайне не рекомендуется открывать мониторинг публично по прямому IP-адресу (http://IP:PORT). Раскрытие прямого IP хоста GameAP создает прямую угрозу целевых DDoS-атак на панель и игровые серверы. Обязательно используйте доменное имя, обратный прокси (Nginx / Caddy) и сервисы фильтрации трафика (например, Cloudflare).',
+                            instructionTitle: 'Инструкция по доступу и красивому адресу страницы:',
                             instructionDirectTitle: 'Прямой доступ (работает сразу): ',
                             instructionDirectText: 'Страница мониторинга не требует входа в панель GameAP. Любой игрок или посетитель может открывать её напрямую по скопированному адресу на вашем домене панели.',
                             instructionServersTitle: 'Отображение серверов: ',
                             instructionServersText: 'Серверы синхронизируются из GameAP автоматически. Ниже в блоке «Видимость серверов» можно исключить служебные или приватные серверы.',
-                            instructionAliasTitle: 'Короткий псевдоним (алиас /monitoring): ',
-                            instructionAliasText: 'Если вы хотите сделать короткий адрес вида /monitoring на том же домене, достаточно добавить правило в ваш веб-сервер (Nginx):',
-                            nginxComment: '# Универсальный алиас для страницы мониторинга (в блоке server вашей панели GameAP):',
+                            instructionAliasTitle: 'Настройка красивого адреса (/monitoring): ',
+                            instructionAliasText: 'Данный код для красивой страницы прописывается в конфигурационный файл вашего веб-сервера (в блок виртуального хоста вашего домена GameAP, например /etc/nginx/sites-available/...):',
+                            tabNginx: 'Nginx (Основной)',
+                            tabCaddy: 'Caddy (Альтернатива)',
+                            tabApache: 'Apache (Альтернатива)',
+                            nginxComment: '# Прописать в секцию server { ... } вашего домена GameAP в Nginx:',
+                            caddyComment: '# Прописать в блок вашего домена GameAP в Caddyfile:',
+                            apacheComment: '# Прописать в секцию <VirtualHost ...> или файл .htaccess в Apache:',
                             generalSettings: '⚙️ Основные параметры',
                             titleLabel: 'Заголовок страницы (Title)',
                             subtitleLabel: 'Подзаголовок',
@@ -67,19 +74,26 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v0.0.1',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.0',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             copyUrl: 'Copy Page URL',
                             copiedUrl: '✓ Copied!',
-                            instructionTitle: 'Access & URL Configuration Guide:',
+                            securityWarningTitle: '⚠️ Security & DDoS Protection Warning:',
+                            securityWarningText: 'Do not expose the monitoring page directly via raw server IP (http://IP:PORT). Revealing your direct GameAP host IP exposes your management panel and game servers to targeted DDoS attacks. Always use a domain name behind a reverse proxy (Nginx or Caddy) with a DDoS protection proxy (such as Cloudflare).',
+                            instructionTitle: 'Access & Clean URL Configuration Guide:',
                             instructionDirectTitle: 'Direct access (works out of the box): ',
                             instructionDirectText: 'The monitoring page does not require a GameAP login. Any visitor or player can open it directly using the copied URL on your panel domain.',
                             instructionServersTitle: 'Server visibility: ',
                             instructionServersText: 'Servers are loaded from GameAP automatically. Use the "Server Visibility" section below to hide private or maintenance servers.',
-                            instructionAliasTitle: 'Clean short URL (alias /monitoring): ',
-                            instructionAliasText: 'If you want a clean short URL like /monitoring on the same domain, add an alias rewrite rule to your web server (Nginx):',
-                            nginxComment: '# Universal clean alias for monitoring page (inside your GameAP server block):',
+                            instructionAliasTitle: 'Clean short URL setup (/monitoring): ',
+                            instructionAliasText: 'This snippet for a clean public URL must be added into your web server configuration file (inside the virtual host block for your GameAP domain, e.g. /etc/nginx/sites-available/...):',
+                            tabNginx: 'Nginx (Recommended)',
+                            tabCaddy: 'Caddy (Alternative)',
+                            tabApache: 'Apache (Alternative)',
+                            nginxComment: '# Add inside the server { ... } block of your GameAP domain in Nginx:',
+                            caddyComment: '# Add inside your GameAP domain block in Caddyfile:',
+                            apacheComment: '# Add inside your <VirtualHost ...> block or .htaccess in Apache:',
                             generalSettings: '⚙️ General Settings',
                             titleLabel: 'Page Title',
                             subtitleLabel: 'Subtitle',
@@ -132,6 +146,7 @@ export const webMonitoringPlugin = {
                     const saveSuccess = ref(false);
                     const saveError = ref('');
                     const copied = ref(false);
+                    const selectedProxy = ref('nginx');
 
                     // Dynamic public URL based on current host/domain
                     const publicUrl = `${window.location.origin}/api/plugins/bwbwb26fs5eje/view`;
@@ -451,7 +466,18 @@ export const webMonitoringPlugin = {
                                 }, copied.value ? t('copiedUrl') : t('copyUrl'))
                             ]),
 
-                            // Universal instruction card under the copy button
+                            // Security Warning Callout
+                            h('div', {
+                                style: 'margin-top: 14px; padding: 12px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; border-radius: 8px;'
+                            }, [
+                                h('div', { style: 'display: flex; align-items: center; gap: 8px; margin-bottom: 6px;' }, [
+                                    h('i', { class: 'fas fa-shield-alt', style: 'color: #ef4444;' }),
+                                    h('span', { style: 'font-weight: 700; color: #fca5a5; font-size: 13px;' }, t('securityWarningTitle'))
+                                ]),
+                                h('p', { style: 'margin: 0; color: #fecaca; font-size: 12px; line-height: 1.5;' }, t('securityWarningText'))
+                            ]),
+
+                            // Universal instruction card under the warning
                             h('div', {
                                 style: 'margin-top: 14px; padding: 14px 16px; background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-left: 4px solid #38bdf8; border-radius: 8px;'
                             }, [
@@ -473,9 +499,33 @@ export const webMonitoringPlugin = {
                                         t('instructionAliasText')
                                     ])
                                 ]),
+                                // Tabs for Nginx / Caddy / Apache
+                                h('div', { style: 'margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;' }, [
+                                    h('button', {
+                                        type: 'button',
+                                        onClick: () => { selectedProxy.value = 'nginx'; },
+                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'nginx' ? '#38bdf8' : '#334155'}; background: ${selectedProxy.value === 'nginx' ? 'rgba(56, 189, 248, 0.15)' : '#0f141f'}; color: ${selectedProxy.value === 'nginx' ? '#38bdf8' : '#94a3b8'};`
+                                    }, t('tabNginx')),
+                                    h('button', {
+                                        type: 'button',
+                                        onClick: () => { selectedProxy.value = 'caddy'; },
+                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'caddy' ? '#38bdf8' : '#334155'}; background: ${selectedProxy.value === 'caddy' ? 'rgba(56, 189, 248, 0.15)' : '#0f141f'}; color: ${selectedProxy.value === 'caddy' ? '#38bdf8' : '#94a3b8'};`
+                                    }, t('tabCaddy')),
+                                    h('button', {
+                                        type: 'button',
+                                        onClick: () => { selectedProxy.value = 'apache'; },
+                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'apache' ? '#38bdf8' : '#334155'}; background: ${selectedProxy.value === 'apache' ? 'rgba(56, 189, 248, 0.15)' : '#0f141f'}; color: ${selectedProxy.value === 'apache' ? '#38bdf8' : '#94a3b8'};`
+                                    }, t('tabApache'))
+                                ]),
                                 h('pre', {
                                     style: 'margin-top: 10px; margin-bottom: 0; background: #090d16; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px; color: #a5f3fc; font-size: 11.5px; font-family: monospace; overflow-x: auto; line-height: 1.4;'
-                                }, `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/bwbwb26fs5eje/view break;\n    proxy_pass $gameap_backend; # Proxy pass to your panel\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n}`)
+                                }, selectedProxy.value === 'nginx' 
+                                    ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/bwbwb26fs5eje/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
+                                    : (selectedProxy.value === 'caddy'
+                                        ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/bwbwb26fs5eje/view\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
+                                        : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/bwbwb26fs5eje/view" [PT]\n`
+                                    )
+                                )
                             ])
                         ]),
 
