@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameAP | Servers Monitoring</title>
+  <meta name="description" content="Public online game servers monitoring for GameAP">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/plugins/web-monitoring/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="brand">
+          <div class="brand-icon">🎮</div>
+          <div>
+            <h1 class="brand-title" id="brand-title">GameAP Servers</h1>
+            <p class="brand-subtitle" id="brand-subtitle">Онлайн мониторинг игровых серверов</p>
+          </div>
+        </div>
+
+        <div class="header-stats">
+          <div class="stat-badge">
+            <span class="pulse-indicator"></span>
+            <span id="stat-online-text">Онлайн: 0 / 0</span>
+          </div>
+          <button id="lang-toggle-btn" class="btn-theme-toggle" title="Switch language / Сменить язык" style="font-weight: 700; font-size: 0.78rem; padding: 6px 10px; min-width: 42px;">EN</button>
+          <button id="theme-toggle-btn" class="btn-theme-toggle" title="Переключить тему (светлая/тёмная)">☀️</button>
+          <button id="refresh-btn" class="btn btn-secondary" title="Обновить сейчас">
+            <svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span id="refresh-label">Обновить</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CUSTOM_HEADER -->
+
+    <!-- Controls / Filters -->
+    <section class="controls-section">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="search-input" placeholder="Поиск сервера по названию, игре или IP..." autocomplete="off">
+      </div>
+
+      <div class="game-filters" id="game-filters">
+        <button class="filter-chip active" id="all-games-btn" data-game="all">Все игры</button>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="servers-section">
+      <div id="loading-state" class="state-card">
+        <div class="spinner"></div>
+        <p id="loading-text">Загрузка списка серверов...</p>
+      </div>
+
+      <div id="error-state" class="state-card state-error hidden">
+        <span class="state-icon">⚠️</span>
+        <h3 id="error-title">Не удалось получить данные</h3>
+        <p id="error-msg">Проверьте доступность GameAP API</p>
+        <button id="retry-btn" class="btn btn-primary">Повторить попытку</button>
+      </div>
+
+      <div id="empty-state" class="state-card hidden">
+        <span class="state-icon">🔍</span>
+        <h3 id="empty-title">Серверы не найдены</h3>
+        <p id="empty-msg">По вашему запросу не найдено ни одного активного сервера</p>
+      </div>
+
+      <div class="servers-grid" id="servers-grid">
+        <!-- Server cards will be inserted here via app.js -->
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <span id="footer-brand">GameAP WebMonitoring Plugin • <a id="version-link" href="https://github.com/gameap/gameap" target="_blank" rel="noopener" class="version-link">v0.0.1</a></span>
+        <span class="auto-refresh-tag"><span id="auto-refresh-label">Автообновление:</span> <strong id="timer-text">15с</strong></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden">IP скопирован в буфер обмена!</div>
+
+  <script src="/plugins/web-monitoring/app.js"></script>
+</body>
+</html>
