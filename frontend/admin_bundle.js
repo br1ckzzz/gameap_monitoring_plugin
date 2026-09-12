@@ -3,7 +3,7 @@
 const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 
 export const webMonitoringPlugin = {
-    id: 'bwbwb26fs5eje',
+    id: 'monitoring',
     name: 'GameAP WebMonitoring',
     version: '1.0.0',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
@@ -149,7 +149,7 @@ export const webMonitoringPlugin = {
                     const selectedProxy = ref('nginx');
 
                     // Dynamic public URL based on current host/domain
-                    const publicUrl = `${window.location.origin}/api/plugins/bwbwb26fs5eje/view`;
+                    const publicUrl = `${window.location.origin}/api/plugins/monitoring/view`;
 
                     // Detect GameAP dark mode reactively
                     const isGameApDark = ref(document.documentElement.classList.contains('dark'));
@@ -455,7 +455,7 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
-                            const sRes = await fetch('/api/plugins/bwbwb26fs5eje/settings');
+                            const sRes = await fetch('/api/plugins/monitoring/settings');
                             if (sRes.ok) {
                                 const data = await sRes.json();
                                 if (data.title) title.value = data.title;
@@ -558,7 +558,7 @@ export const webMonitoringPlugin = {
                                 cached_servers: servers
                             };
                             localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
-                            await fetch('/api/plugins/bwbwb26fs5eje/settings', {
+                            await fetch('/api/plugins/monitoring/settings', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payload)
@@ -591,7 +591,7 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
-                            const res = await fetch('/api/plugins/bwbwb26fs5eje/settings', {
+                            const res = await fetch('/api/plugins/monitoring/settings', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -762,10 +762,10 @@ export const webMonitoringPlugin = {
                                 h('pre', {
                                     class: 'wm-code-pre'
                                 }, selectedProxy.value === 'nginx' 
-                                    ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/bwbwb26fs5eje/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
+                                    ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/monitoring/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
                                     : (selectedProxy.value === 'caddy'
-                                        ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/bwbwb26fs5eje/view\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
-                                        : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/bwbwb26fs5eje/view" [PT]\n`
+                                        ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/monitoring/view\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
+                                        : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]\n`
                                     )
                                 )
                             ])

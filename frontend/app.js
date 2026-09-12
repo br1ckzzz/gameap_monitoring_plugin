@@ -221,7 +221,7 @@ function getApiEndpoint(route) {
     return `${base}${route}`;
   }
   // Fallbacks
-  return `/api/plugins/bwbwb26fs5eje${route}`;
+  return `/api/plugins/monitoring${route}`;
 }
 
 async function fetchServers() {

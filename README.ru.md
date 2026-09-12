@@ -1,6 +1,10 @@
 # 🎮 Плагин GameAP WebMonitoring
 
 <p align="center">
+  <img src="icon.png" alt="GameAP WebMonitoring Logo" width="128">
+</p>
+
+<p align="center">
   <strong>Публичный WebAssembly (WASM) плагин мониторинга игровых серверов для панели управления <a href="https://gameap.ru/">GameAP</a>.</strong>
 </p>
 
@@ -13,6 +17,10 @@
 
 <p align="center">
   <a href="README.md">🇬🇧 Read documentation in English</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/screen.jpg" alt="Интерфейс GameAP WebMonitoring" width="850">
 </p>
 
 ---
@@ -103,7 +111,7 @@ gameap_monitoring_plugin/
 ### Прямой доступ из коробки
 Страница мониторинга доступна по адресу вашего домена:
 ```
-https://<домен-вашей-панели>/api/plugins/bwbwb26fs5eje/view
+https://<домен-вашей-панели>/api/plugins/monitoring/view
 ```
 - Страница открыта для посетителей и не требует авторизации.
 - Корректно работает через HTTPS.
@@ -116,7 +124,7 @@ https://<домен-вашей-панели>/api/plugins/bwbwb26fs5eje/view
 
 ```nginx
 location = /monitoring {
-    rewrite ^ /api/plugins/bwbwb26fs5eje/view break;
+    rewrite ^ /api/plugins/monitoring/view break;
     proxy_pass $gameap_backend; # Или http://127.0.0.1:8080
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -129,7 +137,7 @@ location = /monitoring {
 
 ```caddy
 handle /monitoring {
-    rewrite * /api/plugins/bwbwb26fs5eje/view
+    rewrite * /api/plugins/monitoring/view
     reverse_proxy localhost:8080
 }
 ```
@@ -139,10 +147,10 @@ handle /monitoring {
 
 ```apache
 RewriteEngine On
-RewriteRule "^monitoring$" "/api/plugins/bwbwb26fs5eje/view" [PT]
+RewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]
 ```
 
-> **Примечание:** Статические файлы (`/plugins/web-monitoring/`) и маршруты API (`/api/plugins/bwbwb26fs5eje/`) обрабатываются панелью GameAP автоматически.
+> **Примечание:** Статические файлы (`/plugins/web-monitoring/`) и маршруты API (`/api/plugins/monitoring/`) обрабатываются панелью GameAP автоматически.
 
 ---
 
@@ -182,6 +190,19 @@ python mock_server.py
 ```
 
 Откройте адрес **http://localhost:8050** в браузере.
+
+---
+
+## 🔄 Автоматическая публикация релизов (CI/CD)
+
+В репозитории настроен GitHub Actions Workflow (`.github/workflows/release.yml`), который при создании релиза или пуше тега автоматически собирает WASM-модуль и может отправлять его в официальный каталог плагинов [plugins.gameap.dev](https://plugins.gameap.dev).
+
+### Настройка секретов в GitHub:
+1. Войдите в личный кабинет разработчика на **[plugins.gameap.dev](https://plugins.gameap.dev)** и сгенерируйте API-токен деплоя.
+2. В вашем репозитории GitHub перейдите в **Settings** -> **Secrets and variables** -> **Actions**:
+   - **Repository secrets**: добавьте секрет `GAMEAP_DEPLOY_TOKEN` со значением сгенерированного токена.
+   - *(Опционально)* `GPG_SIGNING_KEY` — секретный GPG-ключ для цифровой подписи артефакта `web_monitoring.wasm.asc`.
+   - **Repository variables**: переменная `GAMEAP_PLUGIN_ID` (по умолчанию используется `monitoring`).
 
 ---
 

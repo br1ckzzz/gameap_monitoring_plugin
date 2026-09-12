@@ -153,7 +153,7 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 // RunDiagnostic runs test calls to all host libraries and returns detailed diagnostic JSON
 func RunDiagnostic(ctx context.Context) map[string]interface{} {
 	diag := make(map[string]interface{})
-	diag["plugin_id"] = "bwbwb26fs5eje"
+	diag["plugin_id"] = "monitoring"
 	diag["version"] = PluginVersion
 
 	// Test serversRepo

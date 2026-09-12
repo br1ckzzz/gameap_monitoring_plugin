@@ -233,7 +233,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
         clean_path = self.path.split("?")[0].rstrip("/")
         
         # Emulate GameAP Plugin API route for servers
-        if clean_path in ("/plugins/web-monitoring/servers", "/api/plugins/bwbwb26fs5eje/servers"):
+        if clean_path in ("/plugins/web-monitoring/servers", "/api/plugins/monitoring/servers", "/api/plugins/bwbwb26fs5eje/servers"):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -252,7 +252,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Emulate GameAP Plugin settings endpoint
-        if clean_path in ("/api/plugins/bwbwb26fs5eje/settings", "/plugins/web-monitoring/settings"):
+        if clean_path in ("/api/plugins/monitoring/settings", "/api/plugins/bwbwb26fs5eje/settings", "/plugins/web-monitoring/settings"):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -273,7 +273,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         clean_path = self.path.split("?")[0].rstrip("/")
-        if clean_path in ("/api/plugins/bwbwb26fs5eje/settings", "/plugins/web-monitoring/settings"):
+        if clean_path in ("/api/plugins/monitoring/settings", "/api/plugins/bwbwb26fs5eje/settings", "/plugins/web-monitoring/settings"):
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
             try:

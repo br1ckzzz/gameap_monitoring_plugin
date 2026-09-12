@@ -37,7 +37,7 @@ func (p *WebMonitoringPlugin) GetInfo(
 	_ *pluginproto.GetInfoRequest,
 ) (*pluginproto.PluginInfo, error) {
 	return &pluginproto.PluginInfo{
-		Id:                  "bwbwb26fs5eje",
+		Id:                  "monitoring",
 		Name:                "GameAP WebMonitoring",
 		Version:             PluginVersion,
 		Description:         "Публичная страница для отображения работающих серверов",

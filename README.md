@@ -1,6 +1,10 @@
 # 🎮 GameAP WebMonitoring Plugin
 
 <p align="center">
+  <img src="icon.png" alt="GameAP WebMonitoring Logo" width="128">
+</p>
+
+<p align="center">
   <strong>Public WebAssembly (WASM) game server monitoring plugin for the <a href="https://gameap.ru/">GameAP</a> management panel.</strong>
 </p>
 
@@ -13,6 +17,10 @@
 
 <p align="center">
   <a href="README.ru.md">🇷🇺 Читать документацию на русском языке</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/screen.jpg" alt="GameAP WebMonitoring Interface" width="850">
 </p>
 
 ---
@@ -107,7 +115,7 @@ Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/li
 The monitoring page is accessible on your domain:
 
 ```
-https://<your-gameap-domain>/api/plugins/bwbwb26fs5eje/view
+https://<your-gameap-domain>/api/plugins/monitoring/view
 ```
 
 - Fully public and requires no login or panel permissions.
@@ -123,7 +131,7 @@ Add this inside your existing GameAP `server { ... }` block (e.g. in `/etc/nginx
 
 ```nginx
 location = /monitoring {
-    rewrite ^ /api/plugins/bwbwb26fs5eje/view break;
+    rewrite ^ /api/plugins/monitoring/view break;
     proxy_pass $gameap_backend; # Or http://127.0.0.1:8080
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -137,7 +145,7 @@ Add this inside your domain block in your `Caddyfile`:
 
 ```caddy
 handle /monitoring {
-    rewrite * /api/plugins/bwbwb26fs5eje/view
+    rewrite * /api/plugins/monitoring/view
     reverse_proxy localhost:8080
 }
 ```
@@ -148,10 +156,10 @@ Add this inside your `<VirtualHost *:443>` block or `.htaccess`:
 
 ```apache
 RewriteEngine On
-RewriteRule "^monitoring$" "/api/plugins/bwbwb26fs5eje/view" [PT]
+RewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]
 ```
 
-> **Note:** Static assets (`/plugins/web-monitoring/`) and API routes (`/api/plugins/bwbwb26fs5eje/`) are handled automatically by GameAP.
+> **Note:** Static assets (`/plugins/web-monitoring/`) and API routes (`/api/plugins/monitoring/`) are handled automatically by GameAP.
 
 ---
 
@@ -194,6 +202,19 @@ python mock_server.py
 ```
 
 Open **<http://localhost:8050>** in your browser to inspect the UI with mock server data.
+
+---
+
+## 🔄 Automated CI/CD Publishing (plugins.gameap.dev)
+
+This repository includes a GitHub Actions Workflow (`.github/workflows/release.yml`) that automatically compiles the WebAssembly binary and can publish new releases directly to the official GameAP plugin catalog at [plugins.gameap.dev](https://plugins.gameap.dev).
+
+### GitHub Secrets Configuration:
+1. Log in to your developer profile at **[plugins.gameap.dev](https://plugins.gameap.dev)** and generate an API Deploy Token.
+2. In your GitHub repository, navigate to **Settings** -> **Secrets and variables** -> **Actions**:
+   - **Repository secrets**: add `GAMEAP_DEPLOY_TOKEN` with your generated token.
+   - *(Optional)* `GPG_SIGNING_KEY` — your ASCII-armored private GPG key to sign `web_monitoring.wasm.asc`.
+   - **Repository variables**: `GAMEAP_PLUGIN_ID` (defaults to `monitoring` if omitted).
 
 ---
 
