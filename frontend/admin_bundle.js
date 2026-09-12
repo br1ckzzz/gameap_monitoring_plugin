@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.0',
+    version: '1.0.1',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.0',
+                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.1',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             copyUrl: 'Копировать адрес страницы',
@@ -74,7 +74,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.0',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.1',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             copyUrl: 'Copy Page URL',
