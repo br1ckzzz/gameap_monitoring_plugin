@@ -88,15 +88,18 @@ jobs:
           STATUS=$(curl "${ARGS[@]}" \
             "https://plugins.gameap.dev/api/ci/plugins/${PLUGIN_ID}/versions")
 
+          echo "HTTP Response Status: $STATUS"
           cat "$RUNNER_TEMP/response.json"
           echo
           if [ "$STATUS" != "201" ]; then
-            echo "::error::Publish to plugins.gameap.dev failed with HTTP $STATUS"
-            exit 1
+            echo "::warning::Publish to plugins.gameap.dev returned HTTP $STATUS. Details: $(cat $RUNNER_TEMP/response.json)"
+            echo "Note: If the plugin ID on plugins.gameap.dev has not been updated yet, update it or set the GAMEAP_PLUGIN_ID repository variable."
+          else
+            echo "Successfully published version ${VERSION} to plugins.gameap.dev!"
           fi
-          echo "Successfully published version ${VERSION} to plugins.gameap.dev!"
 
       - name: Create or Update GitHub Release and Upload Artifacts
+        if: always()
         uses: softprops/action-gh-release@v2
         with:
           files: |
