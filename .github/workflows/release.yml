@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build & Publish Release Binary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          check-latest: true
+
+      - name: Sync frontend assets to plugin
+        run: |
+          mkdir -p plugin/assets
+          cp -r frontend/* plugin/assets/
+
+      - name: Compile WASM Plugin
+        working-directory: plugin
+        env:
+          GOOS: wasip1
+          GOARCH: wasm
+        run: |
+          go build -buildmode=c-shared -trimpath -ldflags="-s -w" -o ../web_monitoring.wasm .
+
+      - name: Create GitHub Release and Upload Artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          files: web_monitoring.wasm
+          generate_release_notes: true
