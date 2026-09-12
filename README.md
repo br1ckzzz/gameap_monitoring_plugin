@@ -203,21 +203,6 @@ python mock_server.py
 
 Open **<http://localhost:8050>** in your browser to inspect the UI with mock server data.
 
----
-
-## 🔄 Automated CI/CD Publishing (plugins.gameap.dev)
-
-This repository includes a GitHub Actions Workflow (`.github/workflows/release.yml`) that automatically compiles the WebAssembly binary and can publish new releases directly to the official GameAP plugin catalog at [plugins.gameap.dev](https://plugins.gameap.dev).
-
-### GitHub Secrets Configuration:
-1. Log in to your developer profile at **[plugins.gameap.dev](https://plugins.gameap.dev)** and generate an API Deploy Token.
-2. In your GitHub repository, navigate to **Settings** -> **Secrets and variables** -> **Actions**:
-   - **Repository secrets**: add `GAMEAP_DEPLOY_TOKEN` with your generated token.
-   - *(Optional)* `GPG_SIGNING_KEY` — your ASCII-armored private GPG key to sign `web_monitoring.wasm.asc`.
-   - **Repository variables**: `GAMEAP_PLUGIN_ID` (defaults to `monitoring` if omitted).
-
----
-
 ## 📄 License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for details.

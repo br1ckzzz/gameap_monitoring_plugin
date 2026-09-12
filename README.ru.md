@@ -191,21 +191,6 @@ python mock_server.py
 
 Откройте адрес **http://localhost:8050** в браузере.
 
----
-
-## 🔄 Автоматическая публикация релизов (CI/CD)
-
-В репозитории настроен GitHub Actions Workflow (`.github/workflows/release.yml`), который при создании релиза или пуше тега автоматически собирает WASM-модуль и может отправлять его в официальный каталог плагинов [plugins.gameap.dev](https://plugins.gameap.dev).
-
-### Настройка секретов в GitHub:
-1. Войдите в личный кабинет разработчика на **[plugins.gameap.dev](https://plugins.gameap.dev)** и сгенерируйте API-токен деплоя.
-2. В вашем репозитории GitHub перейдите в **Settings** -> **Secrets and variables** -> **Actions**:
-   - **Repository secrets**: добавьте секрет `GAMEAP_DEPLOY_TOKEN` со значением сгенерированного токена.
-   - *(Опционально)* `GPG_SIGNING_KEY` — секретный GPG-ключ для цифровой подписи артефакта `web_monitoring.wasm.asc`.
-   - **Repository variables**: переменная `GAMEAP_PLUGIN_ID` (по умолчанию используется `monitoring`).
-
----
-
 ## 📄 Лицензия
 
 Распространяется под лицензией MIT. Подробности см. в файле [LICENSE](LICENSE).
