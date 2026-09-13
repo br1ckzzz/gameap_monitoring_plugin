@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
 	pluginproto "github.com/gameap/gameap/pkg/plugin/proto"
 )
@@ -136,8 +137,8 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 		if req.QueryParams != nil {
 			if actions, ok := req.QueryParams["action"]; ok && len(actions.Values) > 0 {
 				switch actions.Values[0] {
-				case "servers":
-					return p.handleServers(ctx)
+				case "servers", "admin_servers", "all_servers":
+					return p.handleServers(ctx, req)
 				case "settings":
 					return p.handleSettings(ctx, req)
 				case "diagnostic":
@@ -155,7 +156,7 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 		if req.Headers != nil {
 			accept := req.Headers["Accept"]
 			if strings.Contains(accept, "application/json") && !strings.Contains(accept, "text/html") {
-				return p.handleServers(ctx)
+				return p.handleServers(ctx, req)
 			}
 		}
 
@@ -164,7 +165,7 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 
 	switch targetPath {
 	case "/servers":
-		return p.handleServers(ctx)
+		return p.handleServers(ctx, req)
 	case "/view":
 		return p.handleView(ctx)
 	case "/settings":
@@ -182,7 +183,64 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 	}
 }
 
-func (p *WebMonitoringPlugin) handleServers(ctx context.Context) (*pluginproto.HTTPResponse, error) {
+func (p *WebMonitoringPlugin) handleServers(ctx context.Context, req *pluginproto.HTTPRequest) (*pluginproto.HTTPResponse, error) {
+	showAll := false
+	if req != nil && req.QueryParams != nil {
+		if vals, ok := req.QueryParams["all"]; ok && len(vals.Values) > 0 {
+			if vals.Values[0] == "1" || vals.Values[0] == "true" {
+				showAll = true
+			}
+		}
+		if actions, ok := req.QueryParams["action"]; ok && len(actions.Values) > 0 {
+			if actions.Values[0] == "admin_servers" || actions.Values[0] == "all_servers" {
+				showAll = true
+			}
+		}
+	}
+
+	if showAll {
+		allServers, fetchErr := FetchAllServers(ctx)
+		if fetchErr != nil {
+			if logger != nil {
+				logger.Error("Failed to fetch all servers for admin", "error", fetchErr.Error())
+			}
+			return &pluginproto.HTTPResponse{
+				StatusCode: int32(http.StatusOK),
+				Headers: map[string]string{
+					"Content-Type":                "application/json",
+					"Access-Control-Allow-Origin": "*",
+					"Cache-Control":               "no-cache, no-store, must-revalidate",
+				},
+				Body: []byte(fmt.Sprintf(`{"success":false,"error":%q,"total_servers":0,"online_count":0,"servers":[]}`, fetchErr.Error())),
+			}, nil
+		}
+
+		onlineCount := 0
+		for _, s := range allServers {
+			if s.Status == "online" {
+				onlineCount++
+			}
+		}
+
+		res := MonitoringResponse{
+			Success:      true,
+			TotalServers: len(allServers),
+			OnlineCount:  onlineCount,
+			Servers:      allServers,
+			Timestamp:    time.Now().Unix(),
+		}
+		bytes, _ := json.Marshal(res)
+		return &pluginproto.HTTPResponse{
+			StatusCode: int32(http.StatusOK),
+			Headers: map[string]string{
+				"Content-Type":                "application/json",
+				"Access-Control-Allow-Origin": "*",
+				"Cache-Control":               "no-cache, no-store, must-revalidate",
+			},
+			Body: bytes,
+		}, nil
+	}
+
 	data, fetchErr := FetchPublicServers(ctx)
 	if fetchErr != nil {
 		if logger != nil {
@@ -298,7 +356,40 @@ func (p *WebMonitoringPlugin) handleSettings(ctx context.Context, req *pluginpro
 
 	// GET /settings
 	settings := GetSettings(ctx)
-	bytes, err := json.Marshal(settings)
+	allServers, _ := FetchAllServers(ctx)
+
+	type adminSettingsResponse struct {
+		Title            string            `json:"title"`
+		Subtitle         string            `json:"subtitle"`
+		Theme            string            `json:"theme"`
+		RefreshInterval  int               `json:"refresh_interval"`
+		CustomCSS        string            `json:"custom_css"`
+		CustomHeaderHTML string            `json:"custom_header_html"`
+		HiddenServers    []uint64          `json:"hidden_servers"`
+		CachedServers    []PublicServerDTO `json:"cached_servers"`
+		Servers          []PublicServerDTO `json:"servers"`
+		AllServers       []PublicServerDTO `json:"all_servers"`
+	}
+
+	cached := settings.CachedServers
+	if len(allServers) > 0 {
+		cached = allServers
+	}
+
+	respObj := adminSettingsResponse{
+		Title:            settings.Title,
+		Subtitle:         settings.Subtitle,
+		Theme:            settings.Theme,
+		RefreshInterval:  settings.RefreshInterval,
+		CustomCSS:        settings.CustomCSS,
+		CustomHeaderHTML: settings.CustomHeaderHTML,
+		HiddenServers:    settings.HiddenServers,
+		CachedServers:    cached,
+		Servers:          allServers,
+		AllServers:       allServers,
+	}
+
+	bytes, err := json.Marshal(respObj)
 	if err != nil {
 		return &pluginproto.HTTPResponse{
 			StatusCode: int32(http.StatusOK),

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gameap/gameap/pkg/plugin/sdk/games"
 	"github.com/gameap/gameap/pkg/plugin/sdk/servers"
@@ -35,8 +36,8 @@ type MonitoringResponse struct {
 	Timestamp    int64             `json:"timestamp"`
 }
 
-// FetchPublicServers queries GameAP server repository safely and returns JSON bytes
-func FetchPublicServers(ctx context.Context) ([]byte, error) {
+// FetchAllServers retrieves all servers from GameAP (including hidden ones) for the admin visibility settings
+func FetchAllServers(ctx context.Context) ([]PublicServerDTO, error) {
 	defer func() {
 		_ = recover()
 	}()
@@ -68,23 +69,8 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 	}
 
 	list := make([]PublicServerDTO, 0)
-	onlineCount := 0
-
-	settings := GetSettings(ctx)
-	hiddenMap := make(map[uint64]bool)
-	if settings != nil {
-		for _, hid := range settings.HiddenServers {
-			hiddenMap[hid] = true
-		}
-	}
-
 	for _, s := range rawServers {
 		if s == nil {
-			continue
-		}
-
-		// Don't show blocked/suspended servers or servers hidden by admin
-		if s.Blocked || hiddenMap[s.Id] {
 			continue
 		}
 
@@ -102,7 +88,6 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 		status := "offline"
 		if s.ProcessActive {
 			status = "online"
-			onlineCount++
 		}
 
 		// Direct connect link for Steam games
@@ -128,16 +113,43 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 	}
 
 	// Fallback to CachedServers saved from GameAP Admin if live serverRepo returned 0
-	if len(list) == 0 && settings != nil && len(settings.CachedServers) > 0 {
-		for _, s := range settings.CachedServers {
-			if hiddenMap[s.ID] {
-				continue
-			}
-			if s.Status == "online" {
-				onlineCount++
-			}
-			list = append(list, s)
+	if len(list) == 0 {
+		settings := GetSettings(ctx)
+		if settings != nil && len(settings.CachedServers) > 0 {
+			list = append(list, settings.CachedServers...)
 		}
+	}
+
+	return list, nil
+}
+
+// FetchPublicServers queries GameAP server repository safely and returns JSON bytes
+func FetchPublicServers(ctx context.Context) ([]byte, error) {
+	all, err := FetchAllServers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	settings := GetSettings(ctx)
+	hiddenMap := make(map[uint64]bool)
+	if settings != nil {
+		for _, hid := range settings.HiddenServers {
+			hiddenMap[hid] = true
+		}
+	}
+
+	list := make([]PublicServerDTO, 0)
+	onlineCount := 0
+
+	for _, s := range all {
+		// Don't show blocked/suspended servers or servers hidden by admin in public monitoring
+		if s.Blocked || hiddenMap[s.ID] {
+			continue
+		}
+		if s.Status == "online" {
+			onlineCount++
+		}
+		list = append(list, s)
 	}
 
 	res := MonitoringResponse{
@@ -145,6 +157,7 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 		TotalServers: len(list),
 		OnlineCount:  onlineCount,
 		Servers:      list,
+		Timestamp:    time.Now().Unix(),
 	}
 
 	return json.Marshal(res)

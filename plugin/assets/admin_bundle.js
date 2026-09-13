@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.2',
+    version: '1.0.3',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.2',
+                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.3',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             copyUrl: 'Копировать адрес страницы',
@@ -74,7 +74,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.2',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.3',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             copyUrl: 'Copy Page URL',
@@ -451,6 +451,16 @@ export const webMonitoringPlugin = {
                                 if (localData.custom_css !== undefined) customCss.value = localData.custom_css;
                                 if (localData.custom_header_html !== undefined) customHeaderHtml.value = localData.custom_header_html;
                                 if (Array.isArray(localData.hidden_servers)) hiddenServers.value = localData.hidden_servers;
+                                if (Array.isArray(localData.cached_servers) && localData.cached_servers.length > 0) {
+                                    serversList.value = localData.cached_servers;
+                                }
+                            }
+                            const localCachedServers = localStorage.getItem('web_monitoring_cached_servers');
+                            if (localCachedServers) {
+                                const parsed = JSON.parse(localCachedServers);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                    serversList.value = parsed;
+                                }
                             }
                         } catch (e) {}
 
@@ -468,6 +478,15 @@ export const webMonitoringPlugin = {
                                         if (data.custom_css !== undefined) customCss.value = data.custom_css;
                                         if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
                                         if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
+
+                                        // Extract servers directly delivered with settings
+                                        const incomingServers = data.all_servers || data.servers || data.cached_servers;
+                                        if (Array.isArray(incomingServers) && incomingServers.length > 0) {
+                                            serversList.value = incomingServers;
+                                            try {
+                                                localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(incomingServers));
+                                            } catch (_) {}
+                                        }
                                         break;
                                     }
                                 } catch (_) {}
@@ -476,76 +495,88 @@ export const webMonitoringPlugin = {
                             console.warn('Could not load remote plugin settings:', err);
                         }
 
-                        // Load servers list for visibility checkboxes
-                        loadingServers.value = true;
-                        try {
-                            const localCached = localStorage.getItem('web_monitoring_cached_servers');
-                            if (localCached) {
-                                try {
-                                    const parsed = JSON.parse(localCached);
-                                    if (Array.isArray(parsed) && parsed.length > 0) {
-                                        serversList.value = parsed;
-                                    }
-                                } catch (_) {}
-                            }
+                        // If servers are still not loaded, query dedicated plugin endpoints
+                        if (serversList.value.length === 0) {
+                            loadingServers.value = true;
+                            try {
+                                const serverEndpoints = [
+                                    '/api/plugins/monitoring/servers?action=servers&all=1',
+                                    '/api/plugins/monitorine/servers?action=servers&all=1',
+                                    '/api/plugins/monitoring?action=servers&all=1',
+                                    '/api/plugins/monitorine?action=servers&all=1',
+                                    '/api/plugins/monitoring/servers',
+                                    '/api/plugins/monitorine/servers',
+                                    '/plugins/web-monitoring/servers?all=1',
+                                    '/plugins/web-monitoring/servers'
+                                ];
 
-                            const srvRes = await fetch('/plugins/web-monitoring/servers');
-                            if (srvRes.ok) {
-                                const srvData = await srvRes.json();
-                                if (srvData.servers && srvData.servers.length > 0) {
-                                    serversList.value = srvData.servers;
-                                }
-                            }
-
-                            // Fallback to GameAP native /api/servers if plugin list is empty
-                            if (serversList.value.length === 0) {
-                                try {
-                                    const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
-                                    const headers = { 'Accept': 'application/json' };
-                                    if (token) {
-                                        headers['Authorization'] = 'Bearer ' + token;
-                                    }
-                                    const gRes = await fetch('/api/servers', {
-                                        credentials: 'include',
-                                        headers: headers
-                                    });
-                                    if (gRes.ok) {
-                                        const gData = await gRes.json();
-                                        const rawList = Array.isArray(gData) ? gData : (gData.data || gData.servers || []);
-                                        if (rawList.length > 0) {
-                                            serversList.value = rawList.map(s => {
-                                                const sIp = s.server_ip || s.serverIp || s.ip || '';
-                                                const sPort = s.server_port || s.serverPort || s.port || 0;
-                                                const sActive = (s.process_active || s.processActive || s.online || false);
-                                                const sGame = s.game_id || s.gameId || s.game || 'game';
-                                                let cUrl = '';
-                                                if (sIp && sPort && (sGame.includes('cs') || sGame.includes('strike') || sGame.includes('rust') || sGame.includes('tf'))) {
-                                                    cUrl = `steam://connect/${sIp}:${sPort}`;
-                                                }
-                                                return {
-                                                    id: s.id,
-                                                    name: s.name || `Server #${s.id}`,
-                                                    game_code: sGame,
-                                                    game_name: s.game_name || sGame.toUpperCase(),
-                                                    address: sIp,
-                                                    port: sPort,
-                                                    status: sActive ? 'online' : 'offline',
-                                                    installed: s.installed !== undefined ? s.installed : true,
-                                                    blocked: s.blocked || false,
-                                                    connect_url: cUrl
-                                                };
-                                            });
-                                            updateServerListCache(serversList.value);
+                                for (const ep of serverEndpoints) {
+                                    try {
+                                        const srvRes = await fetch(ep);
+                                        if (srvRes.ok) {
+                                            const srvData = await srvRes.json();
+                                            const list = Array.isArray(srvData) ? srvData : (srvData.servers || srvData.all_servers || []);
+                                            if (Array.isArray(list) && list.length > 0) {
+                                                serversList.value = list;
+                                                try {
+                                                    localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(list));
+                                                } catch (_) {}
+                                                break;
+                                            }
                                         }
-                                    }
-                                } catch (e) {
-                                    console.warn('GameAP native API fetch error:', e);
+                                    } catch (_) {}
                                 }
+
+                                // Fallback to GameAP native /api/servers if plugin list is empty
+                                if (serversList.value.length === 0) {
+                                    try {
+                                        const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
+                                        const headers = { 'Accept': 'application/json' };
+                                        if (token) {
+                                            headers['Authorization'] = 'Bearer ' + token;
+                                        }
+                                        const gRes = await fetch('/api/servers', {
+                                            credentials: 'include',
+                                            headers: headers
+                                        });
+                                        if (gRes.ok) {
+                                            const gData = await gRes.json();
+                                            const rawList = Array.isArray(gData) ? gData : (gData.data || gData.servers || []);
+                                            if (rawList.length > 0) {
+                                                serversList.value = rawList.map(s => {
+                                                    const sIp = s.server_ip || s.serverIp || s.ip || '';
+                                                    const sPort = s.server_port || s.serverPort || s.port || 0;
+                                                    const sActive = (s.process_active || s.processActive || s.online || false);
+                                                    const sGame = s.game_id || s.gameId || s.game || 'game';
+                                                    let cUrl = '';
+                                                    if (sIp && sPort && (sGame.includes('cs') || sGame.includes('strike') || sGame.includes('rust') || sGame.includes('tf'))) {
+                                                        cUrl = `steam://connect/${sIp}:${sPort}`;
+                                                    }
+                                                    return {
+                                                        id: s.id,
+                                                        name: s.name || `Server #${s.id}`,
+                                                        game_code: sGame,
+                                                        game_name: s.game_name || sGame.toUpperCase(),
+                                                        address: sIp,
+                                                        port: sPort,
+                                                        status: sActive ? 'online' : 'offline',
+                                                        installed: s.installed !== undefined ? s.installed : true,
+                                                        blocked: s.blocked || false,
+                                                        connect_url: cUrl
+                                                    };
+                                                });
+                                                updateServerListCache(serversList.value);
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.warn('GameAP native API fetch error:', e);
+                                    }
+                                }
+                            } catch (err) {
+                                console.warn('Could not load servers:', err);
+                            } finally {
+                                loadingServers.value = false;
                             }
-                        } catch (err) {
-                            console.warn('Could not load servers:', err);
-                        } finally {
-                            loadingServers.value = false;
                         }
                     };
 

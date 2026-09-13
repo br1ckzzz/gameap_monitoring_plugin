@@ -85,7 +85,9 @@ SETTINGS_CACHE = {
     "custom_css": "",
     "custom_header_html": "",
     "hidden_servers": [],
-    "cached_servers": MOCK_SERVERS
+    "cached_servers": MOCK_SERVERS,
+    "servers": MOCK_SERVERS,
+    "all_servers": MOCK_SERVERS
 }
 
 ADMIN_HTML = """<!DOCTYPE html>
@@ -231,28 +233,44 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         clean_path = self.path.split("?")[0].rstrip("/")
-        
+        query_str = self.path.split("?")[1] if "?" in self.path else ""
+
         # Emulate GameAP Plugin API route for servers
-        if clean_path in ("/plugins/web-monitoring/servers", "/api/plugins/monitoring/servers", "/api/plugins/bwbwb26fs5eje/servers"):
+        is_servers_route = clean_path in (
+            "/plugins/web-monitoring/servers",
+            "/api/plugins/monitoring/servers",
+            "/api/plugins/monitorine/servers",
+            "/api/plugins/bwbwb26fs5eje/servers"
+        ) or (clean_path in ("", "/") and "action=servers" in query_str)
+
+        if is_servers_route:
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
-            
+
             online_count = sum(1 for s in MOCK_SERVERS if s["status"] == "online")
             payload = {
                 "success": True,
                 "total_servers": len(MOCK_SERVERS),
                 "online_count": online_count,
                 "servers": MOCK_SERVERS,
+                "all_servers": MOCK_SERVERS,
                 "timestamp": int(time.time())
             }
             self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
             return
 
         # Emulate GameAP Plugin settings endpoint
-        if clean_path in ("/api/plugins/monitoring/settings", "/api/plugins/bwbwb26fs5eje/settings", "/plugins/web-monitoring/settings"):
+        is_settings_route = clean_path in (
+            "/api/plugins/monitoring/settings",
+            "/api/plugins/monitorine/settings",
+            "/api/plugins/bwbwb26fs5eje/settings",
+            "/plugins/web-monitoring/settings"
+        ) or (clean_path in ("", "/") and "action=settings" in query_str)
+
+        if is_settings_route:
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -273,7 +291,16 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         clean_path = self.path.split("?")[0].rstrip("/")
-        if clean_path in ("/api/plugins/monitoring/settings", "/api/plugins/bwbwb26fs5eje/settings", "/plugins/web-monitoring/settings"):
+        query_str = self.path.split("?")[1] if "?" in self.path else ""
+
+        is_settings_route = clean_path in (
+            "/api/plugins/monitoring/settings",
+            "/api/plugins/monitorine/settings",
+            "/api/plugins/bwbwb26fs5eje/settings",
+            "/plugins/web-monitoring/settings"
+        ) or (clean_path in ("", "/") and "action=settings" in query_str)
+
+        if is_settings_route:
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
             try:
