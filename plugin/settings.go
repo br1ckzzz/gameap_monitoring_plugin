@@ -9,17 +9,6 @@ import (
 	"github.com/gameap/gameap/pkg/plugin/sdk/storage"
 )
 
-// PluginSettings holds customizable options for the web monitoring plugin
-type PluginSettings struct {
-	Title            string            `json:"title"`
-	Subtitle         string            `json:"subtitle"`
-	Theme            string            `json:"theme"` // "dark" or "light"
-	RefreshInterval  int               `json:"refresh_interval"`
-	CustomCSS        string            `json:"custom_css"`
-	CustomHeaderHTML string            `json:"custom_header_html"`
-	HiddenServers    []uint64          `json:"hidden_servers"`
-	CachedServers    []PublicServerDTO `json:"cached_servers"`
-}
 
 var (
 	currentSettings = DefaultSettings()
@@ -28,14 +17,19 @@ var (
 
 func DefaultSettings() *PluginSettings {
 	return &PluginSettings{
-		Title:            "GameAP Servers",
-		Subtitle:         "Онлайн мониторинг игровых серверов",
-		Theme:            "dark",
-		RefreshInterval:  15,
-		CustomCSS:        "",
-		CustomHeaderHTML: "",
-		HiddenServers:    make([]uint64, 0),
-		CachedServers:    make([]PublicServerDTO, 0),
+		Title:                  "GameAP Servers",
+		Subtitle:               "Онлайн мониторинг игровых серверов",
+		Theme:                  "dark",
+		RefreshInterval:        15,
+		CustomCSS:              "",
+		CustomHeaderHTML:       "",
+		HiddenServers:          make([]uint64, 0),
+		CachedServers:          make([]PublicServerDTO, 0),
+		AddressKey:             "",
+		ServerAddressOverrides: make(map[uint64]string),
+		ServerOrder:            make([]uint64, 0),
+		LogoURL:                "",
+		FaviconURL:             "",
 	}
 }
 
@@ -79,6 +73,9 @@ func SaveSettings(ctx context.Context, s *PluginSettings) error {
 	}
 	if s.CachedServers == nil {
 		s.CachedServers = make([]PublicServerDTO, 0)
+	}
+	if s.ServerOrder == nil {
+		s.ServerOrder = make([]uint64, 0)
 	}
 	if s.Theme == "" {
 		s.Theme = "dark"

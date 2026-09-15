@@ -301,6 +301,14 @@ func (p *WebMonitoringPlugin) handleView(ctx context.Context) (*pluginproto.HTTP
 			if settings.Theme == "light" {
 				pageContent = strings.Replace(pageContent, "<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">", 1)
 			}
+			if settings.FaviconURL != "" {
+				faviconTag := "<link rel=\"icon\" href=\"" + template.HTMLEscapeString(settings.FaviconURL) + "\">\n</head>"
+				pageContent = strings.Replace(pageContent, "</head>", faviconTag, 1)
+			}
+			if settings.LogoURL != "" {
+				logoTag := "<img src=\"" + template.HTMLEscapeString(settings.LogoURL) + "\" alt=\"Logo\" class=\"brand-logo\">"
+				pageContent = strings.Replace(pageContent, "<div class=\"brand-icon\">🎮</div>", logoTag, 1)
+			}
 		}
 
 		// Dynamically set footer version link to PluginVersion
@@ -359,16 +367,21 @@ func (p *WebMonitoringPlugin) handleSettings(ctx context.Context, req *pluginpro
 	allServers, _ := FetchAllServers(ctx)
 
 	type adminSettingsResponse struct {
-		Title            string            `json:"title"`
-		Subtitle         string            `json:"subtitle"`
-		Theme            string            `json:"theme"`
-		RefreshInterval  int               `json:"refresh_interval"`
-		CustomCSS        string            `json:"custom_css"`
-		CustomHeaderHTML string            `json:"custom_header_html"`
-		HiddenServers    []uint64          `json:"hidden_servers"`
-		CachedServers    []PublicServerDTO `json:"cached_servers"`
-		Servers          []PublicServerDTO `json:"servers"`
-		AllServers       []PublicServerDTO `json:"all_servers"`
+		Title                  string            `json:"title"`
+		Subtitle               string            `json:"subtitle"`
+		Theme                  string            `json:"theme"`
+		RefreshInterval        int               `json:"refresh_interval"`
+		CustomCSS              string            `json:"custom_css"`
+		CustomHeaderHTML       string            `json:"custom_header_html"`
+		HiddenServers          []uint64          `json:"hidden_servers"`
+		CachedServers          []PublicServerDTO `json:"cached_servers"`
+		AddressKey             string            `json:"address_key"`
+		ServerAddressOverrides map[uint64]string `json:"server_address_overrides"`
+		ServerOrder            []uint64          `json:"server_order"`
+		LogoURL                string            `json:"logo_url"`
+		FaviconURL             string            `json:"favicon_url"`
+		Servers                []PublicServerDTO `json:"servers"`
+		AllServers             []PublicServerDTO `json:"all_servers"`
 	}
 
 	cached := settings.CachedServers
@@ -377,16 +390,21 @@ func (p *WebMonitoringPlugin) handleSettings(ctx context.Context, req *pluginpro
 	}
 
 	respObj := adminSettingsResponse{
-		Title:            settings.Title,
-		Subtitle:         settings.Subtitle,
-		Theme:            settings.Theme,
-		RefreshInterval:  settings.RefreshInterval,
-		CustomCSS:        settings.CustomCSS,
-		CustomHeaderHTML: settings.CustomHeaderHTML,
-		HiddenServers:    settings.HiddenServers,
-		CachedServers:    cached,
-		Servers:          allServers,
-		AllServers:       allServers,
+		Title:                  settings.Title,
+		Subtitle:               settings.Subtitle,
+		Theme:                  settings.Theme,
+		RefreshInterval:        settings.RefreshInterval,
+		CustomCSS:              settings.CustomCSS,
+		CustomHeaderHTML:       settings.CustomHeaderHTML,
+		HiddenServers:          settings.HiddenServers,
+		CachedServers:          cached,
+		AddressKey:             settings.AddressKey,
+		ServerAddressOverrides: settings.ServerAddressOverrides,
+		ServerOrder:            settings.ServerOrder,
+		LogoURL:                settings.LogoURL,
+		FaviconURL:             settings.FaviconURL,
+		Servers:                allServers,
+		AllServers:             allServers,
 	}
 
 	bytes, err := json.Marshal(respObj)

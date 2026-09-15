@@ -399,8 +399,8 @@ function renderServers() {
 
       <div>
         <div class="card-address">
-          <span class="address-text">${addressStr}</span>
-          <button class="btn btn-copy" onclick="copyToClipboard('${addressStr}')" title="${t('copyBtn')}">
+          <span class="address-text">${escapeHtml(addressStr)}</span>
+          <button class="btn btn-copy" type="button" data-copy="${escapeHtml(addressStr)}" title="${t('copyBtn')}">
             ${t('copyBtn')}
           </button>
         </div>
@@ -448,13 +448,43 @@ function setError(hasError, msg) {
   }
 }
 
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    showToast(t('copiedToast', { text }));
-  }).catch(() => {
-    showToast(`IP: ${text}`);
-  });
+function fallbackCopyText(text) {
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.top = "-999999px";
+    textArea.style.left = "-999999px";
+    textArea.setAttribute("readonly", "");
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    if (successful) {
+      showToast(t('copiedToast', { text }));
+      return;
+    }
+  } catch (err) {
+    console.warn("Fallback copy failed", err);
+  }
+  showToast(`IP: ${text}`);
 }
+
+function copyToClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(t('copiedToast', { text }));
+    }).catch(() => {
+      fallbackCopyText(text);
+    });
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+window.copyToClipboard = copyToClipboard;
 
 function showToast(msg) {
   toast.textContent = msg;
@@ -526,9 +556,70 @@ if (retryBtn) {
   });
 }
 
+if (grid) {
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-copy');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const val = btn.getAttribute('data-copy');
+      if (val) {
+        copyToClipboard(val);
+      }
+    }
+  });
+}
+
+function initCustomBranding() {
+  let logo = '';
+  let favicon = '';
+  if (window.INITIAL_DATA) {
+    if (window.INITIAL_DATA.logo_url) logo = window.INITIAL_DATA.logo_url;
+    if (window.INITIAL_DATA.favicon_url) favicon = window.INITIAL_DATA.favicon_url;
+  }
+  if (!logo || !favicon) {
+    try {
+      const sSaved = localStorage.getItem('web_monitoring_settings');
+      if (sSaved) {
+        const p = JSON.parse(sSaved);
+        if (!logo && p.logo_url) logo = p.logo_url;
+        if (!favicon && p.favicon_url) favicon = p.favicon_url;
+      }
+    } catch (_) {}
+  }
+  if (logo) {
+    const brandContainer = document.querySelector('.brand');
+    const brandIcon = document.querySelector('.brand-icon');
+    if (brandContainer) {
+      const existingImg = brandContainer.querySelector('.brand-logo');
+      if (!existingImg) {
+        const img = document.createElement('img');
+        img.src = logo;
+        img.alt = 'Logo';
+        img.className = 'brand-logo';
+        if (brandIcon) {
+          brandContainer.replaceChild(img, brandIcon);
+        } else {
+          brandContainer.insertBefore(img, brandContainer.firstChild);
+        }
+      }
+    }
+  }
+  if (favicon) {
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = favicon;
+  }
+}
+
 // Init
 initTheme();
 initLanguage();
 initPreloadedData();
+initCustomBranding();
 fetchServers();
 startTimer();

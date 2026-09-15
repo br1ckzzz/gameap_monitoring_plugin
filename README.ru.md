@@ -82,7 +82,7 @@ gameap_monitoring_plugin/
 ## 🚀 Установка
 
 ### 1. Скачивание или сборка плагина
-Скачайте готовый файл `web_monitoring.wasm` (v1.0.3) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
+Скачайте готовый файл `web_monitoring.wasm` (v1.0.4) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
 Поместите файл `web_monitoring.wasm` в каталог плагинов GameAP (по умолчанию `/var/lib/gameap/plugins/` или директорию, указанную в `PLUGINS_DIR`).
 
 ### 2. Активация плагина

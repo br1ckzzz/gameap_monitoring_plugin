@@ -88,12 +88,100 @@ func (p *WebMonitoringPlugin) GetSubscribedEvents(
 }
 
 func (p *WebMonitoringPlugin) HandleEvent(
-	_ context.Context,
+	ctx context.Context,
 	event *pluginproto.Event,
 ) (*pluginproto.EventResult, error) {
-	if event != nil && logger != nil {
+	defer func() {
+		_ = recover()
+	}()
+
+	if event == nil {
+		return &pluginproto.EventResult{Handled: true}, nil
+	}
+
+	if logger != nil {
 		logger.Debug("Received GameAP event", slog.Int("type", int(event.Type)))
 	}
+
+	serverEvent := event.GetServerEvent()
+	if serverEvent != nil && serverEvent.Server != nil {
+		s := serverEvent.Server
+		settings := GetSettings(ctx)
+		if settings != nil {
+			changed := false
+			switch event.Type {
+			case pluginproto.EventType_EVENT_TYPE_SERVER_CREATED:
+				found := false
+				for i, existing := range settings.CachedServers {
+					if existing.ID == s.Id {
+						settings.CachedServers[i] = ConvertProtoServerToDTO(s, "", settings)
+						found = true
+						changed = true
+						break
+					}
+				}
+				if !found {
+					settings.CachedServers = append(settings.CachedServers, ConvertProtoServerToDTO(s, "", settings))
+					changed = true
+				}
+
+			case pluginproto.EventType_EVENT_TYPE_SERVER_UPDATED:
+				for i, existing := range settings.CachedServers {
+					if existing.ID == s.Id {
+						dto := ConvertProtoServerToDTO(s, existing.GameName, settings)
+						settings.CachedServers[i] = dto
+						changed = true
+						break
+					}
+				}
+
+			case pluginproto.EventType_EVENT_TYPE_SERVER_DELETED:
+				newList := make([]PublicServerDTO, 0, len(settings.CachedServers))
+				for _, existing := range settings.CachedServers {
+					if existing.ID != s.Id {
+						newList = append(newList, existing)
+					} else {
+						changed = true
+					}
+				}
+				if changed {
+					settings.CachedServers = newList
+				}
+
+			case pluginproto.EventType_EVENT_TYPE_SERVER_POST_START:
+				for i, existing := range settings.CachedServers {
+					if existing.ID == s.Id {
+						settings.CachedServers[i].Status = "online"
+						changed = true
+						break
+					}
+				}
+
+			case pluginproto.EventType_EVENT_TYPE_SERVER_POST_STOP:
+				for i, existing := range settings.CachedServers {
+					if existing.ID == s.Id {
+						settings.CachedServers[i].Status = "offline"
+						changed = true
+						break
+					}
+				}
+
+			case pluginproto.EventType_EVENT_TYPE_SERVER_POST_RESTART:
+				for i, existing := range settings.CachedServers {
+					if existing.ID == s.Id {
+						settings.CachedServers[i].Status = "online"
+						changed = true
+						break
+					}
+				}
+			}
+
+			if changed {
+				_ = SaveSettings(ctx, settings)
+			}
+		}
+	}
+
 	return &pluginproto.EventResult{
 		Handled: true,
 	}, nil

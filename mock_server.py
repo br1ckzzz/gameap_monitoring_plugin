@@ -262,6 +262,40 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
             return
 
+        # Emulate GameAP native API route for servers (/api/servers)
+        if clean_path == "/api/servers":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+
+            payload = {
+                "current_page": 1,
+                "data": [
+                    {
+                        "id": s["id"],
+                        "name": s["name"],
+                        "game_id": s["game_code"],
+                        "server_ip": s["address"],
+                        "server_port": s["port"],
+                        "process_active": (s["status"] == "online"),
+                        "online": (s["status"] == "online"),
+                        "installed": 1,
+                        "blocked": False,
+                        "game": {"name": s["game_name"]},
+                        "metadata": {"public_ip": s["address"]}
+                    }
+                    for s in MOCK_SERVERS
+                ],
+                "from": 1,
+                "last_page": 1,
+                "per_page": 100,
+                "total": len(MOCK_SERVERS)
+            }
+            self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
+            return
+
         # Emulate GameAP Plugin settings endpoint
         is_settings_route = clean_path in (
             "/api/plugins/monitoring/settings",

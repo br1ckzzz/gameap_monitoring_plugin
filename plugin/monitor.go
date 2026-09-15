@@ -13,28 +13,6 @@ import (
 	serverproto "github.com/gameap/gameap/pkg/proto"
 )
 
-// PublicServerDTO represents safe, public server data exposed to visitors
-type PublicServerDTO struct {
-	ID         uint64 `json:"id"`
-	Name       string `json:"name"`
-	GameCode   string `json:"game_code"`
-	GameName   string `json:"game_name"`
-	Address    string `json:"address"`
-	Port       int    `json:"port"`
-	Status     string `json:"status"` // "online", "offline"
-	Installed  bool   `json:"installed"`
-	Blocked    bool   `json:"blocked"`
-	ConnectURL string `json:"connect_url"`
-}
-
-// MonitoringResponse contains the list of servers and summary statistics
-type MonitoringResponse struct {
-	Success      bool              `json:"success"`
-	TotalServers int               `json:"total_servers"`
-	OnlineCount  int               `json:"online_count"`
-	Servers      []PublicServerDTO `json:"servers"`
-	Timestamp    int64             `json:"timestamp"`
-}
 
 // FetchAllServers retrieves all servers from GameAP (including hidden ones) for the admin visibility settings
 func FetchAllServers(ctx context.Context) ([]PublicServerDTO, error) {
@@ -68,56 +46,32 @@ func FetchAllServers(ctx context.Context) ([]PublicServerDTO, error) {
 		}()
 	}
 
+	settings := GetSettings(ctx)
+
 	list := make([]PublicServerDTO, 0)
 	for _, s := range rawServers {
 		if s == nil {
 			continue
 		}
 
-		// Friendly game name fallback
-		gName := s.GameId
+		gName := ""
 		if val, exists := gameNames[s.GameId]; exists && val != "" {
 			gName = val
-		} else {
-			gName = formatGameName(s.GameId)
 		}
-
-		isInstalled := s.Installed == serverproto.ServerInstalledStatus_SERVER_INSTALLED_STATUS_INSTALLED
-
-		// ProcessActive accurately indicates whether the server process is currently running
-		status := "offline"
-		if s.ProcessActive {
-			status = "online"
-		}
-
-		// Direct connect link for Steam games
-		connectURL := ""
-		if isSteamGame(s.GameId) && s.ServerIp != "" && s.ServerPort > 0 {
-			connectURL = fmt.Sprintf("steam://connect/%s:%d", s.ServerIp, s.ServerPort)
-		}
-
-		dto := PublicServerDTO{
-			ID:         s.Id,
-			Name:       s.Name,
-			GameCode:   s.GameId,
-			GameName:   gName,
-			Address:    s.ServerIp,
-			Port:       int(s.ServerPort),
-			Status:     status,
-			Installed:  isInstalled,
-			Blocked:    s.Blocked,
-			ConnectURL: connectURL,
-		}
-
+		dto := ConvertProtoServerToDTO(s, gName, settings)
 		list = append(list, dto)
 	}
 
 	// Fallback to CachedServers saved from GameAP Admin if live serverRepo returned 0
 	if len(list) == 0 {
-		settings := GetSettings(ctx)
 		if settings != nil && len(settings.CachedServers) > 0 {
 			list = append(list, settings.CachedServers...)
 		}
+	}
+
+	// Apply manual server ordering if configured
+	if settings != nil && len(settings.ServerOrder) > 0 {
+		list = SortServersByOrder(list, settings.ServerOrder)
 	}
 
 	return list, nil
@@ -262,5 +216,44 @@ func isSteamGame(code string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// ConvertProtoServerToDTO converts GameAP proto Server to public monitoring DTO
+func ConvertProtoServerToDTO(s *serverproto.Server, gameName string, settings *PluginSettings) PublicServerDTO {
+	if s == nil {
+		return PublicServerDTO{}
+	}
+
+	gName := gameName
+	if gName == "" {
+		gName = formatGameName(s.GameId)
+	}
+
+	isInstalled := s.Installed == serverproto.ServerInstalledStatus_SERVER_INSTALLED_STATUS_INSTALLED
+
+	status := "offline"
+	if s.ProcessActive {
+		status = "online"
+	}
+
+	resolvedAddress := ResolveServerAddress(s, settings)
+
+	connectURL := ""
+	if isSteamGame(s.GameId) && resolvedAddress != "" && s.ServerPort > 0 {
+		connectURL = fmt.Sprintf("steam://connect/%s:%d", resolvedAddress, s.ServerPort)
+	}
+
+	return PublicServerDTO{
+		ID:         s.Id,
+		Name:       s.Name,
+		GameCode:   s.GameId,
+		GameName:   gName,
+		Address:    resolvedAddress,
+		Port:       int(s.ServerPort),
+		Status:     status,
+		Installed:  isInstalled,
+		Blocked:    s.Blocked,
+		ConnectURL: connectURL,
 	}
 }

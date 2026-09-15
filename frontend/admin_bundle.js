@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.3',
+    version: '1.0.4',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.3',
+                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.4',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             copyUrl: 'Копировать адрес страницы',
@@ -53,14 +53,28 @@ export const webMonitoringPlugin = {
                             generalSettings: '⚙️ Основные параметры',
                             titleLabel: 'Заголовок страницы (Title)',
                             subtitleLabel: 'Подзаголовок',
-                            themeLabel: 'Тема публичной страницы по умолчанию',
+                            themeLabel: 'Тема по умолчанию',
                             darkTheme: '🌙 Тёмная тема (Dark)',
                             lightTheme: '☀️ Светлая тема (Light)',
-                            refreshIntervalLabel: 'Интервал автообновления (сек.)',
-                            serversVisibility: '🎮 Видимость серверов',
+                            refreshIntervalLabel: 'Интервал обновления (сек.)',
+                            serversVisibility: '🎮 Видимость и порядок серверов',
                             serversVisibilityHelp: 'Отметьте серверы, которые должны отображаться в публичном мониторинге.',
+                            serversOrderHelp: 'Перетаскивайте серверы мышью (Drag-and-Drop) или используйте стрелки ▲ ▼ для задания порядка отображения. Флагманские серверы будут сверху.',
+                            moveUp: 'Поднять выше',
+                            moveDown: 'Опустить ниже',
+                            refreshServersBtn: 'Обновить список',
                             loadingServers: 'Загрузка списка серверов...',
                             noServers: 'В панели GameAP пока не найдено запущенных или установленных серверов.',
+                            addressKeyLabel: 'Ключ адреса сервера (опционально)',
+                            addressKeyHelp: 'По умолчанию плагин автоматически находит адрес (public_ip, domain, hostname в метаданных и переменных). Вы можете указать несколько ключей через запятую или точку с запятой (например: public_ip, domain; my_custom_ip).',
+                            addressKeyPlaceholder: 'Например: public_ip, domain; hostname',
+                            brandingSection: '🖼️ Логотип и фавикон',
+                            logoUrlLabel: 'Прямая ссылка на логотип (URL)',
+                            logoUrlHelp: 'Отображается в левом верхнем углу публичной страницы вместо эмодзи 🎮. Поддерживаются PNG, SVG, JPG, WebP.',
+                            logoUrlPlaceholder: 'https://example.com/logo.png',
+                            faviconUrlLabel: 'Прямая ссылка на фавикон (Favicon URL)',
+                            faviconUrlHelp: 'Иконка во вкладке браузера (.ico, .png, .svg).',
+                            faviconUrlPlaceholder: 'https://example.com/favicon.ico',
                             customCss: '🎨 Пользовательский CSS',
                             customCssHelp: 'Стили внедряются прямо в страницу мониторинга без перекомпиляции плагина.',
                             customCssPlaceholder: '/* Например: */\nbody { background: #0b0f19; }\n.server-card { border-radius: 16px; }',
@@ -70,11 +84,13 @@ export const webMonitoringPlugin = {
                             saveBtn: 'Сохранить настройки',
                             savingBtn: 'Сохранение...',
                             saveSuccess: '✓ Настройки успешно сохранены!',
-                            saveError: 'Ошибка сохранения'
+                            saveError: 'Ошибка сохранения',
+                            expandBtn: 'Развернуть',
+                            collapseBtn: 'Свернуть'
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.3',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.4',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             copyUrl: 'Copy Page URL',
@@ -97,14 +113,28 @@ export const webMonitoringPlugin = {
                             generalSettings: '⚙️ General Settings',
                             titleLabel: 'Page Title',
                             subtitleLabel: 'Subtitle',
-                            themeLabel: 'Default Public Page Theme',
+                            themeLabel: 'Default Theme',
                             darkTheme: '🌙 Dark Theme',
                             lightTheme: '☀️ Light Theme',
                             refreshIntervalLabel: 'Auto-refresh Interval (sec)',
-                            serversVisibility: '🎮 Server Visibility',
-                            serversVisibilityHelp: 'Select servers that should be displayed on the public monitoring page.',
+                            serversVisibility: '🎮 Server Visibility & Ordering',
+                            serversVisibilityHelp: 'Select servers to display on the public monitoring page.',
+                            serversOrderHelp: 'Drag and drop servers or use ▲ ▼ arrows to set display order. Flagship servers will appear at the top.',
+                            moveUp: 'Move Up',
+                            moveDown: 'Move Down',
+                            refreshServersBtn: 'Refresh Servers',
                             loadingServers: 'Loading servers list...',
                             noServers: 'No installed or running servers found in GameAP.',
+                            addressKeyLabel: 'Server Address Key (Optional)',
+                            addressKeyHelp: 'By default, the plugin automatically detects address from variables. You can specify multiple keys separated by comma or semicolon (e.g.: public_ip, domain; my_custom_ip).',
+                            addressKeyPlaceholder: 'e.g. public_ip, domain; hostname',
+                            brandingSection: '🖼️ Logo & Favicon',
+                            logoUrlLabel: 'Logo Image URL',
+                            logoUrlHelp: 'Displayed in top-left header instead of 🎮 emoji. Supports PNG, SVG, JPG, WebP.',
+                            logoUrlPlaceholder: 'https://example.com/logo.png',
+                            faviconUrlLabel: 'Favicon URL',
+                            faviconUrlHelp: 'Browser tab icon (.ico, .png, .svg).',
+                            faviconUrlPlaceholder: 'https://example.com/favicon.ico',
                             customCss: '🎨 Custom CSS',
                             customCssHelp: 'Styles are injected directly into the monitoring page without recompilation.',
                             customCssPlaceholder: '/* Example: */\nbody { background: #0b0f19; }\n.server-card { border-radius: 16px; }',
@@ -114,7 +144,9 @@ export const webMonitoringPlugin = {
                             saveBtn: 'Save Settings',
                             savingBtn: 'Saving...',
                             saveSuccess: '✓ Settings saved successfully!',
-                            saveError: 'Save error'
+                            saveError: 'Save error',
+                            expandBtn: 'Expand',
+                            collapseBtn: 'Collapse'
                         }
                     };
 
@@ -139,6 +171,11 @@ export const webMonitoringPlugin = {
                     const refreshInterval = ref(15);
                     const customCss = ref('');
                     const customHeaderHtml = ref('');
+                    const addressKey = ref('');
+                    const logoUrl = ref('');
+                    const faviconUrl = ref('');
+                    const serverOrder = ref([]);
+                    const draggedServerId = ref(null);
                     const hiddenServers = ref([]);
                     const serversList = ref([]);
                     const loadingServers = ref(false);
@@ -147,6 +184,81 @@ export const webMonitoringPlugin = {
                     const saveError = ref('');
                     const copied = ref(false);
                     const selectedProxy = ref('nginx');
+                    const showDdosAlert = ref(localStorage.getItem('web_monitoring_admin_ddos_open') === 'true');
+                    const showInstructions = ref(localStorage.getItem('web_monitoring_admin_instructions_open') === 'true');
+
+                    const toggleDdosAlert = () => {
+                        showDdosAlert.value = !showDdosAlert.value;
+                        try {
+                            localStorage.setItem('web_monitoring_admin_ddos_open', showDdosAlert.value);
+                        } catch (_) {}
+                    };
+
+                    const toggleInstructions = () => {
+                        showInstructions.value = !showInstructions.value;
+                        try {
+                            localStorage.setItem('web_monitoring_admin_instructions_open', showInstructions.value);
+                        } catch (_) {}
+                    };
+
+                    const applyServerSort = (list, order) => {
+                        if (!Array.isArray(order) || order.length === 0 || !Array.isArray(list) || list.length <= 1) {
+                            return list;
+                        }
+                        const orderMap = new Map();
+                        order.forEach((id, idx) => orderMap.set(id, idx));
+                        return [...list].sort((a, b) => {
+                            const posA = orderMap.has(a.id) ? orderMap.get(a.id) : 999999;
+                            const posB = orderMap.has(b.id) ? orderMap.get(b.id) : 999999;
+                            return posA - posB;
+                        });
+                    };
+
+                    const moveServer = (index, delta) => {
+                        const target = index + delta;
+                        if (target < 0 || target >= serversList.value.length) return;
+                        const item = serversList.value.splice(index, 1)[0];
+                        serversList.value.splice(target, 0, item);
+                        serverOrder.value = serversList.value.map(s => s.id);
+                        autoSyncServers(serversList.value);
+                    };
+
+                    const onDragStart = (e, srv) => {
+                        draggedServerId.value = srv.id;
+                        if (e.dataTransfer) {
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', String(srv.id));
+                        }
+                    };
+
+                    const onDragOver = (e) => {
+                        e.preventDefault();
+                        if (e.dataTransfer) {
+                            e.dataTransfer.dropEffect = 'move';
+                        }
+                    };
+
+                    const onDrop = (e, targetSrv) => {
+                        e.preventDefault();
+                        const draggedId = draggedServerId.value;
+                        if (!draggedId || draggedId === targetSrv.id) {
+                            draggedServerId.value = null;
+                            return;
+                        }
+                        const fromIdx = serversList.value.findIndex(s => s.id === draggedId);
+                        const toIdx = serversList.value.findIndex(s => s.id === targetSrv.id);
+                        if (fromIdx !== -1 && toIdx !== -1) {
+                            const [moved] = serversList.value.splice(fromIdx, 1);
+                            serversList.value.splice(toIdx, 0, moved);
+                            serverOrder.value = serversList.value.map(s => s.id);
+                            autoSyncServers(serversList.value);
+                        }
+                        draggedServerId.value = null;
+                    };
+
+                    const onDragEnd = () => {
+                        draggedServerId.value = null;
+                    };
 
                     // Dynamic public URL based on current host/domain
                     const publicUrl = `${window.location.origin}/api/plugins/monitoring/view`;
@@ -170,7 +282,8 @@ export const webMonitoringPlugin = {
                         styleEl.textContent = `
                             /* GameAP Design Token Bindings with accurate fallbacks */
                             .wm-admin-root {
-                                max-width: 960px;
+                                width: 100%;
+                                max-width: 1160px;
                                 margin: 0 auto;
                                 padding: 20px 16px;
                                 font-family: inherit;
@@ -249,18 +362,35 @@ export const webMonitoringPlugin = {
                                 gap: 8px !important;
                             }
 
-                            /* Labels */
+                            /* Labels & Form Groups */
+                            .wm-form-group {
+                                display: flex !important;
+                                flex-direction: column !important;
+                                justify-content: flex-start !important;
+                            }
+                            .wm-form-group > label,
                             .wm-label {
                                 display: block !important;
                                 font-size: 13px !important;
                                 font-weight: 500 !important;
                                 color: var(--wm-text-secondary) !important;
                                 margin-bottom: 6px !important;
+                                line-height: 1.4 !important;
+                                white-space: nowrap !important;
+                                overflow: hidden !important;
+                                text-overflow: ellipsis !important;
+                            }
+                            .wm-form-group > input,
+                            .wm-form-group > select,
+                            .wm-form-group > .wm-input,
+                            .wm-form-group > .wm-select {
+                                margin-top: auto !important;
                             }
 
                             /* Input and Select Controls */
                             .wm-input, .wm-select {
                                 width: 100% !important;
+                                height: 42px !important;
                                 background: var(--wm-bg-inset) !important;
                                 color: var(--wm-text) !important;
                                 border: 1px solid var(--wm-border-strong) !important;
@@ -270,6 +400,9 @@ export const webMonitoringPlugin = {
                                 box-sizing: border-box !important;
                                 outline: none !important;
                                 transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease !important;
+                            }
+                            .wm-select {
+                                cursor: pointer !important;
                             }
                             .wm-input:focus, .wm-select:focus {
                                 border-color: var(--wm-primary) !important;
@@ -383,22 +516,127 @@ export const webMonitoringPlugin = {
                             /* DDoS Callout */
                             .wm-ddos-alert {
                                 margin-top: 14px;
-                                padding: 12px 16px;
                                 background: var(--wm-danger-soft);
                                 border: 1px solid var(--wm-danger);
                                 border-left: 4px solid var(--wm-danger);
                                 border-radius: var(--wm-radius-control);
                                 color: var(--wm-danger-text);
+                                overflow: hidden;
+                                transition: all 0.2s ease;
+                            }
+
+                            .wm-ddos-header {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 10px 14px;
+                                cursor: pointer;
+                                user-select: none;
+                                font-weight: 600;
+                                transition: background-color 0.15s ease;
+                            }
+                            .wm-ddos-header:hover {
+                                background: rgba(239, 68, 68, 0.08);
+                            }
+
+                            .wm-ddos-body {
+                                padding: 0 14px 12px 14px;
+                                font-size: 12.5px;
+                                line-height: 1.55;
+                                border-top: 1px solid rgba(239, 68, 68, 0.15);
                             }
 
                             /* Instructions Card */
                             .wm-instruction-box {
                                 margin-top: 14px;
-                                padding: 14px 16px;
                                 background: var(--wm-bg-inset);
                                 border: 1px solid var(--wm-border);
                                 border-left: 4px solid var(--wm-primary);
                                 border-radius: var(--wm-radius-control);
+                                overflow: hidden;
+                                transition: all 0.2s ease;
+                            }
+
+                            .wm-instruction-header {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 10px 14px;
+                                cursor: pointer;
+                                user-select: none;
+                                font-weight: 600;
+                                font-size: 13px;
+                                color: var(--wm-text);
+                                transition: background-color 0.15s ease;
+                            }
+                            .wm-instruction-header:hover {
+                                background: var(--wm-surface-hover);
+                            }
+
+                            .wm-instruction-body {
+                                padding: 0 14px 16px 14px;
+                                border-top: 1px solid var(--wm-border);
+                            }
+
+                            .wm-spoiler-toggle {
+                                font-size: 11.5px;
+                                font-weight: 600;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                padding: 3px 8px;
+                                border-radius: 5px;
+                                background: rgba(0, 0, 0, 0.06);
+                                transition: all 0.15s ease;
+                            }
+                            .wm-spoiler-toggle:hover {
+                                background: rgba(0, 0, 0, 0.12);
+                            }
+                            html.dark .wm-spoiler-toggle,
+                            .dark .wm-spoiler-toggle {
+                                background: rgba(255, 255, 255, 0.08);
+                            }
+                            html.dark .wm-spoiler-toggle:hover,
+                            .dark .wm-spoiler-toggle:hover {
+                                background: rgba(255, 255, 255, 0.14);
+                            }
+
+                            /* Responsive adjustments for mobile, tablet, and wide screens */
+                            @media (max-width: 768px) {
+                                .wm-admin-root {
+                                    padding: 12px 8px;
+                                }
+                                .wm-card {
+                                    padding: 16px 12px !important;
+                                    margin-bottom: 12px !important;
+                                }
+                                .wm-direct-bar {
+                                    flex-direction: column;
+                                    align-items: stretch !important;
+                                    gap: 8px;
+                                }
+                                .wm-direct-code {
+                                    word-break: break-all;
+                                    display: block;
+                                }
+                                .wm-copy-btn {
+                                    width: 100%;
+                                    text-align: center;
+                                }
+                            }
+
+                            @media (max-width: 480px) {
+                                .wm-admin-root {
+                                    padding: 8px 4px;
+                                }
+                                .wm-card {
+                                    padding: 12px 10px !important;
+                                    border-radius: 8px !important;
+                                }
+                                .wm-server-item {
+                                    padding: 10px 8px;
+                                    gap: 8px;
+                                }
                             }
 
                             /* Server Visibility Checkbox Row */
@@ -410,12 +648,70 @@ export const webMonitoringPlugin = {
                                 background: var(--wm-bg-inset);
                                 border-radius: var(--wm-radius-control);
                                 border: 1px solid var(--wm-border);
-                                cursor: pointer;
-                                transition: background-color 0.2s ease, border-color 0.2s ease;
+                                transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+                                user-select: none;
                             }
                             .wm-server-item:hover {
                                 background: var(--wm-surface-hover);
                                 border-color: var(--wm-border-strong);
+                            }
+                            .wm-server-item.wm-dragging {
+                                opacity: 0.45;
+                                border-style: dashed;
+                                border-color: var(--wm-primary);
+                            }
+
+                            .wm-drag-handle {
+                                cursor: grab;
+                                color: var(--wm-text-muted);
+                                padding: 4px 6px;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: color 0.15s ease;
+                                user-select: none;
+                            }
+                            .wm-drag-handle:hover {
+                                color: var(--wm-primary);
+                            }
+                            .wm-drag-handle:active {
+                                cursor: grabbing;
+                            }
+
+                            .wm-order-btn {
+                                background: var(--wm-surface) !important;
+                                border: 1px solid var(--wm-border-strong) !important;
+                                border-radius: 4px !important;
+                                color: var(--wm-text-muted) !important;
+                                width: 22px !important;
+                                height: 20px !important;
+                                padding: 0 !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                justify-content: center !important;
+                                font-size: 10px !important;
+                                cursor: pointer !important;
+                                transition: all 0.15s ease !important;
+                            }
+                            .wm-order-btn:hover:not(:disabled) {
+                                background: var(--wm-primary-soft) !important;
+                                color: var(--wm-primary-soft-text) !important;
+                                border-color: var(--wm-primary) !important;
+                            }
+                            .wm-order-btn:disabled {
+                                opacity: 0.25 !important;
+                                cursor: not-allowed !important;
+                            }
+
+                            .wm-img-preview {
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                border: 1px solid var(--wm-border-strong);
+                                border-radius: 6px;
+                                background: var(--wm-surface);
+                                padding: 4px;
+                                max-height: 40px;
                             }
 
                             /* Preformatted code snippet */
@@ -432,7 +728,149 @@ export const webMonitoringPlugin = {
                                 overflow-x: auto;
                                 line-height: 1.45;
                             }
+
+                            /* Refresh Servers Button */
+                            .wm-btn-refresh {
+                                background: var(--wm-bg-inset) !important;
+                                color: var(--wm-text) !important;
+                                border: 1px solid var(--wm-border-strong) !important;
+                                border-radius: var(--wm-radius-control) !important;
+                                padding: 6px 12px !important;
+                                font-size: 12px !important;
+                                font-weight: 500 !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                cursor: pointer !important;
+                                transition: all 0.2s ease !important;
+                            }
+                            .wm-btn-refresh:hover:not(:disabled) {
+                                background: var(--wm-primary-soft) !important;
+                                border-color: var(--wm-primary) !important;
+                                color: var(--wm-primary-soft-text) !important;
+                            }
+                            .wm-btn-refresh:disabled {
+                                opacity: 0.6 !important;
+                                cursor: not-allowed !important;
+                            }
+
+                            @keyframes wm-spin {
+                                from { transform: rotate(0deg); }
+                                to { transform: rotate(360deg); }
+                            }
                         `;
+                    };
+
+                    // Live server synchronization with GameAP API
+                    const syncLiveServers = async (showLoading = false) => {
+                        if (showLoading || serversList.value.length === 0) {
+                            loadingServers.value = true;
+                        }
+
+                        let liveServers = null;
+
+                        // 1. Query GameAP native API (/api/servers?page[size]=100)
+                        try {
+                            let rawList = [];
+                            if (window.axios && typeof window.axios.get === 'function') {
+                                try {
+                                    const aRes = await window.axios.get('/api/servers?page[size]=100');
+                                    if (aRes && aRes.data) {
+                                        rawList = Array.isArray(aRes.data) ? aRes.data : (aRes.data.data || aRes.data.servers || []);
+                                    }
+                                } catch (_) {}
+                            }
+
+                            if (!rawList || rawList.length === 0) {
+                                const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
+                                const headers = { 'Accept': 'application/json' };
+                                if (token) {
+                                    headers['Authorization'] = 'Bearer ' + token;
+                                }
+                                const gRes = await fetch('/api/servers?page[size]=100', {
+                                    credentials: 'include',
+                                    headers: headers
+                                });
+                                if (gRes.ok) {
+                                    const gData = await gRes.json();
+                                    rawList = Array.isArray(gData) ? gData : (gData.data || gData.servers || []);
+                                }
+                            }
+
+                            if (Array.isArray(rawList) && rawList.length > 0) {
+                                const customKeys = (addressKey.value || '').split(/[,;]+/).map(k => k.trim()).filter(Boolean);
+                                liveServers = rawList.map(s => {
+                                    let metaIp = '';
+                                    if (s.metadata) {
+                                        for (const k of customKeys) {
+                                            if (s.metadata[k]) {
+                                                metaIp = s.metadata[k];
+                                                break;
+                                            }
+                                        }
+                                        if (!metaIp && s.metadata.public_ip) {
+                                            metaIp = s.metadata.public_ip;
+                                        }
+                                    }
+                                    const sIp = metaIp || s.server_ip || s.serverIp || s.ip || '';
+                                    const sPort = s.server_port || s.serverPort || s.port || 0;
+                                    const sActive = (s.process_active || s.processActive || s.online || false);
+                                    const sGame = s.game_id || s.gameId || s.game || 'game';
+                                    let cUrl = '';
+                                    if (sIp && sPort && (sGame.includes('cs') || sGame.includes('strike') || sGame.includes('rust') || sGame.includes('tf') || sGame.includes('valheim'))) {
+                                        cUrl = `steam://connect/${sIp}:${sPort}`;
+                                    }
+                                    return {
+                                        id: s.id,
+                                        name: s.name || `Server #${s.id}`,
+                                        game_code: sGame,
+                                        game_name: (s.game && s.game.name) || s.game_name || sGame.toUpperCase(),
+                                        address: sIp,
+                                        port: sPort,
+                                        status: sActive ? 'online' : 'offline',
+                                        installed: s.installed !== undefined ? (s.installed === 1 || s.installed === true) : true,
+                                        blocked: s.blocked || false,
+                                        connect_url: cUrl
+                                    };
+                                });
+                            }
+                        } catch (e) {
+                            console.warn('GameAP native API fetch error:', e);
+                        }
+
+                        // 2. Fallback to plugin endpoints if native endpoint did not return servers
+                        if (!liveServers || liveServers.length === 0) {
+                            const serverEndpoints = [
+                                '/api/plugins/monitoring/servers?action=admin_servers&all=1',
+                                '/api/plugins/monitorine/servers?action=admin_servers&all=1',
+                                '/api/plugins/monitoring?action=admin_servers&all=1',
+                                '/api/plugins/monitorine?action=admin_servers&all=1',
+                                '/api/plugins/monitoring/servers?all=1',
+                                '/api/plugins/monitorine/servers?all=1',
+                                '/plugins/web-monitoring/servers?all=1'
+                            ];
+
+                            for (const ep of serverEndpoints) {
+                                try {
+                                    const srvRes = await fetch(ep);
+                                    if (srvRes.ok) {
+                                        const srvData = await srvRes.json();
+                                        const list = Array.isArray(srvData) ? srvData : (srvData.all_servers || srvData.servers || []);
+                                        if (Array.isArray(list) && list.length > 0) {
+                                            liveServers = list;
+                                            break;
+                                        }
+                                    }
+                                } catch (_) {}
+                            }
+                        }
+
+                        // 3. Update servers list and synchronize cache if live servers were obtained
+                        if (Array.isArray(liveServers) && liveServers.length > 0) {
+                            serversList.value = applyServerSort(liveServers, serverOrder.value);
+                            updateServerListCache(serversList.value);
+                        }
+
+                        loadingServers.value = false;
                     };
 
                     // Load current settings and servers list
@@ -450,16 +888,20 @@ export const webMonitoringPlugin = {
                                 if (localData.refresh_interval) refreshInterval.value = localData.refresh_interval;
                                 if (localData.custom_css !== undefined) customCss.value = localData.custom_css;
                                 if (localData.custom_header_html !== undefined) customHeaderHtml.value = localData.custom_header_html;
+                                if (localData.address_key !== undefined) addressKey.value = localData.address_key;
+                                if (localData.logo_url !== undefined) logoUrl.value = localData.logo_url;
+                                if (localData.favicon_url !== undefined) faviconUrl.value = localData.favicon_url;
+                                if (Array.isArray(localData.server_order)) serverOrder.value = localData.server_order;
                                 if (Array.isArray(localData.hidden_servers)) hiddenServers.value = localData.hidden_servers;
                                 if (Array.isArray(localData.cached_servers) && localData.cached_servers.length > 0) {
-                                    serversList.value = localData.cached_servers;
+                                    serversList.value = applyServerSort(localData.cached_servers, serverOrder.value);
                                 }
                             }
                             const localCachedServers = localStorage.getItem('web_monitoring_cached_servers');
                             if (localCachedServers) {
                                 const parsed = JSON.parse(localCachedServers);
                                 if (Array.isArray(parsed) && parsed.length > 0) {
-                                    serversList.value = parsed;
+                                    serversList.value = applyServerSort(parsed, serverOrder.value);
                                 }
                             }
                         } catch (e) {}
@@ -477,15 +919,16 @@ export const webMonitoringPlugin = {
                                         if (data.refresh_interval) refreshInterval.value = data.refresh_interval;
                                         if (data.custom_css !== undefined) customCss.value = data.custom_css;
                                         if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
+                                        if (data.address_key !== undefined) addressKey.value = data.address_key;
+                                        if (data.logo_url !== undefined) logoUrl.value = data.logo_url;
+                                        if (data.favicon_url !== undefined) faviconUrl.value = data.favicon_url;
+                                        if (Array.isArray(data.server_order)) serverOrder.value = data.server_order;
                                         if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
 
-                                        // Extract servers directly delivered with settings
+                                        // If we don't have servers loaded yet, use incoming servers from settings
                                         const incomingServers = data.all_servers || data.servers || data.cached_servers;
-                                        if (Array.isArray(incomingServers) && incomingServers.length > 0) {
-                                            serversList.value = incomingServers;
-                                            try {
-                                                localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(incomingServers));
-                                            } catch (_) {}
+                                        if (Array.isArray(incomingServers) && incomingServers.length > 0 && serversList.value.length === 0) {
+                                            serversList.value = applyServerSort(incomingServers, serverOrder.value);
                                         }
                                         break;
                                     }
@@ -495,89 +938,8 @@ export const webMonitoringPlugin = {
                             console.warn('Could not load remote plugin settings:', err);
                         }
 
-                        // If servers are still not loaded, query dedicated plugin endpoints
-                        if (serversList.value.length === 0) {
-                            loadingServers.value = true;
-                            try {
-                                const serverEndpoints = [
-                                    '/api/plugins/monitoring/servers?action=servers&all=1',
-                                    '/api/plugins/monitorine/servers?action=servers&all=1',
-                                    '/api/plugins/monitoring?action=servers&all=1',
-                                    '/api/plugins/monitorine?action=servers&all=1',
-                                    '/api/plugins/monitoring/servers',
-                                    '/api/plugins/monitorine/servers',
-                                    '/plugins/web-monitoring/servers?all=1',
-                                    '/plugins/web-monitoring/servers'
-                                ];
-
-                                for (const ep of serverEndpoints) {
-                                    try {
-                                        const srvRes = await fetch(ep);
-                                        if (srvRes.ok) {
-                                            const srvData = await srvRes.json();
-                                            const list = Array.isArray(srvData) ? srvData : (srvData.servers || srvData.all_servers || []);
-                                            if (Array.isArray(list) && list.length > 0) {
-                                                serversList.value = list;
-                                                try {
-                                                    localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(list));
-                                                } catch (_) {}
-                                                break;
-                                            }
-                                        }
-                                    } catch (_) {}
-                                }
-
-                                // Fallback to GameAP native /api/servers if plugin list is empty
-                                if (serversList.value.length === 0) {
-                                    try {
-                                        const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
-                                        const headers = { 'Accept': 'application/json' };
-                                        if (token) {
-                                            headers['Authorization'] = 'Bearer ' + token;
-                                        }
-                                        const gRes = await fetch('/api/servers', {
-                                            credentials: 'include',
-                                            headers: headers
-                                        });
-                                        if (gRes.ok) {
-                                            const gData = await gRes.json();
-                                            const rawList = Array.isArray(gData) ? gData : (gData.data || gData.servers || []);
-                                            if (rawList.length > 0) {
-                                                serversList.value = rawList.map(s => {
-                                                    const sIp = s.server_ip || s.serverIp || s.ip || '';
-                                                    const sPort = s.server_port || s.serverPort || s.port || 0;
-                                                    const sActive = (s.process_active || s.processActive || s.online || false);
-                                                    const sGame = s.game_id || s.gameId || s.game || 'game';
-                                                    let cUrl = '';
-                                                    if (sIp && sPort && (sGame.includes('cs') || sGame.includes('strike') || sGame.includes('rust') || sGame.includes('tf'))) {
-                                                        cUrl = `steam://connect/${sIp}:${sPort}`;
-                                                    }
-                                                    return {
-                                                        id: s.id,
-                                                        name: s.name || `Server #${s.id}`,
-                                                        game_code: sGame,
-                                                        game_name: s.game_name || sGame.toUpperCase(),
-                                                        address: sIp,
-                                                        port: sPort,
-                                                        status: sActive ? 'online' : 'offline',
-                                                        installed: s.installed !== undefined ? s.installed : true,
-                                                        blocked: s.blocked || false,
-                                                        connect_url: cUrl
-                                                    };
-                                                });
-                                                updateServerListCache(serversList.value);
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.warn('GameAP native API fetch error:', e);
-                                    }
-                                }
-                            } catch (err) {
-                                console.warn('Could not load servers:', err);
-                            } finally {
-                                loadingServers.value = false;
-                            }
-                        }
+                        // Always perform live synchronization with GameAP servers
+                        await syncLiveServers();
                     };
 
                     const updateServerListCache = async (servers) => {
@@ -590,6 +952,10 @@ export const webMonitoringPlugin = {
                                 refresh_interval: parseInt(refreshInterval.value, 10) || 15,
                                 custom_css: customCss.value,
                                 custom_header_html: customHeaderHtml.value,
+                                address_key: addressKey.value.trim(),
+                                logo_url: logoUrl.value.trim(),
+                                favicon_url: faviconUrl.value.trim(),
+                                server_order: serversList.value.map(s => s.id),
                                 hidden_servers: hiddenServers.value,
                                 cached_servers: servers
                             };
@@ -623,6 +989,10 @@ export const webMonitoringPlugin = {
                             refresh_interval: parseInt(refreshInterval.value, 10) || 15,
                             custom_css: customCss.value,
                             custom_header_html: customHeaderHtml.value,
+                            address_key: addressKey.value.trim(),
+                            logo_url: logoUrl.value.trim(),
+                            favicon_url: faviconUrl.value.trim(),
+                            server_order: serversList.value.map(s => s.id),
                             hidden_servers: hiddenServers.value,
                             cached_servers: serversList.value
                         };
@@ -767,62 +1137,86 @@ export const webMonitoringPlugin = {
                                 }, copied.value ? t('copiedUrl') : t('copyUrl'))
                             ]),
 
-                            // Security Warning Callout
+                            // Security Warning Callout (Collapsible Spoiler)
                             h('div', { class: 'wm-ddos-alert' }, [
-                                h('div', { style: 'display: flex; align-items: center; gap: 8px; margin-bottom: 6px;' }, [
-                                    h('i', { class: 'fas fa-shield-alt', style: 'color: var(--wm-danger); font-size: 15px;' }),
-                                    h('span', { style: 'font-weight: 700; font-size: 13px;' }, t('securityWarningTitle'))
-                                ]),
-                                h('p', { style: 'margin: 0; font-size: 12.5px; line-height: 1.5;' }, t('securityWarningText'))
-                            ]),
-
-                            // Universal instruction card under the warning
-                            h('div', { class: 'wm-instruction-box' }, [
-                                h('div', { style: 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;' }, [
-                                    h('i', { class: 'fas fa-info-circle', style: 'color: var(--wm-primary);' }),
-                                    h('span', { style: 'font-weight: 600; color: var(--wm-text); font-size: 13px;' }, t('instructionTitle'))
-                                ]),
-                                h('ul', { style: 'margin: 0; padding-left: 20px; color: var(--wm-text-secondary); font-size: 12.5px; line-height: 1.6;' }, [
-                                    h('li', [
-                                        h('strong', { style: 'color: var(--wm-text);' }, t('instructionDirectTitle')),
-                                        t('instructionDirectText')
+                                h('div', {
+                                    class: 'wm-ddos-header',
+                                    onClick: toggleDdosAlert,
+                                    title: showDdosAlert.value ? t('collapseBtn') : t('expandBtn')
+                                }, [
+                                    h('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
+                                        h('i', { class: 'fas fa-shield-alt', style: 'color: var(--wm-danger); font-size: 14px;' }),
+                                        h('span', { style: 'font-weight: 700; font-size: 13px;' }, t('securityWarningTitle'))
                                     ]),
-                                    h('li', [
-                                        h('strong', { style: 'color: var(--wm-text);' }, t('instructionServersTitle')),
-                                        t('instructionServersText')
-                                    ]),
-                                    h('li', [
-                                        h('strong', { style: 'color: var(--wm-text);' }, t('instructionAliasTitle')),
-                                        t('instructionAliasText')
+                                    h('span', { class: 'wm-spoiler-toggle' }, [
+                                        h('span', showDdosAlert.value ? t('collapseBtn') : t('expandBtn')),
+                                        h('i', { class: showDdosAlert.value ? 'fas fa-chevron-up' : 'fas fa-chevron-down', style: 'font-size: 10px;' })
                                     ])
                                 ]),
-                                // Tabs for Nginx / Caddy / Apache
-                                h('div', { style: 'margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;' }, [
-                                    h('button', {
-                                        type: 'button',
-                                        onClick: () => { selectedProxy.value = 'nginx'; },
-                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'nginx' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'nginx' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'nginx' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
-                                    }, t('tabNginx')),
-                                    h('button', {
-                                        type: 'button',
-                                        onClick: () => { selectedProxy.value = 'caddy'; },
-                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'caddy' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'caddy' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'caddy' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
-                                    }, t('tabCaddy')),
-                                    h('button', {
-                                        type: 'button',
-                                        onClick: () => { selectedProxy.value = 'apache'; },
-                                        style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'apache' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'apache' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'apache' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
-                                    }, t('tabApache'))
+                                showDdosAlert.value && h('div', { class: 'wm-ddos-body' }, [
+                                    h('p', { style: 'margin: 10px 0 0 0; font-size: 12.5px; line-height: 1.55;' }, t('securityWarningText'))
+                                ])
+                            ]),
+
+                            // Universal instruction card under the warning (Collapsible Spoiler)
+                            h('div', { class: 'wm-instruction-box' }, [
+                                h('div', {
+                                    class: 'wm-instruction-header',
+                                    onClick: toggleInstructions,
+                                    title: showInstructions.value ? t('collapseBtn') : t('expandBtn')
+                                }, [
+                                    h('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
+                                        h('i', { class: 'fas fa-info-circle', style: 'color: var(--wm-primary); font-size: 14px;' }),
+                                        h('span', { style: 'font-weight: 600; color: var(--wm-text); font-size: 13px;' }, t('instructionTitle'))
+                                    ]),
+                                    h('span', { class: 'wm-spoiler-toggle' }, [
+                                        h('span', showInstructions.value ? t('collapseBtn') : t('expandBtn')),
+                                        h('i', { class: showInstructions.value ? 'fas fa-chevron-up' : 'fas fa-chevron-down', style: 'font-size: 10px;' })
+                                    ])
                                 ]),
-                                h('pre', {
-                                    class: 'wm-code-pre'
-                                }, selectedProxy.value === 'nginx' 
-                                    ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/monitoring/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
-                                    : (selectedProxy.value === 'caddy'
-                                        ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/monitoring/view\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
-                                        : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]\n`
+                                showInstructions.value && h('div', { class: 'wm-instruction-body' }, [
+                                    h('ul', { style: 'margin: 12px 0 0 0; padding-left: 20px; color: var(--wm-text-secondary); font-size: 12.5px; line-height: 1.6;' }, [
+                                        h('li', [
+                                            h('strong', { style: 'color: var(--wm-text);' }, t('instructionDirectTitle')),
+                                            t('instructionDirectText')
+                                        ]),
+                                        h('li', [
+                                            h('strong', { style: 'color: var(--wm-text);' }, t('instructionServersTitle')),
+                                            t('instructionServersText')
+                                        ]),
+                                        h('li', [
+                                            h('strong', { style: 'color: var(--wm-text);' }, t('instructionAliasTitle')),
+                                            t('instructionAliasText')
+                                        ])
+                                    ]),
+                                    // Tabs for Nginx / Caddy / Apache
+                                    h('div', { style: 'margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;' }, [
+                                        h('button', {
+                                            type: 'button',
+                                            onClick: (e) => { e.stopPropagation(); selectedProxy.value = 'nginx'; },
+                                            style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'nginx' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'nginx' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'nginx' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
+                                        }, t('tabNginx')),
+                                        h('button', {
+                                            type: 'button',
+                                            onClick: (e) => { e.stopPropagation(); selectedProxy.value = 'caddy'; },
+                                            style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'caddy' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'caddy' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'caddy' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
+                                        }, t('tabCaddy')),
+                                        h('button', {
+                                            type: 'button',
+                                            onClick: (e) => { e.stopPropagation(); selectedProxy.value = 'apache'; },
+                                            style: `padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid ${selectedProxy.value === 'apache' ? 'var(--wm-primary)' : 'var(--wm-border-strong)'}; background: ${selectedProxy.value === 'apache' ? 'var(--wm-primary-soft)' : 'var(--wm-surface)'}; color: ${selectedProxy.value === 'apache' ? 'var(--wm-primary-soft-text)' : 'var(--wm-text-muted)'};`
+                                        }, t('tabApache'))
+                                    ]),
+                                    h('pre', {
+                                        class: 'wm-code-pre'
+                                    }, selectedProxy.value === 'nginx' 
+                                        ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/monitoring/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
+                                        : (selectedProxy.value === 'caddy'
+                                            ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/monitoring/view\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
+                                            : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]\n`
+                                        )
                                     )
-                                )
+                                ])
                             ])
                         ]),
 
@@ -830,8 +1224,8 @@ export const webMonitoringPlugin = {
                         h('div', { class: 'wm-card' }, [
                             h('h3', { class: 'wm-title' }, t('generalSettings')),
                             h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;' }, [
-                                h('div', [
-                                    h('label', { class: 'wm-label' }, t('titleLabel')),
+                                h('div', { class: 'wm-form-group' }, [
+                                    h('label', { class: 'wm-label', title: t('titleLabel') }, t('titleLabel')),
                                     h('input', {
                                         type: 'text',
                                         value: title.value,
@@ -839,8 +1233,8 @@ export const webMonitoringPlugin = {
                                         class: 'wm-input'
                                     })
                                 ]),
-                                h('div', [
-                                    h('label', { class: 'wm-label' }, t('subtitleLabel')),
+                                h('div', { class: 'wm-form-group' }, [
+                                    h('label', { class: 'wm-label', title: t('subtitleLabel') }, t('subtitleLabel')),
                                     h('input', {
                                         type: 'text',
                                         value: subtitle.value,
@@ -848,8 +1242,8 @@ export const webMonitoringPlugin = {
                                         class: 'wm-input'
                                     })
                                 ]),
-                                h('div', [
-                                    h('label', { class: 'wm-label' }, t('themeLabel')),
+                                h('div', { class: 'wm-form-group' }, [
+                                    h('label', { class: 'wm-label', title: t('themeLabel') }, t('themeLabel')),
                                     h('select', {
                                         value: theme.value,
                                         onChange: (e) => { theme.value = e.target.value; },
@@ -859,8 +1253,8 @@ export const webMonitoringPlugin = {
                                         h('option', { value: 'light' }, t('lightTheme'))
                                     ])
                                 ]),
-                                h('div', [
-                                    h('label', { class: 'wm-label' }, t('refreshIntervalLabel')),
+                                h('div', { class: 'wm-form-group' }, [
+                                    h('label', { class: 'wm-label', title: t('refreshIntervalLabel') }, t('refreshIntervalLabel')),
                                     h('input', {
                                         type: 'number',
                                         min: '5',
@@ -869,35 +1263,157 @@ export const webMonitoringPlugin = {
                                         onInput: (e) => { refreshInterval.value = e.target.value; },
                                         class: 'wm-input'
                                     })
+                                ]),
+                                h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                    h('label', { class: 'wm-label', title: t('addressKeyLabel') }, t('addressKeyLabel')),
+                                    h('input', {
+                                        type: 'text',
+                                        value: addressKey.value,
+                                        placeholder: t('addressKeyPlaceholder'),
+                                        onInput: (e) => { addressKey.value = e.target.value; },
+                                        class: 'wm-input'
+                                    }),
+                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('addressKeyHelp'))
+                                ])
+                            ])
+                        ]),
+
+                        // Branding Card (Logo & Favicon)
+                        h('div', { class: 'wm-card' }, [
+                            h('h3', { class: 'wm-title' }, t('brandingSection')),
+                            h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;' }, [
+                                h('div', { class: 'wm-form-group' }, [
+                                    h('label', { class: 'wm-label', title: t('logoUrlLabel') }, t('logoUrlLabel')),
+                                    h('div', { style: 'display: flex; gap: 10px; align-items: center;' }, [
+                                        h('input', {
+                                            type: 'text',
+                                            value: logoUrl.value,
+                                            placeholder: t('logoUrlPlaceholder'),
+                                            onInput: (e) => { logoUrl.value = e.target.value; },
+                                            class: 'wm-input'
+                                        }),
+                                        logoUrl.value ? h('div', { class: 'wm-img-preview', title: 'Предпросмотр логотипа' }, [
+                                            h('img', {
+                                                src: logoUrl.value,
+                                                alt: 'Logo preview',
+                                                style: 'max-height: 32px; max-width: 60px; object-fit: contain;',
+                                                onError: (e) => { e.target.style.display = 'none'; }
+                                            })
+                                        ]) : null
+                                    ]),
+                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('logoUrlHelp'))
+                                ]),
+                                h('div', { class: 'wm-form-group' }, [
+                                    h('label', { class: 'wm-label', title: t('faviconUrlLabel') }, t('faviconUrlLabel')),
+                                    h('div', { style: 'display: flex; gap: 10px; align-items: center;' }, [
+                                        h('input', {
+                                            type: 'text',
+                                            value: faviconUrl.value,
+                                            placeholder: t('faviconUrlPlaceholder'),
+                                            onInput: (e) => { faviconUrl.value = e.target.value; },
+                                            class: 'wm-input'
+                                        }),
+                                        faviconUrl.value ? h('div', { class: 'wm-img-preview', style: 'padding: 4px 8px;', title: 'Предпросмотр фавикона' }, [
+                                            h('img', {
+                                                src: faviconUrl.value,
+                                                alt: 'Favicon preview',
+                                                style: 'width: 20px; height: 20px; object-fit: contain;',
+                                                onError: (e) => { e.target.style.display = 'none'; }
+                                            })
+                                        ]) : null
+                                    ]),
+                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('faviconUrlHelp'))
                                 ])
                             ])
                         ]),
 
                         // Server Visibility Card
                         h('div', { class: 'wm-card' }, [
-                            h('h3', { class: 'wm-title' }, t('serversVisibility')),
-                            h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 14px 0;' }, t('serversVisibilityHelp')),
-                            loadingServers.value
-                                ? h('div', { style: 'color: var(--wm-text-muted); font-size: 13px; padding: 12px 0;' }, t('loadingServers'))
+                            h('div', { style: 'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 6px;' }, [
+                                h('h3', { class: 'wm-title', style: 'margin: 0;' }, t('serversVisibility')),
+                                h('button', {
+                                    type: 'button',
+                                    onClick: () => syncLiveServers(true),
+                                    disabled: loadingServers.value,
+                                    class: 'wm-btn-refresh',
+                                    title: t('refreshServersBtn')
+                                }, [
+                                    h('i', {
+                                        class: 'fas fa-sync-alt',
+                                        style: loadingServers.value ? 'animation: wm-spin 1s linear infinite;' : ''
+                                    }),
+                                    h('span', { style: 'margin-left: 6px;' }, t('refreshServersBtn'))
+                                ])
+                            ]),
+                            h('p', { style: 'font-size: 12.5px; color: var(--wm-text-muted); margin: 0 0 14px 0; line-height: 1.5;' }, [
+                                h('span', t('serversVisibilityHelp')),
+                                h('br'),
+                                h('span', { style: 'color: var(--wm-primary-soft-text); font-weight: 500;' }, t('serversOrderHelp'))
+                            ]),
+                            (loadingServers.value && serversList.value.length === 0)
+                                ? h('div', { style: 'color: var(--wm-text-muted); font-size: 13px; padding: 12px 0; display: flex; align-items: center; gap: 8px;' }, [
+                                    h('i', { class: 'fas fa-spinner fa-spin' }),
+                                    h('span', t('loadingServers'))
+                                ])
                                 : serversList.value.length === 0
                                     ? h('div', { style: 'color: var(--wm-text-muted); font-size: 13px; padding: 12px 0;' }, t('noServers'))
-                                    : h('div', { style: 'display: flex; flex-direction: column; gap: 8px;' }, serversList.value.map(srv => {
+                                    : h('div', { style: 'display: flex; flex-direction: column; gap: 8px;' }, serversList.value.map((srv, idx) => {
                                         const isHidden = hiddenServers.value.includes(srv.id);
                                         const isOnline = srv.status === 'online';
-                                        return h('label', {
+                                        return h('div', {
                                             key: srv.id,
-                                            class: 'wm-server-item'
+                                            class: 'wm-server-item' + (draggedServerId.value === srv.id ? ' wm-dragging' : ''),
+                                            draggable: true,
+                                            onDragstart: (e) => onDragStart(e, srv),
+                                            onDragover: onDragOver,
+                                            onDrop: (e) => onDrop(e, srv),
+                                            onDragend: onDragEnd
                                         }, [
+                                            // Drag grip handle
+                                            h('div', {
+                                                class: 'wm-drag-handle',
+                                                title: t('serversOrderHelp')
+                                            }, [
+                                                h('i', { class: 'fas fa-grip-vertical' })
+                                            ]),
+                                            // Up / Down order buttons
+                                            h('div', { style: 'display: flex; flex-direction: column; gap: 2px;' }, [
+                                                h('button', {
+                                                    type: 'button',
+                                                    class: 'wm-order-btn',
+                                                    disabled: idx === 0,
+                                                    onClick: (e) => { e.stopPropagation(); moveServer(idx, -1); },
+                                                    title: t('moveUp')
+                                                }, [
+                                                    h('i', { class: 'fas fa-chevron-up' })
+                                                ]),
+                                                h('button', {
+                                                    type: 'button',
+                                                    class: 'wm-order-btn',
+                                                    disabled: idx === serversList.value.length - 1,
+                                                    onClick: (e) => { e.stopPropagation(); moveServer(idx, 1); },
+                                                    title: t('moveDown')
+                                                }, [
+                                                    h('i', { class: 'fas fa-chevron-down' })
+                                                ])
+                                            ]),
+                                            // Visibility checkbox
                                             h('input', {
                                                 type: 'checkbox',
+                                                id: `srv-vis-${srv.id}`,
                                                 checked: !isHidden,
                                                 onChange: () => toggleServer(srv.id),
                                                 style: 'width: 18px; height: 18px; cursor: pointer; accent-color: var(--wm-primary);'
                                             }),
-                                            h('div', { style: 'flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px;' }, [
+                                            // Server details
+                                            h('label', {
+                                                for: `srv-vis-${srv.id}`,
+                                                style: 'flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; margin: 0;'
+                                            }, [
                                                 h('span', { style: 'font-size: 14px; font-weight: 500; color: var(--wm-text);' }, srv.name),
                                                 h('span', { style: 'font-size: 12px; color: var(--wm-text-muted); font-family: monospace;' }, `${srv.address}:${srv.port}`)
                                             ]),
+                                            // Status pill
                                             h('span', {
                                                 style: isOnline
                                                     ? 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--wm-primary-soft); color: var(--wm-primary-soft-text); border: 1px solid var(--wm-primary);'

@@ -83,7 +83,7 @@ gameap_monitoring_plugin/
 
 ### 1. Download or Build the Plugin Binary
 
-Download `web_monitoring.wasm` (v1.0.3) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
+Download `web_monitoring.wasm` (v1.0.4) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
 Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/lib/gameap/plugins/` or your configured `PLUGINS_DIR`).
 
 ### 2. Activate in GameAP
