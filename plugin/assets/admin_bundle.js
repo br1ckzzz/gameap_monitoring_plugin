@@ -30,9 +30,10 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.4',
+                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.5',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
+                            publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
                             copyUrl: 'Копировать адрес страницы',
                             copiedUrl: '✓ Скопировано!',
                             securityWarningTitle: '⚠️ Безопасность и защита от DDoS-атак:',
@@ -90,9 +91,10 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.4',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.5',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
+                            publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
                             copyUrl: 'Copy Page URL',
                             copiedUrl: '✓ Copied!',
                             securityWarningTitle: '⚠️ Security & DDoS Protection Warning:',
@@ -260,8 +262,8 @@ export const webMonitoringPlugin = {
                         draggedServerId.value = null;
                     };
 
-                    // Dynamic public URL based on current host/domain
-                    const publicUrl = `${window.location.origin}/api/plugins/monitoring/view`;
+                    // Dynamic public URL based on current host/domain (canonical short URL)
+                    const publicUrl = `${window.location.origin}/api/plugins/monitoring`;
 
                     // Detect GameAP dark mode reactively
                     const isGameApDark = ref(document.documentElement.classList.contains('dark'));
@@ -1127,9 +1129,12 @@ export const webMonitoringPlugin = {
 
                             // Direct link bar
                             h('div', { class: 'wm-direct-bar' }, [
-                                h('div', { style: 'font-size: 13px; color: var(--wm-text-secondary); display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis;' }, [
-                                    h('span', { style: 'font-weight: 600; color: var(--wm-text);' }, t('publicUrlLabel')),
-                                    h('code', { class: 'wm-direct-code' }, publicUrl)
+                                h('div', { style: 'font-size: 13px; color: var(--wm-text-secondary); display: flex; flex-direction: column; gap: 4px; overflow: hidden;' }, [
+                                    h('div', { style: 'display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis;' }, [
+                                        h('span', { style: 'font-weight: 600; color: var(--wm-text);' }, t('publicUrlLabel')),
+                                        h('code', { class: 'wm-direct-code' }, publicUrl)
+                                    ]),
+                                    h('div', { style: 'font-size: 11px; color: var(--wm-text-muted);' }, t('publicUrlHint'))
                                 ]),
                                 h('button', {
                                     onClick: copyPublicUrl,
@@ -1210,10 +1215,10 @@ export const webMonitoringPlugin = {
                                     h('pre', {
                                         class: 'wm-code-pre'
                                     }, selectedProxy.value === 'nginx' 
-                                        ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/monitoring/view break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n}`
+                                        ? `${t('nginxComment')}\nlocation = /monitoring {\n    rewrite ^ /api/plugins/monitoring break;\n    proxy_pass $gameap_backend; # Проксирование на панель GameAP\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n    proxy_set_header X-Gameap-Client-Ip $remote_addr;\n}`
                                         : (selectedProxy.value === 'caddy'
-                                            ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/monitoring/view\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
-                                            : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]\n`
+                                            ? `${t('caddyComment')}\nhandle /monitoring {\n    rewrite * /api/plugins/monitoring\n    reverse_proxy localhost:8080 # Укажите локальный адрес/порт панели GameAP\n}`
+                                            : `${t('apacheComment')}\nRewriteEngine On\nRewriteRule "^monitoring$" "/api/plugins/monitoring" [PT]\n`
                                         )
                                     )
                                 ])

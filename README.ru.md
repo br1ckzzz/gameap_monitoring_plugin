@@ -82,7 +82,7 @@ gameap_monitoring_plugin/
 ## 🚀 Установка
 
 ### 1. Скачивание или сборка плагина
-Скачайте готовый файл `web_monitoring.wasm` (v1.0.4) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
+Скачайте готовый файл `web_monitoring.wasm` (v1.0.5) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
 Поместите файл `web_monitoring.wasm` в каталог плагинов GameAP (по умолчанию `/var/lib/gameap/plugins/` или директорию, указанную в `PLUGINS_DIR`).
 
 ### 2. Активация плагина
@@ -106,15 +106,26 @@ gameap_monitoring_plugin/
 
 ---
 
+## 🛡️ Архитектурные оптимизации GameAP v4.5.3 (Anti-DoS и кэш)
+
+Начиная с версии **v1.0.5**, плагин полностью оптимизирован под механизмы сериализации и защиты от DoS панели **GameAP v4.5.3**:
+- **Внутриплагинный RAM Micro-Cache (4 сек):** Вызовы плагинов в GameAP выполняются строго последовательно (1 поток на WASM-модуль). При наплыве сотен пользователей первый запрос опрашивает GameAP, а остальные запросы в очереди `PLUGINS_ROUTES_MAX_QUEUE` мгновенно отдают закэшированные байты за ~0.05 мс, предотвращая переполнение очереди и ошибки 503.
+- **Интеллектуальный клиентский Backoff:** При получении HTTP `429 Too Many Requests` или `503 Service Unavailable` фронтенд считывает заголовок `Retry-After`, деликатно приостанавливает автообновление и не запускает каскадные повторные запросы, защищая хост от шторма нагрузки.
+- **Поддержка `X-Gameap-Client-Ip`:** Диагностический эндпоинт автоматически определяет реальный доверенный IP клиента, передаваемый панелью через защищенный заголовок GameAP v4.5.3.
+
+---
+
 ## 🌐 Доступ по URL и настройка веб-сервера
 
 ### Прямой доступ из коробки
-Страница мониторинга доступна по адресу вашего домена:
+Страница мониторинга доступна по каноническому короткому адресу вашего домена:
 ```
-https://<домен-вашей-панели>/api/plugins/monitoring/view
+https://<домен-вашей-панели>/api/plugins/monitoring
 ```
+*(Также для 100% обратной совместимости поддерживается классический адрес `/api/plugins/monitoring/view`).*
 - Страница открыта для посетителей и не требует авторизации.
 - Корректно работает через HTTPS.
+- Логотип в шапке страницы кликабелен и возвращает на главную страницу / сбрасывает фильтры.
 
 ### Красивый короткий URL (`/monitoring`)
 Чтобы игроки переходили по красивой короткой ссылке вида `https://<домен>/monitoring`, добавьте правило в настройки вашего веб-сервера:
@@ -124,11 +135,12 @@ https://<домен-вашей-панели>/api/plugins/monitoring/view
 
 ```nginx
 location = /monitoring {
-    rewrite ^ /api/plugins/monitoring/view break;
+    rewrite ^ /api/plugins/monitoring break;
     proxy_pass $gameap_backend; # Или http://127.0.0.1:8080
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Gameap-Client-Ip $remote_addr;
 }
 ```
 
@@ -137,7 +149,7 @@ location = /monitoring {
 
 ```caddy
 handle /monitoring {
-    rewrite * /api/plugins/monitoring/view
+    rewrite * /api/plugins/monitoring
     reverse_proxy localhost:8080
 }
 ```
@@ -147,7 +159,7 @@ handle /monitoring {
 
 ```apache
 RewriteEngine On
-RewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]
+RewriteRule "^monitoring$" "/api/plugins/monitoring" [PT]
 ```
 
 > **Примечание:** Статические файлы (`/plugins/web-monitoring/`) и маршруты API (`/api/plugins/monitoring/`) обрабатываются панелью GameAP автоматически.

@@ -10,6 +10,7 @@ import json
 import os
 import socketserver
 import time
+import urllib.parse
 
 PORT = 8050
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
@@ -232,16 +233,97 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=FRONTEND_DIR, **kwargs)
 
     def do_GET(self):
-        clean_path = self.path.split("?")[0].rstrip("/")
-        query_str = self.path.split("?")[1] if "?" in self.path else ""
+        parsed_url = urllib.parse.urlparse(self.path)
+        clean_path = parsed_url.path.rstrip("/")
+        query_str = parsed_url.query
+        parsed_query = urllib.parse.parse_qs(query_str)
+        action = parsed_query.get("action", [""])[0]
+
+        # DoS / Rate-limit simulation for testing backoff behavior
+        if "simulate_busy=1" in query_str:
+            self.send_response(503)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Retry-After", "5")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(b'{"error":"plugin is busy (simulated)"}')
+            return
+
+        if "simulate_ratelimit=1" in query_str:
+            self.send_response(429)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Retry-After", "8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(b'{"error":"too many requests (simulated rate-limit)"}')
+            return
+
+        # Serve static assets requested via GameAP plugin prefix /plugins/web-monitoring/
+        if clean_path.startswith("/plugins/web-monitoring/"):
+            rel_name = clean_path[len("/plugins/web-monitoring/"):].lstrip("/")
+            if rel_name and rel_name not in ("servers", "settings", "diagnostic"):
+                file_path = os.path.join(FRONTEND_DIR, rel_name)
+                if os.path.isfile(file_path):
+                    content_type = "application/octet-stream"
+                    if rel_name.endswith(".js"):
+                        content_type = "application/javascript; charset=utf-8"
+                    elif rel_name.endswith(".css"):
+                        content_type = "text/css; charset=utf-8"
+                    elif rel_name.endswith(".svg"):
+                        content_type = "image/svg+xml; charset=utf-8"
+                    elif rel_name.endswith(".json"):
+                        content_type = "application/json; charset=utf-8"
+                    elif rel_name.endswith(".html"):
+                        content_type = "text/html; charset=utf-8"
+
+                    with open(file_path, "rb") as f:
+                        data = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Cache-Control", "no-cache")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+
+        # Diagnostic endpoint emulation
+        is_diag_route = (
+            action == "diagnostic"
+            or clean_path in (
+                "/diagnostic",
+                "/api/plugins/monitoring/diagnostic",
+                "/api/plugins/monitorine/diagnostic",
+                "/plugins/web-monitoring/diagnostic"
+            )
+        )
+
+        if is_diag_route:
+            client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
+            diag = {
+                "plugin_id": "monitoring",
+                "version": "1.0.5",
+                "client_ip": client_ip,
+                "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
+                "servers_count": len(MOCK_SERVERS),
+                "settings": SETTINGS_CACHE
+            }
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(diag, ensure_ascii=False, indent=2).encode("utf-8"))
+            return
 
         # Emulate GameAP Plugin API route for servers
-        is_servers_route = clean_path in (
-            "/plugins/web-monitoring/servers",
-            "/api/plugins/monitoring/servers",
-            "/api/plugins/monitorine/servers",
-            "/api/plugins/bwbwb26fs5eje/servers"
-        ) or (clean_path in ("", "/") and "action=servers" in query_str)
+        is_servers_route = (
+            action == "servers"
+            or clean_path in (
+                "/plugins/web-monitoring/servers",
+                "/api/plugins/monitoring/servers",
+                "/api/plugins/monitorine/servers",
+                "/api/plugins/bwbwb26fs5eje/servers"
+            )
+        )
 
         if is_servers_route:
             self.send_response(200)
@@ -297,12 +379,15 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Emulate GameAP Plugin settings endpoint
-        is_settings_route = clean_path in (
-            "/api/plugins/monitoring/settings",
-            "/api/plugins/monitorine/settings",
-            "/api/plugins/bwbwb26fs5eje/settings",
-            "/plugins/web-monitoring/settings"
-        ) or (clean_path in ("", "/") and "action=settings" in query_str)
+        is_settings_route = (
+            action == "settings"
+            or clean_path in (
+                "/api/plugins/monitoring/settings",
+                "/api/plugins/monitorine/settings",
+                "/api/plugins/bwbwb26fs5eje/settings",
+                "/plugins/web-monitoring/settings"
+            )
+        )
 
         if is_settings_route:
             self.send_response(200)
@@ -320,19 +405,45 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(ADMIN_HTML.encode("utf-8"))
             return
 
+        # Serve public monitoring page directly at canonical short URL, legacy /view or root
+        if clean_path in ("", "/", "/index.html", "/api/plugins/monitoring", "/api/plugins/monitoring/view", "/api/plugins/monitorine", "/api/plugins/monitorine/view"):
+            index_file = os.path.join(FRONTEND_DIR, "index.html")
+            with open(index_file, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            initial_data = {
+                "servers": MOCK_SERVERS,
+                "version": "1.0.5"
+            }
+            injection = f"<script>window.INITIAL_DATA = {json.dumps(initial_data, ensure_ascii=False)};</script></head>"
+            content = content.replace("</head>", injection)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(content.encode("utf-8"))
+            return
+
         # Default static file serving from frontend directory
         return super().do_GET()
 
     def do_POST(self):
-        clean_path = self.path.split("?")[0].rstrip("/")
-        query_str = self.path.split("?")[1] if "?" in self.path else ""
+        parsed_url = urllib.parse.urlparse(self.path)
+        clean_path = parsed_url.path.rstrip("/")
+        query_str = parsed_url.query
+        parsed_query = urllib.parse.parse_qs(query_str)
+        action = parsed_query.get("action", [""])[0]
 
-        is_settings_route = clean_path in (
-            "/api/plugins/monitoring/settings",
-            "/api/plugins/monitorine/settings",
-            "/api/plugins/bwbwb26fs5eje/settings",
-            "/plugins/web-monitoring/settings"
-        ) or (clean_path in ("", "/") and "action=settings" in query_str)
+        is_settings_route = (
+            action == "settings"
+            or clean_path in (
+                "/api/plugins/monitoring/settings",
+                "/api/plugins/monitorine/settings",
+                "/api/plugins/bwbwb26fs5eje/settings",
+                "/plugins/web-monitoring/settings"
+            )
+        )
 
         if is_settings_route:
             content_length = int(self.headers.get("Content-Length", 0))

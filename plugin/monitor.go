@@ -77,8 +77,26 @@ func FetchAllServers(ctx context.Context) ([]PublicServerDTO, error) {
 	return list, nil
 }
 
+var (
+	cachedPublicResponse []byte
+	cachedPublicTime     time.Time
+	cachedPublicList     []PublicServerDTO
+)
+
+// InvalidateCache clears the in-memory response cache (e.g. after settings changes)
+func InvalidateCache() {
+	cachedPublicResponse = nil
+	cachedPublicTime = time.Time{}
+	cachedPublicList = nil
+}
+
 // FetchPublicServers queries GameAP server repository safely and returns JSON bytes
 func FetchPublicServers(ctx context.Context) ([]byte, error) {
+	// Micro-cache: Return cached response if under 4 seconds to protect GameAP queue during traffic spikes
+	if cachedPublicResponse != nil && time.Since(cachedPublicTime) < 4*time.Second {
+		return cachedPublicResponse, nil
+	}
+
 	all, err := FetchAllServers(ctx)
 	if err != nil {
 		return nil, err
@@ -114,7 +132,13 @@ func FetchPublicServers(ctx context.Context) ([]byte, error) {
 		Timestamp:    time.Now().Unix(),
 	}
 
-	return json.Marshal(res)
+	bytes, err := json.Marshal(res)
+	if err == nil {
+		cachedPublicResponse = bytes
+		cachedPublicTime = time.Now()
+		cachedPublicList = list
+	}
+	return bytes, err
 }
 
 // RunDiagnostic runs test calls to all host libraries and returns detailed diagnostic JSON

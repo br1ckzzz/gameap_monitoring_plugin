@@ -8,20 +8,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/plugins/web-monitoring/styles.css">
+  <link rel="stylesheet" href="/plugins/web-monitoring/styles.css?v=1.0.5">
 </head>
 <body>
   <div class="app-container">
     <!-- Header -->
     <header class="header">
       <div class="header-content">
-        <div class="brand">
+        <a href="./" class="brand" id="brand-link" title="Главная страница мониторинга">
           <div class="brand-icon">🎮</div>
           <div>
             <h1 class="brand-title" id="brand-title">GameAP Servers</h1>
             <p class="brand-subtitle" id="brand-subtitle">Онлайн мониторинг игровых серверов</p>
           </div>
-        </div>
+        </a>
 
         <div class="header-stats">
           <div class="stat-badge">
@@ -85,7 +85,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-content">
-        <span id="footer-brand">GameAP WebMonitoring Plugin • <a id="version-link" href="https://github.com/br1ckzzz/gameap_monitoring_plugin" target="_blank" rel="noopener" class="version-link">v1.0.4</a></span>
+        <span id="footer-brand">GameAP WebMonitoring Plugin • <a id="version-link" href="https://github.com/br1ckzzz/gameap_monitoring_plugin" target="_blank" rel="noopener" class="version-link">v1.0.5</a></span>
         <span class="auto-refresh-tag"><span id="auto-refresh-label">Автообновление:</span> <strong id="timer-text">15с</strong></span>
       </div>
     </footer>
@@ -94,6 +94,6 @@
   <!-- Toast notification -->
   <div id="toast" class="toast hidden">IP скопирован в буфер обмена!</div>
 
-  <script src="/plugins/web-monitoring/app.js"></script>
+  <script src="/plugins/web-monitoring/app.js?v=1.0.5"></script>
 </body>
 </html>

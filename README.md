@@ -83,7 +83,7 @@ gameap_monitoring_plugin/
 
 ### 1. Download or Build the Plugin Binary
 
-Download `web_monitoring.wasm` (v1.0.4) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
+Download `web_monitoring.wasm` (v1.0.5) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
 Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/lib/gameap/plugins/` or your configured `PLUGINS_DIR`).
 
 ### 2. Activate in GameAP
@@ -108,6 +108,15 @@ Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/li
 
 ---
 
+## 🛡️ GameAP v4.5.3 Hardening & Architectural Improvements
+
+Starting with **v1.0.5**, the plugin includes architectural optimizations specifically tailored for GameAP v4.5.3 serialized plugin routing:
+- **In-Memory RAM Micro-Cache (4s):** GameAP serializes all calls to a WASM module. During traffic spikes, the first request queries GameAP host services and caches the JSON response in RAM for 4 seconds. Subsequent queued requests are served immediately in 0.05ms, preventing `PLUGINS_ROUTES_MAX_QUEUE` exhaustion and HTTP 503 errors.
+- **Intelligent Client Backoff:** When GameAP returns HTTP `429 Too Many Requests` or `503 Service Unavailable`, the frontend respects the `Retry-After` header, delays the auto-refresh timer, and does not execute cascading retries.
+- **Trusted Client IP Detection:** The diagnostic endpoint automatically extracts the verified client IP from the `X-Gameap-Client-Ip` header passed by GameAP v4.5.3.
+
+---
+
 ## 🌐 Public URL & Web Server Configuration
 
 ### Out of the Box Access
@@ -115,11 +124,13 @@ Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/li
 The monitoring page is accessible on your domain:
 
 ```
-https://<your-gameap-domain>/api/plugins/monitoring/view
+https://<your-gameap-domain>/api/plugins/monitoring
 ```
 
+*(The legacy URL `/api/plugins/monitoring/view` is fully maintained for 100% backward compatibility).*
 - Fully public and requires no login or panel permissions.
 - Works automatically with HTTPS and existing domain configurations.
+- Clickable header brand logo smoothly navigates to home and clears filters.
 
 ### Clean Short URL (`/monitoring`)
 
@@ -131,11 +142,12 @@ Add this inside your existing GameAP `server { ... }` block (e.g. in `/etc/nginx
 
 ```nginx
 location = /monitoring {
-    rewrite ^ /api/plugins/monitoring/view break;
+    rewrite ^ /api/plugins/monitoring break;
     proxy_pass $gameap_backend; # Or http://127.0.0.1:8080
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Gameap-Client-Ip $remote_addr;
 }
 ```
 
@@ -145,7 +157,7 @@ Add this inside your domain block in your `Caddyfile`:
 
 ```caddy
 handle /monitoring {
-    rewrite * /api/plugins/monitoring/view
+    rewrite * /api/plugins/monitoring
     reverse_proxy localhost:8080
 }
 ```
@@ -156,7 +168,7 @@ Add this inside your `<VirtualHost *:443>` block or `.htaccess`:
 
 ```apache
 RewriteEngine On
-RewriteRule "^monitoring$" "/api/plugins/monitoring/view" [PT]
+RewriteRule "^monitoring$" "/api/plugins/monitoring" [PT]
 ```
 
 > **Note:** Static assets (`/plugins/web-monitoring/`) and API routes (`/api/plugins/monitoring/`) are handled automatically by GameAP.

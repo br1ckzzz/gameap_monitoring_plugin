@@ -20,7 +20,8 @@ const I18N = {
     emptyMsg: "По вашему запросу не найдено ни одного активного сервера",
     autoRefresh: "Автообновление:",
     secUnit: "с",
-    nextLang: "EN"
+    nextLang: "EN",
+    busyNotice: "Сервер перегружен (защита GameAP). Повтор через {sec} с"
   },
   en: {
     brandSubtitle: "Online Game Server Monitoring",
@@ -39,7 +40,8 @@ const I18N = {
     emptyMsg: "No active servers match your filter",
     autoRefresh: "Auto-refresh:",
     secUnit: "s",
-    nextLang: "RU"
+    nextLang: "RU",
+    busyNotice: "Server is busy (GameAP protection). Retrying in {sec} s"
   }
 };
 
@@ -214,16 +216,23 @@ function initPreloadedData() {
 
 // Determine API base path based on current window location
 function getApiEndpoint(route) {
-  const path = window.location.pathname || '';
-  const idx = path.indexOf('/view');
+  let path = window.location.pathname || '';
   const sep = route.includes('?') ? '&' : '?';
   const actionName = route.replace(/^\//, '').split('?')[0];
+
+  // Strip /view or /view/ if opened via legacy route
+  const idx = path.indexOf('/view');
   if (idx !== -1) {
-    const base = path.substring(0, idx);
-    return `${base}${route}${sep}action=${actionName}`;
+    path = path.substring(0, idx);
   }
-  // Fallbacks
-  return `/api/plugins/monitoring${route}${sep}action=${actionName}`;
+  path = path.replace(/\/+$/, '');
+
+  // If path is root or standalone HTML file, use canonical plugin endpoint
+  if (!path || path === '/' || path.endsWith('.html') || (!path.includes('monitoring') && !path.includes('plugins'))) {
+    path = '/api/plugins/monitoring';
+  }
+
+  return `${path}${route}${sep}action=${actionName}`;
 }
 
 async function fetchServers() {
@@ -231,86 +240,147 @@ async function fetchServers() {
     setLoading(true);
   }
   
-  let loadedData = null;
-  const primaryEndpoint = getApiEndpoint('/servers');
-  const fallbackEndpoint = '/api/plugins/monitorine/servers';
-  const fallbackEndpoint2 = '/plugins/web-monitoring/servers';
+  try {
+    let loadedData = null;
+    const primaryEndpoint = getApiEndpoint('/servers');
+    const directEndpoint = '/api/plugins/monitoring?action=servers';
+    const fallbackEndpoint = '/api/plugins/monitorine/servers';
+    const fallbackEndpoint2 = '/plugins/web-monitoring/servers';
 
-  // Helper to attempt fetch from an endpoint
-  async function tryFetch(url) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.servers)) {
-          return data.servers;
-        }
-      }
-    } catch (err) {
-      console.warn(`Fetch error for ${url}:`, err);
+    function handleRateLimit(retrySec) {
+      console.warn(`GameAP returned 429/503, backing off for ${retrySec}s`);
+      countdownSeconds = retrySec + 2;
+      updateTimerDisplay();
+      showToast(t('busyNotice', { sec: retrySec }));
     }
-    return null;
-  }
 
-  // 1. Try primary endpoint
-  loadedData = await tryFetch(primaryEndpoint);
+    // Helper to attempt fetch from an endpoint
+    async function tryFetch(url) {
+      try {
+        const controller = new AbortController();
+        // Synchronized with GameAP v4.5.3 PLUGINS_ROUTES_QUEUE_TIMEOUT (10s)
+        const timeoutId = setTimeout(() => controller.abort(), 9500);
+        const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+        clearTimeout(timeoutId);
 
-  // 2. If primary failed, try monitorine canonical endpoint
-  if (!loadedData && primaryEndpoint !== fallbackEndpoint) {
-    loadedData = await tryFetch(fallbackEndpoint);
-  }
-
-  // 3. Try legacy static plugin endpoint
-  if (!loadedData && primaryEndpoint !== fallbackEndpoint2) {
-    loadedData = await tryFetch(fallbackEndpoint2);
-  }
-
-  // 3. Fallback to preloaded INITIAL_DATA if present
-  if ((!loadedData || loadedData.length === 0) && window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.servers) && window.INITIAL_DATA.servers.length > 0) {
-    loadedData = window.INITIAL_DATA.servers;
-  }
-
-  // 4. Fallback to localStorage cached servers from Admin panel
-  if (!loadedData || loadedData.length === 0) {
-    try {
-      const cached = localStorage.getItem('web_monitoring_cached_servers');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          loadedData = parsed;
+        // Handle GameAP v4.5.3 DoS protection and rate-limiting
+        if (res.status === 429 || res.status === 503) {
+          let retrySec = 5;
+          const retryHeader = res.headers.get('Retry-After');
+          if (retryHeader) {
+            const parsed = parseInt(retryHeader, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              retrySec = parsed;
+            }
+          } else if (res.status === 429) {
+            retrySec = 10;
+          }
+          return { rateLimited: true, status: res.status, retryAfter: retrySec };
         }
-      }
-    } catch (_) {}
-  }
 
-  // 5. Fallback to settings payload cache
-  if (!loadedData || loadedData.length === 0) {
-    try {
-      const sSaved = localStorage.getItem('web_monitoring_settings');
-      if (sSaved) {
-        const pSettings = JSON.parse(sSaved);
-        if (pSettings && Array.isArray(pSettings.cached_servers) && pSettings.cached_servers.length > 0) {
-          loadedData = pSettings.cached_servers;
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.servers)) {
+            return { success: true, servers: data.servers };
+          }
         }
+      } catch (err) {
+        console.warn(`Fetch error for ${url}:`, err);
       }
-    } catch (_) {}
-  }
+      return null;
+    }
 
-  if (loadedData && loadedData.length > 0) {
-    allServers = loadedData;
-    setError(false);
-  } else if (allServers.length === 0) {
-    console.warn('No active servers returned, showing fallback demo servers');
-    allServers = DEMO_SERVERS;
+    // 1. Try primary endpoint
+    const primaryRes = await tryFetch(primaryEndpoint);
+    if (primaryRes && primaryRes.rateLimited) {
+      handleRateLimit(primaryRes.retryAfter);
+      return;
+    }
+    if (primaryRes && primaryRes.success) {
+      loadedData = primaryRes.servers;
+    }
+
+    // 2. If primary failed, try direct canonical action endpoint
+    if (!loadedData && primaryEndpoint !== directEndpoint) {
+      const dirRes = await tryFetch(directEndpoint);
+      if (dirRes && dirRes.rateLimited) {
+        handleRateLimit(dirRes.retryAfter);
+        return;
+      }
+      if (dirRes && dirRes.success) {
+        loadedData = dirRes.servers;
+      }
+    }
+
+    // 3. If still no data, try fallback endpoints (only on 404/network error, NOT 429/503)
+    if (!loadedData && primaryEndpoint !== fallbackEndpoint) {
+      const fb1 = await tryFetch(fallbackEndpoint);
+      if (fb1 && fb1.rateLimited) {
+        handleRateLimit(fb1.retryAfter);
+        return;
+      }
+      if (fb1 && fb1.success) {
+        loadedData = fb1.servers;
+      }
+    }
+
+    // 4. Try legacy static plugin endpoint
+    if (!loadedData && primaryEndpoint !== fallbackEndpoint2) {
+      const fb2 = await tryFetch(fallbackEndpoint2);
+      if (fb2 && fb2.rateLimited) {
+        handleRateLimit(fb2.retryAfter);
+        return;
+      }
+      if (fb2 && fb2.success) {
+        loadedData = fb2.servers;
+      }
+    }
+
+    // 5. Fallback to preloaded INITIAL_DATA if present
+    if ((!loadedData || loadedData.length === 0) && window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.servers) && window.INITIAL_DATA.servers.length > 0) {
+      loadedData = window.INITIAL_DATA.servers;
+    }
+
+    // 6. Fallback to localStorage cached servers from Admin panel
+    if (!loadedData || loadedData.length === 0) {
+      try {
+        const cached = localStorage.getItem('web_monitoring_cached_servers');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            loadedData = parsed;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 7. Fallback to settings payload cache
+    if (!loadedData || loadedData.length === 0) {
+      try {
+        const sSaved = localStorage.getItem('web_monitoring_settings');
+        if (sSaved) {
+          const pSettings = JSON.parse(sSaved);
+          if (pSettings && Array.isArray(pSettings.cached_servers) && pSettings.cached_servers.length > 0) {
+            loadedData = pSettings.cached_servers;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (loadedData && loadedData.length > 0) {
+      allServers = loadedData;
+      setError(false);
+    } else if (allServers.length === 0) {
+      console.warn('No active servers returned, showing fallback demo servers');
+      allServers = DEMO_SERVERS;
+    }
+  } catch (outerErr) {
+    console.error('fetchServers error:', outerErr);
+  } finally {
+    renderAll();
+    setLoading(false);
+    resetTimer();
   }
-  
-  renderAll();
-  setLoading(false);
-  resetTimer();
 }
 
 function renderAll() {
@@ -526,8 +596,7 @@ function startTimer() {
 }
 
 function resetTimer() {
-  countdownSeconds = AUTO_REFRESH_SECONDS;
-  updateTimerDisplay();
+  startTimer();
 }
 
 function updateTimerDisplay() {
@@ -546,7 +615,32 @@ if (searchInput) {
 
 if (refreshBtn) {
   refreshBtn.addEventListener('click', () => {
+    resetTimer();
     fetchServers();
+  });
+}
+
+const brandLink = document.getElementById('brand-link');
+if (brandLink) {
+  brandLink.addEventListener('click', (e) => {
+    // If URL has search params or filters are active, smooth reset
+    if (window.location.search || searchQuery || selectedGame !== 'all') {
+      e.preventDefault();
+      searchQuery = '';
+      if (searchInput) searchInput.value = '';
+      selectedGame = 'all';
+      const allBtn = document.getElementById('all-games-btn');
+      if (allBtn) {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        allBtn.classList.add('active');
+      }
+      if (window.history && window.history.pushState) {
+        const cleanUrl = window.location.pathname.replace(/\/view\/?$/, '');
+        window.history.pushState(null, '', cleanUrl || '/');
+      }
+      renderServers();
+      updateStats();
+    }
   });
 }
 
@@ -621,5 +715,5 @@ initTheme();
 initLanguage();
 initPreloadedData();
 initCustomBranding();
-fetchServers();
 startTimer();
+fetchServers();

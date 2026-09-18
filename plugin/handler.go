@@ -64,7 +64,7 @@ func (p *WebMonitoringPlugin) GetHTTPRoutes(
 				Methods:      []string{"GET", "POST"},
 				RequiresAuth: false,
 				AdminOnly:    false,
-				Description:  "Root fallback route for GameAP Base32 path normalization",
+				Description:  "Canonical short public monitoring route (/api/plugins/monitoring)",
 			},
 			{
 				Path:         "/servers",
@@ -78,7 +78,7 @@ func (p *WebMonitoringPlugin) GetHTTPRoutes(
 				Methods:      []string{"GET"},
 				RequiresAuth: false,
 				AdminOnly:    false,
-				Description:  "Public web monitoring page",
+				Description:  "Public web monitoring page (legacy compatibility alias)",
 			},
 			{
 				Path:         "/settings",
@@ -142,7 +142,7 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 				case "settings":
 					return p.handleSettings(ctx, req)
 				case "diagnostic":
-					return p.handleDiagnostic(ctx)
+					return p.handleDiagnostic(ctx, req)
 				case "view":
 					return p.handleView(ctx)
 				}
@@ -171,7 +171,7 @@ func (p *WebMonitoringPlugin) HandleHTTPRequest(
 	case "/settings":
 		return p.handleSettings(ctx, req)
 	case "/diagnostic":
-		return p.handleDiagnostic(ctx)
+		return p.handleDiagnostic(ctx, req)
 	default:
 		return &pluginproto.HTTPResponse{
 			StatusCode: int32(http.StatusNotFound),
@@ -311,6 +311,12 @@ func (p *WebMonitoringPlugin) handleView(ctx context.Context) (*pluginproto.HTTP
 			}
 		}
 
+		// Preload servers into HTML for instant 0ms first render (no spinner)
+		if pubBytes, err := FetchPublicServers(ctx); err == nil && len(pubBytes) > 0 {
+			preloadedScript := fmt.Sprintf("<script>window.INITIAL_DATA = %s;</script>\n</head>", string(pubBytes))
+			pageContent = strings.Replace(pageContent, "</head>", preloadedScript, 1)
+		}
+
 		// Dynamically set footer version link to PluginVersion
 		pageContent = strings.Replace(pageContent, "v1.0.0", "v"+PluginVersion, 1)
 	}()
@@ -352,6 +358,7 @@ func (p *WebMonitoringPlugin) handleSettings(ctx context.Context, req *pluginpro
 				Body: []byte(fmt.Sprintf(`{"success":false,"error":%q}`, saveErr.Error())),
 			}, nil
 		}
+		InvalidateCache()
 		return &pluginproto.HTTPResponse{
 			StatusCode: int32(http.StatusOK),
 			Headers: map[string]string{
@@ -429,8 +436,24 @@ func (p *WebMonitoringPlugin) handleSettings(ctx context.Context, req *pluginpro
 	}, nil
 }
 
-func (p *WebMonitoringPlugin) handleDiagnostic(ctx context.Context) (*pluginproto.HTTPResponse, error) {
+func (p *WebMonitoringPlugin) handleDiagnostic(ctx context.Context, req *pluginproto.HTTPRequest) (*pluginproto.HTTPResponse, error) {
+	clientIP := ""
+	trustedDetected := false
+	if req != nil && req.Headers != nil {
+		if ip, ok := req.Headers["X-Gameap-Client-Ip"]; ok && ip != "" {
+			clientIP = ip
+			trustedDetected = true
+		} else if xff, ok := req.Headers["X-Forwarded-For"]; ok && xff != "" {
+			clientIP = xff
+		} else if xri, ok := req.Headers["X-Real-IP"]; ok && xri != "" {
+			clientIP = xri
+		}
+	}
+
 	diag := RunDiagnostic(ctx)
+	diag["client_ip"] = clientIP
+	diag["trusted_header_detected"] = trustedDetected
+
 	bytes, _ := json.MarshalIndent(diag, "", "  ")
 	return &pluginproto.HTTPResponse{
 		StatusCode: int32(http.StatusOK),
