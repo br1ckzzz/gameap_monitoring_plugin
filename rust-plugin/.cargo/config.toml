@@ -1,6 +1,11 @@
+[target.wasm32-wasip1]
+rustflags = [
+    "-C", "link-arg=--export=malloc",
+    "-C", "link-arg=--export=free",
+]
+
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"
-rustflags = ["-C", "linker=rust-lld"]
 
 [target.x86_64-pc-windows-gnu]
 linker = "rust-lld"
