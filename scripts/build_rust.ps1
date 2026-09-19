@@ -30,7 +30,6 @@ if (Get-Command $CARGO_CMD -ErrorAction SilentlyContinue) {
         $OUTPUT = Join-Path $ROOT_DIR "web_monitoring.wasm"
 
         if (Test-Path $ARTIFACT) {
-            # Check for wasm-opt to shrink binary even further
             if (Get-Command "wasm-opt" -ErrorAction SilentlyContinue) {
                 Write-Host "-> Optimizing with wasm-opt -Oz..." -ForegroundColor Yellow
                 wasm-opt -Oz $ARTIFACT -o $OUTPUT
@@ -38,8 +37,7 @@ if (Get-Command $CARGO_CMD -ErrorAction SilentlyContinue) {
                 Copy-Item -Path $ARTIFACT -Destination $OUTPUT -Force
             }
 
-            $size = (Get-Item $OUTPUT).Length / 1MB
-            Write-Host ("Build successful! Output: {0} ({1:N2} MB)" -f $OUTPUT, $size) -ForegroundColor Green
+            Write-Host ("Build successful! Output: {0}" -f $OUTPUT) -ForegroundColor Green
         }
     } finally {
         Pop-Location

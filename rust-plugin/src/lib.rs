@@ -1,4 +1,4 @@
-//! GameAP WebMonitoring: Ultra-lightweight WebAssembly Plugin written in Rust.
+//! GameAP WebMonitoring: WebAssembly Plugin written in Rust.
 //!
 //! Provides public live monitoring endpoints, admin bundle, static assets,
 //! and server event hooks with high-performance memory model and Anti-DoS caching.

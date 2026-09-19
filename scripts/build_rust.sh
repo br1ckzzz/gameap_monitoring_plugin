@@ -26,8 +26,7 @@ if command -v cargo &> /dev/null; then
             cp "$ARTIFACT" "$OUTPUT"
         fi
 
-        SIZE=$(ls -lh "$OUTPUT" | awk '{print $5}')
-        echo "Build successful! Output: $OUTPUT ($SIZE)"
+        echo "Build successful! Output: $OUTPUT"
     fi
 elif command -v docker &> /dev/null; then
     echo "-> Local Cargo not detected. Compiling inside rust:alpine container..."
