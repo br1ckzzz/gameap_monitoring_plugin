@@ -1,11 +1,12 @@
-//! Embedded frontend assets compiled directly into the WASM binary.
+//! Embedded assets compiled directly into the WASM binary.
 //!
-//! Replaces runtime disk reads with zero-copy binary static slices.
+//! Autonomous self-contained assets with zero runtime disk reads.
 
-pub const INDEX_HTML: &[u8] = include_bytes!("../../frontend/index.html");
-pub const STYLES_CSS: &[u8] = include_bytes!("../../frontend/styles.css");
-pub const APP_JS: &[u8] = include_bytes!("../../frontend/app.js");
-pub const ADMIN_BUNDLE_JS: &[u8] = include_bytes!("../../frontend/admin_bundle.js");
+pub const INDEX_HTML: &[u8] = include_bytes!("../assets/index.html");
+pub const STYLES_CSS: &[u8] = include_bytes!("../assets/styles.css");
+pub const APP_JS: &[u8] = include_bytes!("../assets/app.js");
+pub const ADMIN_BUNDLE_JS: &[u8] = include_bytes!("../assets/admin_bundle.js");
+pub const ICON_PNG: &[u8] = include_bytes!("../assets/icon.png");
 
 /// Represents an asset file contributed to GameAP static routes.
 pub struct AssetFile {
@@ -14,7 +15,7 @@ pub struct AssetFile {
 }
 
 /// Returns the collection of static assets exposed to web visitors.
-pub fn get_frontend_assets() -> [AssetFile; 3] {
+pub fn get_frontend_assets() -> [AssetFile; 4] {
     [
         AssetFile {
             path: "plugins/web-monitoring/index.html",
@@ -27,6 +28,10 @@ pub fn get_frontend_assets() -> [AssetFile; 3] {
         AssetFile {
             path: "plugins/web-monitoring/app.js",
             content: APP_JS,
+        },
+        AssetFile {
+            path: "plugins/web-monitoring/icon.png",
+            content: ICON_PNG,
         },
     ]
 }

@@ -78,6 +78,6 @@ pub fn get_admin_bundle() -> &'static [u8] {
 }
 
 /// Returns static frontend assets.
-pub fn get_assets_list() -> [crate::assets::AssetFile; 3] {
+pub fn get_assets_list() -> [crate::assets::AssetFile; 4] {
     get_frontend_assets()
 }

@@ -48,3 +48,7 @@ desktop.ini
 *.local.md
 docs/RUST_MIGRATION.md
 docs/RUST_MIGRATION.local.md
+
+# Legacy Go sources
+legacy-go/
+go-legacy/

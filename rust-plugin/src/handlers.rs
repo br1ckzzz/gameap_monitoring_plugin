@@ -70,6 +70,11 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
         "/view" => handle_view(),
         "/settings" => handle_settings(req),
         "/diagnostic" => handle_diagnostic(req),
+        "/icon.png" | "/plugins/web-monitoring/icon.png" => HTTPResponseData {
+            status_code: 200,
+            content_type: "image/png",
+            body: crate::assets::ICON_PNG.to_vec(),
+        },
         _ => HTTPResponseData {
             status_code: 404,
             content_type: "application/json",

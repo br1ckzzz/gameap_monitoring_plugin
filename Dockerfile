@@ -1,28 +1,21 @@
-# Multi-stage Docker build for GameAP WebMonitoring WASM Plugin
-FROM golang:1.23-alpine AS builder
+# Multi-stage Docker build for GameAP WebMonitoring WASM Plugin (Rust wasm32-wasip1)
+FROM rust:alpine AS builder
 
 WORKDIR /src
 
-# Install git and build tools
-RUN apk add --no-cache git make
+# Install git and required dependencies
+RUN apk add --no-cache git
 
-# Copy go module definitions
-COPY plugin/go.mod plugin/go.sum ./plugin/
-WORKDIR /src/plugin
+# Add WASI target
+RUN rustup target add wasm32-wasip1
 
-# Copy source code and frontend assets
-WORKDIR /src
-COPY frontend/ ./frontend/
-COPY plugin/ ./plugin/
-RUN mkdir -p ./plugin/assets && cp -r ./frontend/* ./plugin/assets/
+# Copy rust crate files
+COPY rust-plugin/ ./rust-plugin/
 
-WORKDIR /src/plugin
+WORKDIR /src/rust-plugin
 
-# Compile Go code to WebAssembly WASI target
-ENV GOOS=wasip1
-ENV GOARCH=wasm
-
-RUN go build -buildmode=c-shared -trimpath -ldflags="-s -w" -o /out/web_monitoring.wasm .
+# Compile Rust crate to WebAssembly
+RUN cargo build --target wasm32-wasip1 --release
 
 FROM scratch AS artifact
-COPY --from=builder /out/web_monitoring.wasm /web_monitoring.wasm
+COPY --from=builder /src/rust-plugin/target/wasm32-wasip1/release/gameap_web_monitoring.wasm /web_monitoring.wasm
