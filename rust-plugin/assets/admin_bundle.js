@@ -82,6 +82,15 @@ export const webMonitoringPlugin = {
                             customHeader: '📝 Пользовательский HTML в шапку',
                             customHeaderHelp: 'Вы можете добавить баннеры, ссылки на Discord/Telegram или логотип сообщества.',
                             customHeaderPlaceholder: '<!-- Например: -->\n<div style="text-align: center; margin-bottom: 20px;">\n  <a href="https://discord.gg/..." style="color: #5865F2;">Наш Discord</a>\n</div>',
+                            botApiSection: '🤖 Интеграция с Discord / Bot API',
+                            botApiEnabledLabel: 'Разрешить доступ для внешних ботов (Bot API)',
+                            botApiEnabledHelp: 'Включает защищённый доступ по токену для внешних ботов (например, Discord-бота GameAP_WebMonBot).',
+                            botApiTokenLabel: 'Секретный токен доступа (API Token)',
+                            botApiTokenPlaceholder: 'Нажмите «Сгенерировать» или введите токен',
+                            botApiTokenHelp: 'Бот передаёт этот ключ в HTTP-заголовке X-WebMon-Token или параметре ?token=. Храните его в секрете!',
+                            generateTokenBtn: 'Сгенерировать токен',
+                            copyTokenBtn: 'Копировать токен',
+                            copiedToken: '✓ Скопировано!',
                             saveBtn: 'Сохранить настройки',
                             savingBtn: 'Сохранение...',
                             saveSuccess: '✓ Настройки успешно сохранены!',
@@ -143,6 +152,15 @@ export const webMonitoringPlugin = {
                             customHeader: '📝 Custom Header HTML',
                             customHeaderHelp: 'You can add banners, links to Discord/Telegram, or community logos.',
                             customHeaderPlaceholder: '<!-- Example: -->\n<div style="text-align: center; margin-bottom: 20px;">\n  <a href="https://discord.gg/..." style="color: #5865F2;">Join Discord</a>\n</div>',
+                            botApiSection: '🤖 Discord / Bot API Integration',
+                            botApiEnabledLabel: 'Allow access for external bots (Bot API)',
+                            botApiEnabledHelp: 'Enables token-protected access for external bots (e.g., Discord bot GameAP_WebMonBot).',
+                            botApiTokenLabel: 'Secret Access Token (API Token)',
+                            botApiTokenPlaceholder: 'Click Generate or enter your token',
+                            botApiTokenHelp: 'The bot transmits this key in the X-WebMon-Token header or ?token= param. Keep it secret!',
+                            generateTokenBtn: 'Generate Token',
+                            copyTokenBtn: 'Copy Token',
+                            copiedToken: '✓ Copied!',
                             saveBtn: 'Save Settings',
                             savingBtn: 'Saving...',
                             saveSuccess: '✓ Settings saved successfully!',
@@ -176,6 +194,9 @@ export const webMonitoringPlugin = {
                     const addressKey = ref('');
                     const logoUrl = ref('');
                     const faviconUrl = ref('');
+                    const botApiEnabled = ref(false);
+                    const botApiToken = ref('');
+                    const copiedToken = ref(false);
                     const serverOrder = ref([]);
                     const draggedServerId = ref(null);
                     const hiddenServers = ref([]);
@@ -201,6 +222,41 @@ export const webMonitoringPlugin = {
                         try {
                             localStorage.setItem('web_monitoring_admin_instructions_open', showInstructions.value);
                         } catch (_) {}
+                    };
+
+                    const generateBotToken = () => {
+                        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                        let res = 'wm_';
+                        if (window.crypto && window.crypto.getRandomValues) {
+                            const array = new Uint8Array(28);
+                            window.crypto.getRandomValues(array);
+                            for (let i = 0; i < array.length; i++) {
+                                res += chars[array[i] % chars.length];
+                            }
+                        } else {
+                            for (let i = 0; i < 28; i++) {
+                                res += chars.charAt(Math.floor(Math.random() * chars.length));
+                            }
+                        }
+                        botApiToken.value = res;
+                    };
+
+                    const copyBotToken = async () => {
+                        if (!botApiToken.value) return;
+                        try {
+                            await navigator.clipboard.writeText(botApiToken.value);
+                            copiedToken.value = true;
+                            setTimeout(() => { copiedToken.value = false; }, 2500);
+                        } catch (e) {
+                            const input = document.createElement('input');
+                            input.value = botApiToken.value;
+                            document.body.appendChild(input);
+                            input.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(input);
+                            copiedToken.value = true;
+                            setTimeout(() => { copiedToken.value = false; }, 2500);
+                        }
                     };
 
                     const applyServerSort = (list, order) => {
@@ -893,6 +949,8 @@ export const webMonitoringPlugin = {
                                 if (localData.address_key !== undefined) addressKey.value = localData.address_key;
                                 if (localData.logo_url !== undefined) logoUrl.value = localData.logo_url;
                                 if (localData.favicon_url !== undefined) faviconUrl.value = localData.favicon_url;
+                                if (localData.bot_api_enabled !== undefined) botApiEnabled.value = localData.bot_api_enabled;
+                                if (localData.bot_api_token !== undefined) botApiToken.value = localData.bot_api_token;
                                 if (Array.isArray(localData.server_order)) serverOrder.value = localData.server_order;
                                 if (Array.isArray(localData.hidden_servers)) hiddenServers.value = localData.hidden_servers;
                                 if (Array.isArray(localData.cached_servers) && localData.cached_servers.length > 0) {
@@ -924,6 +982,8 @@ export const webMonitoringPlugin = {
                                         if (data.address_key !== undefined) addressKey.value = data.address_key;
                                         if (data.logo_url !== undefined) logoUrl.value = data.logo_url;
                                         if (data.favicon_url !== undefined) faviconUrl.value = data.favicon_url;
+                                        if (data.bot_api_enabled !== undefined) botApiEnabled.value = data.bot_api_enabled;
+                                        if (data.bot_api_token !== undefined) botApiToken.value = data.bot_api_token;
                                         if (Array.isArray(data.server_order)) serverOrder.value = data.server_order;
                                         if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
 
@@ -957,6 +1017,8 @@ export const webMonitoringPlugin = {
                                 address_key: addressKey.value.trim(),
                                 logo_url: logoUrl.value.trim(),
                                 favicon_url: faviconUrl.value.trim(),
+                                bot_api_enabled: botApiEnabled.value,
+                                bot_api_token: botApiToken.value.trim(),
                                 server_order: serversList.value.map(s => s.id),
                                 hidden_servers: hiddenServers.value,
                                 cached_servers: servers
@@ -994,6 +1056,8 @@ export const webMonitoringPlugin = {
                             address_key: addressKey.value.trim(),
                             logo_url: logoUrl.value.trim(),
                             favicon_url: faviconUrl.value.trim(),
+                            bot_api_enabled: botApiEnabled.value,
+                            bot_api_token: botApiToken.value.trim(),
                             server_order: serversList.value.map(s => s.id),
                             hidden_servers: hiddenServers.value,
                             cached_servers: serversList.value
@@ -1328,6 +1392,74 @@ export const webMonitoringPlugin = {
                                         ]) : null
                                     ]),
                                     h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('faviconUrlHelp'))
+                                ])
+                            ])
+                        ]),
+
+                        // Bot API Integration Card
+                        h('div', { class: 'wm-card' }, [
+                            h('h3', { class: 'wm-title' }, t('botApiSection')),
+                            h('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
+                                // Checkbox: Allow external bots
+                                h('label', {
+                                    style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;'
+                                }, [
+                                    h('input', {
+                                        type: 'checkbox',
+                                        checked: botApiEnabled.value,
+                                        onChange: (e) => {
+                                            botApiEnabled.value = e.target.checked;
+                                            if (botApiEnabled.value && !botApiToken.value) {
+                                                generateBotToken();
+                                            }
+                                        },
+                                        style: 'width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--wm-primary);'
+                                    }),
+                                    h('div', [
+                                        h('span', { style: 'font-size: 14px; font-weight: 600; color: var(--wm-text); display: block;' }, t('botApiEnabledLabel')),
+                                        h('p', { style: 'font-size: 12px; color: var(--wm-text-muted); margin: 3px 0 0 0;' }, t('botApiEnabledHelp'))
+                                    ])
+                                ]),
+
+                                // Secret API Token input and buttons
+                                h('div', {
+                                    style: `display: flex; flex-direction: column; gap: 6px; transition: opacity 0.2s ease; ${botApiEnabled.value ? '' : 'opacity: 0.55;'}`
+                                }, [
+                                    h('label', { class: 'wm-label', title: t('botApiTokenLabel') }, t('botApiTokenLabel')),
+                                    h('div', { style: 'display: flex; gap: 10px; flex-wrap: wrap; align-items: center;' }, [
+                                        h('div', { style: 'flex: 1; min-width: 260px;' }, [
+                                            h('input', {
+                                                type: 'text',
+                                                value: botApiToken.value,
+                                                placeholder: t('botApiTokenPlaceholder'),
+                                                onInput: (e) => { botApiToken.value = e.target.value; },
+                                                class: 'wm-input',
+                                                style: 'font-family: monospace; font-size: 13px;'
+                                            })
+                                        ]),
+                                        h('button', {
+                                            type: 'button',
+                                            onClick: generateBotToken,
+                                            class: 'wm-btn-refresh',
+                                            style: 'height: 42px; padding: 0 16px; font-weight: 600;',
+                                            title: t('generateTokenBtn')
+                                        }, [
+                                            h('i', { class: 'fas fa-dice', style: 'margin-right: 6px;' }),
+                                            t('generateTokenBtn')
+                                        ]),
+                                        h('button', {
+                                            type: 'button',
+                                            onClick: copyBotToken,
+                                            disabled: !botApiToken.value,
+                                            class: 'wm-copy-btn',
+                                            style: 'height: 42px; padding: 0 16px; font-weight: 600; margin: 0;',
+                                            title: t('copyTokenBtn')
+                                        }, [
+                                            h('i', { class: copiedToken.value ? 'fas fa-check' : 'fas fa-copy', style: 'margin-right: 6px;' }),
+                                            copiedToken.value ? t('copiedToken') : t('copyTokenBtn')
+                                        ])
+                                    ]),
+                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('botApiTokenHelp'))
                                 ])
                             ])
                         ]),

@@ -19,6 +19,11 @@ if (-not (Get-Command "cargo" -ErrorAction SilentlyContinue)) {
         $CARGO_CMD = $USER_CARGO
     }
 }
+$FRONTEND_BUNDLE = Join-Path $ROOT_DIR "frontend\admin_bundle.js"
+$ASSETS_BUNDLE = Join-Path $RUST_DIR "assets\admin_bundle.js"
+if (Test-Path $FRONTEND_BUNDLE) {
+    Copy-Item -Path $FRONTEND_BUNDLE -Destination $ASSETS_BUNDLE -Force
+}
 
 if (Get-Command $CARGO_CMD -ErrorAction SilentlyContinue) {
     Push-Location $RUST_DIR

@@ -50,6 +50,20 @@ pub const HTTP_ROUTES: &[HTTPRouteDescriptor] = &[
         description: "Get public list of active servers",
     },
     HTTPRouteDescriptor {
+        path: "/api/servers",
+        methods: &["GET"],
+        requires_auth: false,
+        admin_only: false,
+        description: "Bot API endpoint for external Discord and monitoring bots",
+    },
+    HTTPRouteDescriptor {
+        path: "/bot/servers",
+        methods: &["GET"],
+        requires_auth: false,
+        admin_only: false,
+        description: "Bot API endpoint alias for external monitoring bots",
+    },
+    HTTPRouteDescriptor {
         path: "/view",
         methods: &["GET"],
         requires_auth: false,

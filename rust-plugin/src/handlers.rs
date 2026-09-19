@@ -30,8 +30,54 @@ struct AdminSettingsResponse {
     pub server_order: Vec<u64>,
     pub logo_url: String,
     pub favicon_url: String,
+    pub bot_api_enabled: bool,
+    pub bot_api_token: String,
     pub servers: Vec<PublicServerDTO>,
     pub all_servers: Vec<PublicServerDTO>,
+}
+
+fn get_header_ignore_case<'a>(headers: &'a HashMap<String, String>, key: &str) -> Option<&'a String> {
+    headers.iter().find_map(|(k, v)| {
+        if k.eq_ignore_ascii_case(key) {
+            Some(v)
+        } else {
+            None
+        }
+    })
+}
+
+fn extract_auth_token(req: &HttpRequest) -> Option<String> {
+    if let Some(token) = get_header_ignore_case(&req.headers, "X-WebMon-Token") {
+        let trimmed = token.trim();
+        if !trimmed.is_empty() {
+            return Some(trimmed.to_string());
+        }
+    }
+    if let Some(auth) = get_header_ignore_case(&req.headers, "Authorization") {
+        if let Some(stripped) = auth.strip_prefix("Bearer ") {
+            let trimmed = stripped.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+    }
+    if let Some(vals) = req.query_params.get("token") {
+        if let Some(first) = vals.values.first() {
+            let trimmed = first.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+    }
+    if let Some(vals) = req.query_params.get("api_token") {
+        if let Some(first) = vals.values.first() {
+            let trimmed = first.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+    }
+    None
 }
 
 /// Dispatches HTTP requests matching Go's `HandleHTTPRequest` router.
@@ -66,7 +112,7 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     }
 
     match path {
-        "/servers" => handle_servers(req),
+        "/servers" | "/api/servers" | "/bot/servers" => handle_servers(req),
         "/view" => handle_view(),
         "/settings" => handle_settings(req),
         "/diagnostic" => handle_diagnostic(req),
@@ -83,8 +129,37 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     }
 }
 
-/// Serves public server list with Anti-DoS micro-cache or all servers for admin.
+/// Serves public server list with Anti-DoS micro-cache or all servers for admin / bot API.
 fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
+    let settings = get_settings();
+    let path = req.path.trim_end_matches('/');
+    let is_explicit_bot_endpoint = path.ends_with("/api/servers") || path.ends_with("/bot/servers");
+    let provided_token = extract_auth_token(req);
+
+    // Validate bot API authentication if requested on bot endpoints or with token
+    if is_explicit_bot_endpoint || provided_token.is_some() {
+        if !settings.bot_api_enabled {
+            return HTTPResponseData {
+                status_code: 403,
+                content_type: "application/json; charset=utf-8",
+                body: br#"{"success":false,"error":"Bot API is disabled in plugin settings"}"#.to_vec(),
+            };
+        }
+
+        if !settings.bot_api_token.is_empty() {
+            match provided_token {
+                Some(ref token) if token == &settings.bot_api_token => {},
+                _ => {
+                    return HTTPResponseData {
+                        status_code: 401,
+                        content_type: "application/json; charset=utf-8",
+                        body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+                    };
+                }
+            }
+        }
+    }
+
     let mut show_all = false;
     if let Some(vals) = req.query_params.get("all") {
         if let Some(first) = vals.values.first() {
@@ -245,6 +320,8 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
         server_order: settings.server_order,
         logo_url: settings.logo_url.unwrap_or_default(),
         favicon_url: settings.favicon_url.unwrap_or_default(),
+        bot_api_enabled: settings.bot_api_enabled,
+        bot_api_token: settings.bot_api_token,
         servers: all_servers.clone(),
         all_servers,
     };

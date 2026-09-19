@@ -53,6 +53,10 @@ pub struct PluginSettings {
     pub logo_url: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub favicon_url: Option<String>,
+    #[serde(default)]
+    pub bot_api_enabled: bool,
+    #[serde(default)]
+    pub bot_api_token: String,
 }
 
 impl Default for PluginSettings {
@@ -71,6 +75,8 @@ impl Default for PluginSettings {
             server_order: Vec::new(),
             logo_url: None,
             favicon_url: None,
+            bot_api_enabled: false,
+            bot_api_token: String::new(),
         }
     }
 }
