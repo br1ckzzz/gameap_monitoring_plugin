@@ -42,3 +42,9 @@ desktop.ini
 *.log
 *.bak
 *.orig
+
+# Local private files
+*.local.*
+*.local.md
+docs/RUST_MIGRATION.md
+docs/RUST_MIGRATION.local.md
