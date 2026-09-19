@@ -6,6 +6,7 @@ use std::sync::Mutex;
 static CURRENT_SETTINGS: Mutex<Option<PluginSettings>> = Mutex::new(None);
 
 #[link(wasm_import_module = "gameap-storage")]
+#[allow(dead_code)]
 extern "C" {
     #[link_name = "get"]
     fn host_storage_get(ptr: u32, size: u32) -> u64;

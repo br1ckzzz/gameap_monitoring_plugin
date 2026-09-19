@@ -12,11 +12,19 @@ Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host " Building GameAP WebMonitoring (RUST WASM)" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
-if (Get-Command "cargo" -ErrorAction SilentlyContinue) {
+$CARGO_CMD = "cargo"
+if (-not (Get-Command "cargo" -ErrorAction SilentlyContinue)) {
+    $USER_CARGO = Join-Path $env:USERPROFILE ".cargo\bin\cargo.exe"
+    if (Test-Path $USER_CARGO) {
+        $CARGO_CMD = $USER_CARGO
+    }
+}
+
+if (Get-Command $CARGO_CMD -ErrorAction SilentlyContinue) {
     Push-Location $RUST_DIR
     try {
         Write-Host "-> Compiling Rust crate to $TARGET (Release mode)..." -ForegroundColor Yellow
-        cargo build --target $TARGET --release
+        & $CARGO_CMD +stable-x86_64-pc-windows-gnu build --target $TARGET --release
 
         $ARTIFACT = Join-Path $RUST_DIR "target\$TARGET\release\gameap_web_monitoring.wasm"
         $OUTPUT = Join-Path $ROOT_DIR "web_monitoring.wasm"

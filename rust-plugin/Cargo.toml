@@ -10,12 +10,9 @@ license = "MIT"
 crate-type = ["cdylib"]
 
 [dependencies]
-prost = { version = "0.13", default-features = false, features = ["prost-derive"] }
-serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-
-[build-dependencies]
-prost-build = "0.13"
+prost = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [profile.release]
 opt-level = "z"          # Optimize for minimal binary size

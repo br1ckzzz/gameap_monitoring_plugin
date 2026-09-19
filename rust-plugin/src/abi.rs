@@ -33,14 +33,16 @@ pub extern "C" fn allocate(size: u32) -> u32 {
     unsafe { alloc(layout) as u32 }
 }
 
-/// Frees previously allocated raw linear memory.
+/// Deallocates previously allocated raw linear memory.
 #[no_mangle]
-pub extern "C" fn free(ptr: u32) {
-    if ptr == 0 {
+pub extern "C" fn deallocate(ptr: u32, size: u32) {
+    if ptr == 0 || size == 0 {
         return;
     }
-    // In WASM linear memory, simple deallocation or no-op if using a bump allocator.
-    // Standard allocator handles proper dealloc when layout is known.
+    let layout = Layout::from_size_align(size as usize, 8).unwrap_or(
+        Layout::from_size_align(size as usize, 1).unwrap()
+    );
+    unsafe { dealloc(ptr as *mut u8, layout) }
 }
 
 /// Reads a protobuf message from host-provided memory pointer and size.

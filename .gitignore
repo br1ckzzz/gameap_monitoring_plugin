@@ -10,6 +10,10 @@ web_monitoring.wasm
 *.tar.gz
 *.zip
 
+# Rust
+target/
+rust-plugin/target/
+
 # Python
 __pycache__/
 *.py[cod]
