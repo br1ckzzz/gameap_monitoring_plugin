@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package gameap;
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+enum EntityType {
+  ENTITY_TYPE_UNSPECIFIED = 0;
+  ENTITY_TYPE_USER = 1;
+  ENTITY_TYPE_NODE = 2;
+  ENTITY_TYPE_CLIENT_CERTIFICATE = 3;
+  ENTITY_TYPE_GAME = 4;
+  ENTITY_TYPE_GAME_MOD = 5;
+  ENTITY_TYPE_SERVER = 6;
+  ENTITY_TYPE_ROLE = 7;
+}

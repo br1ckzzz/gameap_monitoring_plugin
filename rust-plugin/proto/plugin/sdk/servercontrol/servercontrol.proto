@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.servercontrol;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/servercontrol";
+
+// ServerControlService provides server control capabilities to plugins
+// go:plugin type=host module=gameap-servercontrol
+service ServerControlService {
+  rpc StartServer(ServerControlRequest) returns (ServerControlResponse);
+  rpc StopServer(ServerControlRequest) returns (ServerControlResponse);
+  rpc RestartServer(ServerControlRequest) returns (ServerControlResponse);
+  rpc UpdateServer(ServerControlRequest) returns (ServerControlResponse);
+  rpc InstallServer(ServerControlRequest) returns (ServerControlResponse);
+  rpc ReinstallServer(ServerControlRequest) returns (ServerControlResponse);
+}
+
+message ServerControlRequest {
+  uint64 server_id = 1;
+}
+
+message ServerControlResponse {
+  bool success = 1;
+  optional string error = 2;
+  optional uint64 task_id = 3;
+}

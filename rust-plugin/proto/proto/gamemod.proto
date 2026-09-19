@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package gameap;
+
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+message GameModFastRcon {
+  string info = 1;
+  string command = 2;
+}
+
+message GameModVar {
+  string var = 1;
+  string default = 2;
+  string info = 3;
+  bool admin_var = 4;
+}
+
+message GameMod {
+  uint64 id = 1;
+  string game_code = 2;
+  string name = 3;
+  optional string start_cmd_linux = 4;
+  optional string start_cmd_windows = 5;
+  optional string kick_cmd = 6;
+  optional string ban_cmd = 7;
+  repeated GameModFastRcon fast_rcon = 8;
+  repeated GameModVar vars = 9;
+  optional string remote_repository_linux = 10;
+  optional string remote_repository_windows = 11;
+  optional string local_repository_linux = 12;
+  optional string local_repository_windows = 13;
+  optional string chname_cmd = 14;
+  optional string srestart_cmd = 15;
+  optional string chmap_cmd = 16;
+  optional string sendmsg_cmd = 17;
+  optional string passwd_cmd = 18;
+  map<string, google.protobuf.Any> metadata = 19;
+}

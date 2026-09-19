@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package gameap;
+
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+message Game {
+  string code = 1;
+  string name = 2;
+  string engine = 3;
+  string engine_version = 4;
+  optional uint32 steam_app_id_linux = 5;
+  optional uint32 steam_app_id_windows = 6;
+  optional string steam_app_set_config = 7;
+  optional string remote_repository_linux = 8;
+  optional string remote_repository_windows = 9;
+  bool enabled = 10;
+  optional string local_repository_linux = 11;
+  optional string local_repository_windows = 12;
+  map<string, google.protobuf.Any> metadata = 13;
+}

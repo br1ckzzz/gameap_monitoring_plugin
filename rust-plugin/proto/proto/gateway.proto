@@ -1,0 +1,475 @@
+syntax = "proto3";
+
+package gameap;
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "pkg/proto/daemontask.proto";
+import "pkg/proto/server.proto";
+import "pkg/proto/game.proto";
+import "pkg/proto/gamemod.proto";
+import "pkg/proto/filetransfer.proto";
+import "pkg/proto/serversetting.proto";
+import "pkg/proto/servertask.proto";
+
+service DaemonGateway {
+  rpc Connect(stream DaemonMessage) returns (stream GatewayMessage);
+  rpc Enroll(EnrollRequest) returns (EnrollResponse);
+}
+
+message DaemonMessage {
+  string request_id = 1;
+
+  oneof payload {
+    RegisterRequest register = 10;
+    Heartbeat heartbeat = 11;
+    MetricsResponse metrics_response = 12;
+
+    TaskStatusUpdate task_status = 20;
+    TaskOutput task_output = 21;
+
+    CommandOutput command_output = 30;
+    CommandResult command_result = 31;
+    AttachStarted attach_started = 32;
+    AttachOutput attach_output = 33;
+    AttachClosed attach_closed = 34;
+    ConsoleLogResponse console_log_response = 35;
+
+    ServerStatusBatch server_statuses = 50;
+
+    FileReadResponse file_read_response = 60;
+    FileWriteResponse file_write_response = 61;
+    FileListResponse file_list_response = 62;
+    FileOperationResponse file_operation_response = 63;
+    ArchiveProgress archive_progress = 64;
+    ArchiveResponse archive_response = 65;
+
+    StatusResponse status_response = 70;
+
+    HTTPProxyResponse http_proxy_response = 80;
+
+    ServerTaskExecutionStarted  server_task_execution_started  = 25;
+    ServerTaskExecutionFinished server_task_execution_finished = 26;
+    ServerTaskExecutionLog      server_task_execution_log      = 27;
+    ServerTaskResyncRequest     server_task_resync_request     = 28;
+  }
+}
+
+message GatewayMessage {
+  string request_id = 1;
+
+  oneof payload {
+    RegisterAck register_ack = 10;
+    ShutdownNotification shutdown = 11;
+    MetricsRequest metrics_request = 12;
+
+    DaemonTask task = 20;
+    TaskCancel task_cancel = 21;
+
+    CommandRequest command = 30;
+    AttachRequest attach_request = 34;
+    AttachInput attach_input = 35;
+    AttachDetach attach_detach = 36;
+    ConsoleLogRequest console_log_request = 37;
+
+    Server server_config = 50;
+    ServerConfigBatch server_config_batch = 51;
+    ServerConfigUpdate server_config_update = 52;
+
+    FileReadRequest file_read = 60;
+    FileWriteRequest file_write = 61;
+    FileListRequest file_list = 62;
+    FileUploadTask file_upload_task = 63;
+    FileOperationRequest file_operation = 64;
+    FileDownloadTask file_download_task = 65;
+    ArchiveRequest archive = 66;
+    ArchiveCancel archive_cancel = 67;
+
+    StatusRequest status_request = 70;
+
+    HTTPProxyRequest http_proxy = 80;
+
+    ServerTaskSnapshot        server_task_snapshot         = 25;
+    ServerTaskDelta           server_task_delta            = 26;
+    ServerTaskExecutionCancel server_task_execution_cancel = 27;
+    ServerTaskExecutionAck    server_task_execution_ack    = 28;
+  }
+}
+
+message RegisterRequest {
+  uint64 node_id = 1;
+  string api_key = 2;
+  string version = 3;
+  repeated string capabilities = 4;
+  repeated InFlightTask in_flight_tasks = 5;
+  uint64 server_task_snapshot_version = 6;
+  repeated InFlightServerTaskExecution in_flight_server_task_executions = 7;
+}
+
+message InFlightTask {
+  uint64 task_id = 1;
+  DaemonTaskStatus status = 2;
+  string partial_output = 3;
+  google.protobuf.Timestamp started_at = 4;
+}
+
+message RegisterAck {
+  bool success = 1;
+  string error_message = 2;
+  repeated Server servers = 3;
+  repeated DaemonTask pending_tasks = 4;
+  repeated Game games = 5;
+  repeated GameMod game_mods = 6;
+  google.protobuf.Duration heartbeat_interval = 7;
+  repeated ServerSetting server_settings = 8;
+  ServerTaskSnapshot server_task_snapshot = 9;
+}
+
+message Heartbeat {
+  google.protobuf.Timestamp timestamp = 1;
+  SystemStats system_stats = 2;
+}
+
+message SystemStats {
+  double load_average_1m = 1;
+  double load_average_5m = 2;
+  double load_average_15m = 3;
+  double cpu_usage_percent = 4;
+  uint64 memory_used_bytes = 5;
+  uint64 memory_total_bytes = 6;
+}
+
+enum MetricType {
+  METRIC_TYPE_UNSPECIFIED = 0;
+  METRIC_TYPE_GAUGE = 1;
+  METRIC_TYPE_COUNTER = 2;
+}
+
+enum MetricUnit {
+  METRIC_UNIT_UNSPECIFIED = 0;
+
+  METRIC_UNIT_COUNT = 1;
+  METRIC_UNIT_PERCENT = 2;
+  METRIC_UNIT_RATIO = 3;
+
+  METRIC_UNIT_BYTES = 10;
+  METRIC_UNIT_BITS = 11;
+
+  METRIC_UNIT_SECONDS = 20;
+  METRIC_UNIT_MILLISECONDS = 21;
+  METRIC_UNIT_MICROSECONDS = 22;
+  METRIC_UNIT_NANOSECONDS = 23;
+
+  METRIC_UNIT_HERTZ = 30;
+
+  METRIC_UNIT_CELSIUS = 40;
+  METRIC_UNIT_WATTS = 41;
+  METRIC_UNIT_VOLTS = 42;
+  METRIC_UNIT_RPM = 43;
+}
+
+// One point in a real-time series. Identity metadata (name, type, unit,
+// labels) lives on the enclosing MetricSeries.
+//
+// min/max/avg/sample_count are populated only when the daemon
+// pre-aggregates raw samples into buckets before pushing (e.g. collects
+// every 1s, ships every 10s). Leave unset for raw single-sample points.
+// Aggregation fields use double; precision caps at 2^53.
+message MetricPoint {
+  google.protobuf.Timestamp timestamp = 1;
+
+  oneof value {
+    double double_value = 2;
+    uint64 uint_value = 3;
+    int64 int_value = 4;
+  }
+
+  optional double min = 5;
+  optional double max = 6;
+  optional double avg = 7;
+  optional uint32 sample_count = 8;
+}
+
+// A group of points sharing one name and one label set.
+//
+// For per-game-server process metrics, labels MUST include "server_id".
+// "pid" is optional and debug-only (changes across restarts).
+message MetricSeries {
+  string name = 1;
+  MetricType type = 2;
+  MetricUnit unit = 3;
+  map<string, string> labels = 4;
+  repeated MetricPoint points = 5;
+}
+
+// API → daemon. Pull-mode metrics request. Either fetch the most recent
+// snapshot of all metrics or replay recent history from the daemon's
+// in-process ring buffer.
+message MetricsRequest {
+  oneof kind {
+    CurrentMetricsRequest current = 1;
+    MetricsHistoryRequest history = 2;
+  }
+}
+
+// Empty body — fetch the most recent reading of all collected metrics.
+// One MetricPoint per series in the response.
+message CurrentMetricsRequest {}
+
+// Fetch metrics from the daemon's ring buffer for the requested window.
+// Daemon's retention bounds the answer (typically 10-60 min); a window
+// exceeding retention is truncated to whatever is available.
+message MetricsHistoryRequest {
+  uint32 seconds = 1;
+}
+
+// daemon → API. Series-grouped response shared by current snapshot and
+// history. For current responses each series carries a single
+// MetricPoint; for history responses each series carries multiple
+// MetricPoints ordered by timestamp.
+//
+// The sending daemon's node_id is established by the authenticated
+// session; no explicit machine_id is carried here.
+message MetricsResponse {
+  google.protobuf.Timestamp timestamp = 1;
+
+  // Labels applied to ALL series. On label-key conflict, per-series
+  // labels win.
+  map<string, string> common_labels = 2;
+
+  repeated MetricSeries series = 3;
+
+  // For history responses: actual covered window in seconds (may be
+  // less than requested if daemon's ring is shorter). 0 / unset for
+  // current snapshots.
+  uint32 actual_window_seconds = 4;
+}
+
+message TaskStatusUpdate {
+  uint64 task_id = 1;
+  DaemonTaskStatus status = 2;
+  string message = 3;
+}
+
+message TaskOutput {
+  uint64 task_id = 1;
+  bytes output_chunk = 2;
+  bool is_final = 3;
+}
+
+message TaskCancel {
+  uint64 task_id = 1;
+  string reason = 2;
+}
+
+message CommandRequest {
+  string command_id = 1;
+  uint64 server_id = 2;
+  string command = 3;
+  google.protobuf.Duration timeout = 4;
+  bool stream_output = 5;
+  string work_dir = 6;
+}
+
+message CommandOutput {
+  string command_id = 1;
+  bytes output_chunk = 2;
+}
+
+message CommandResult {
+  string command_id = 1;
+  int32 exit_code = 2;
+  bytes output = 3;
+  string error = 4;
+  string request_id = 5;
+}
+
+message ServerStatus {
+  uint64 server_id = 1;
+  bool is_running = 2;
+  google.protobuf.Timestamp last_check = 3;
+}
+
+message ServerStatusBatch {
+  repeated ServerStatus statuses = 1;
+}
+
+message ServerConfigBatch {
+  repeated Server servers = 1;
+  repeated ServerSetting server_settings = 2;
+}
+
+message ServerConfigUpdate {
+  Server server = 1;
+  repeated ServerSetting settings = 2;
+  optional Game game = 3;
+  optional GameMod game_mod = 4;
+}
+
+message ShutdownNotification {
+  string reason = 1;
+  google.protobuf.Duration reconnect_delay = 2;
+}
+
+message FileReadRequest {
+  string path = 1;
+  int64 max_size = 2;
+  int64 offset = 3;
+  int64 length = 4;
+}
+
+message FileReadResponse {
+  string request_id = 1;
+  bool success = 2;
+  bytes content = 3;
+  string transfer_id = 4;
+  string error = 5;
+}
+
+message FileWriteRequest {
+  string path = 1;
+  bytes content = 2;
+  int32 mode = 3;
+  bool create_dirs = 4;
+  string owner_user = 5;
+  int32 owner_uid = 6;
+  int32 owner_gid = 7;
+}
+
+message FileWriteResponse {
+  string request_id = 1;
+  bool success = 2;
+  string error = 3;
+}
+
+message FileListRequest {
+  string path = 1;
+  bool recursive = 2;
+  string pattern = 3;
+}
+
+message FileListResponse {
+  string request_id = 1;
+  bool success = 2;
+  repeated FileStat files = 3;
+  string error = 4;
+}
+
+message FileUploadTask {
+  string transfer_id = 1;
+  string path = 2;
+  string checksum_sha256 = 3;
+  int64 total_size = 4;
+  string owner_user = 5;
+  int32 owner_uid = 6;
+  int32 owner_gid = 7;
+  int32 mode = 8;
+}
+
+message FileDownloadTask {
+  string transfer_id = 1;
+  string path = 2;
+  string checksum_sha256 = 3;
+}
+
+message EnrollRequest {
+  string setup_key = 1;
+  string host = 2;
+  int32 port = 3;
+  string os = 4;
+  string version = 5;
+  repeated string capabilities = 6;
+}
+
+message EnrollResponse {
+  bool success = 1;
+  string error_message = 2;
+  uint64 node_id = 3;
+  string api_key = 4;
+  string root_certificate = 5;
+  string server_certificate = 6;
+  string server_private_key = 7;
+}
+
+message AttachRequest {
+  string session_id = 1;
+  uint64 server_id = 2;
+}
+
+message AttachStarted {
+  string session_id = 1;
+  uint64 server_id = 2;
+}
+
+message AttachInput {
+  string session_id = 1;
+  bytes data = 2;
+}
+
+message AttachOutput {
+  string session_id = 1;
+  bytes data = 2;
+}
+
+message AttachDetach {
+  string session_id = 1;
+  string reason = 2;
+}
+
+message AttachClosed {
+  string session_id = 1;
+  string reason = 2;
+  int32 exit_code = 3;
+}
+
+message ConsoleLogRequest {
+  uint64 server_id = 1;
+  int64 max_bytes = 2;
+}
+
+message ConsoleLogResponse {
+  string request_id = 1;
+  bool success = 2;
+  bytes data = 3;
+  string error = 4;
+}
+
+message StatusRequest {}
+
+message StatusResponse {
+  string request_id = 1;
+  bool success = 2;
+  string version = 3;
+  string build_date = 4;
+  int64 uptime_seconds = 5;
+  int32 working_tasks = 6;
+  int32 waiting_tasks = 7;
+  int32 online_servers = 8;
+  string error = 9;
+}
+
+message HeaderEntry {
+  string name = 1;
+  string value = 2;
+}
+
+message HTTPProxyRequest {
+  string url = 1;
+  string unix_socket = 2;
+  string method = 3;
+  repeated HeaderEntry headers = 4;
+  bytes body = 5;
+  google.protobuf.Duration timeout = 6;
+  bool follow_redirects = 7;
+}
+
+message HTTPProxyResponse {
+  string request_id = 1;
+  bool success = 2;
+  int32 status_code = 3;
+  repeated HeaderEntry headers = 4;
+  bytes body = 5;
+  string error = 6;
+}

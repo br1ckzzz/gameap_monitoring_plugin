@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.daemontasks;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/daemontasks";
+
+import "pkg/plugin/sdk/common/common.proto";
+import "pkg/proto/daemontask.proto";
+
+// DaemonTasksService provides daemon task repository access to plugins
+// go:plugin type=host module=gameap-daemontasks
+service DaemonTasksService {
+  rpc FindDaemonTasks(FindDaemonTasksRequest) returns (FindDaemonTasksResponse);
+  rpc CreateDaemonTask(CreateDaemonTaskRequest) returns (CreateDaemonTaskResponse);
+}
+
+message FindDaemonTasksRequest {
+  optional DaemonTaskFilter filter = 1;
+  repeated gameap.plugin.sdk.common.Sorting sorting = 2;
+  optional gameap.plugin.sdk.common.Pagination pagination = 3;
+}
+
+message DaemonTaskFilter {
+  repeated uint64 ids = 1;
+  repeated uint64 server_ids = 2;
+  repeated uint64 node_ids = 3;
+  repeated gameap.DaemonTaskStatus statuses = 4;
+  repeated gameap.DaemonTaskType task_types = 5;
+}
+
+message FindDaemonTasksResponse {
+  repeated gameap.DaemonTask tasks = 1;
+  int32 total = 2;
+}
+
+message CreateDaemonTaskRequest {
+  uint64 node_id = 1;
+  optional uint64 server_id = 2;
+  gameap.DaemonTaskType task_type = 3;
+  optional string data = 4;
+  optional string cmd = 5;
+  optional uint64 run_after_id = 6;
+}
+
+message CreateDaemonTaskResponse {
+  bool success = 1;
+  optional string error = 2;
+  uint64 task_id = 3;
+}

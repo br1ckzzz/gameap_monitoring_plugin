@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.games;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/games";
+
+import "pkg/plugin/sdk/common/common.proto";
+import "pkg/proto/game.proto";
+
+// GamesService provides game repository access to plugins
+// go:plugin type=host module=gameap-games
+service GamesService {
+  rpc FindGames(FindGamesRequest) returns (FindGamesResponse);
+  rpc GetGame(GetGameRequest) returns (GetGameResponse);
+}
+
+message FindGamesRequest {
+  optional GameFilter filter = 1;
+  repeated gameap.plugin.sdk.common.Sorting sorting = 2;
+  optional gameap.plugin.sdk.common.Pagination pagination = 3;
+}
+
+message GameFilter {
+  repeated string codes = 1;
+  optional string engine = 2;
+  optional bool enabled = 3;
+}
+
+message FindGamesResponse {
+  repeated gameap.Game games = 1;
+  int32 total = 2;
+}
+
+message GetGameRequest {
+  string code = 1;
+}
+
+message GetGameResponse {
+  optional gameap.Game game = 1;
+  bool found = 2;
+}

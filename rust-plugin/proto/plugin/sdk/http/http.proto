@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.http;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/http";
+
+// HTTPService provides HTTP client capabilities to plugins
+// go:plugin type=host module=gameap-http
+service HTTPService {
+  rpc Fetch(HTTPFetchRequest) returns (HTTPFetchResponse);
+}
+
+message HTTPFetchRequest {
+  string method = 1;
+  string url = 2;
+  map<string, string> headers = 3;
+  optional bytes body = 4;
+  int32 timeout_seconds = 5;
+}
+
+message HTTPFetchResponse {
+  int32 status_code = 1;
+  map<string, string> headers = 2;
+  bytes body = 3;
+  optional string error = 4;
+}

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.servers;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/servers";
+
+import "pkg/proto/server.proto";
+import "pkg/plugin/sdk/common/common.proto";
+
+// ServersService provides server repository access to plugins
+// go:plugin type=host module=gameap-servers
+service ServersService {
+  rpc FindServers(FindServersRequest) returns (FindServersResponse);
+  rpc GetServer(GetServerRequest) returns (GetServerResponse);
+  rpc SaveServer(SaveServerRequest) returns (SaveServerResponse);
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse);
+}
+
+message FindServersRequest {
+  optional ServerFilter filter = 1;
+  repeated gameap.plugin.sdk.common.Sorting sorting = 2;
+  optional gameap.plugin.sdk.common.Pagination pagination = 3;
+}
+
+message ServerFilter {
+  repeated uint64 ids = 1;
+  repeated uint64 node_ids = 2;
+  repeated string game_ids = 3;
+  optional bool enabled = 4;
+  optional bool process_active = 5;
+  optional gameap.ServerInstalledStatus installed = 6;
+}
+
+message FindServersResponse {
+  repeated gameap.Server servers = 1;
+  int32 total = 2;
+}
+
+message GetServerRequest {
+  uint64 id = 1;
+}
+
+message GetServerResponse {
+  optional gameap.Server server = 1;
+  bool found = 2;
+}
+
+message SaveServerRequest {
+  gameap.Server server = 1;
+}
+
+message SaveServerResponse {
+  bool success = 1;
+  optional string error = 2;
+  uint64 id = 3;
+}
+
+message DeleteServerRequest {
+  uint64 id = 1;
+}
+
+message DeleteServerResponse {
+  bool success = 1;
+  optional string error = 2;
+}

@@ -1,0 +1,45 @@
+# ==========================================================
+# Build GameAP WebMonitoring WASM Plugin (Rust wasm32-wasip1)
+# ==========================================================
+$ErrorActionPreference = "Stop"
+
+$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$ROOT_DIR = Split-Path -Parent $SCRIPT_DIR
+$RUST_DIR = Join-Path $ROOT_DIR "rust-plugin"
+$TARGET = "wasm32-wasip1"
+
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host " Building GameAP WebMonitoring (RUST WASM)" -ForegroundColor Cyan
+Write-Host "==========================================" -ForegroundColor Cyan
+
+if (Get-Command "cargo" -ErrorAction SilentlyContinue) {
+    Push-Location $RUST_DIR
+    try {
+        Write-Host "-> Compiling Rust crate to $TARGET (Release mode)..." -ForegroundColor Yellow
+        cargo build --target $TARGET --release
+
+        $ARTIFACT = Join-Path $RUST_DIR "target\$TARGET\release\gameap_web_monitoring.wasm"
+        $OUTPUT = Join-Path $ROOT_DIR "web_monitoring.wasm"
+
+        if (Test-Path $ARTIFACT) {
+            # Check for wasm-opt to shrink binary even further
+            if (Get-Command "wasm-opt" -ErrorAction SilentlyContinue) {
+                Write-Host "-> Optimizing with wasm-opt -Oz..." -ForegroundColor Yellow
+                wasm-opt -Oz $ARTIFACT -o $OUTPUT
+            } else {
+                Copy-Item -Path $ARTIFACT -Destination $OUTPUT -Force
+            }
+
+            $size = (Get-Item $OUTPUT).Length / 1MB
+            Write-Host ("Build successful! Output: {0} ({1:N2} MB)" -f $OUTPUT, $size) -ForegroundColor Green
+        }
+    } finally {
+        Pop-Location
+    }
+} elseif (Get-Command "docker" -ErrorAction SilentlyContinue) {
+    Write-Host "-> Local Cargo not detected. Compiling inside rust:alpine container..." -ForegroundColor Yellow
+    # Future Docker builder support
+    Write-Host "Docker builder will be executed when ready."
+} else {
+    Write-Host "Neither 'cargo' nor 'docker' found. Install Rust (https://rustup.rs) with target $TARGET." -ForegroundColor Red
+}

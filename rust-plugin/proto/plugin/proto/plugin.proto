@@ -1,0 +1,353 @@
+syntax = "proto3";
+
+package gameap.plugin;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/proto";
+
+import "pkg/proto/server.proto";
+import "pkg/proto/user.proto";
+import "pkg/proto/pat.proto";
+import "pkg/proto/node.proto";
+import "pkg/proto/serversetting.proto";
+
+// ===============================
+// Events
+// ===============================
+
+// EventType defines all plugin event types
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+
+  // Server lifecycle events
+  EVENT_TYPE_SERVER_PRE_START = 100;
+  EVENT_TYPE_SERVER_POST_START = 101;
+  EVENT_TYPE_SERVER_PRE_STOP = 102;
+  EVENT_TYPE_SERVER_POST_STOP = 103;
+  EVENT_TYPE_SERVER_PRE_RESTART = 104;
+  EVENT_TYPE_SERVER_POST_RESTART = 105;
+  EVENT_TYPE_SERVER_PRE_INSTALL = 106;
+  EVENT_TYPE_SERVER_POST_INSTALL = 107;
+  EVENT_TYPE_SERVER_PRE_UPDATE = 108;
+  EVENT_TYPE_SERVER_POST_UPDATE = 109;
+  EVENT_TYPE_SERVER_PRE_REINSTALL = 110;
+  EVENT_TYPE_SERVER_POST_REINSTALL = 111;
+  EVENT_TYPE_SERVER_PRE_DELETE = 112;
+  EVENT_TYPE_SERVER_POST_DELETE = 113;
+
+  // Server CRUD events
+  EVENT_TYPE_SERVER_CREATED = 120;
+  EVENT_TYPE_SERVER_UPDATED = 121;
+  EVENT_TYPE_SERVER_DELETED = 122;
+
+  // Server settings (the key/value table) were saved; payload lists the
+  // settings that changed.
+  EVENT_TYPE_SERVER_SETTINGS_CHANGED = 130;
+
+  // User events. USER_PRE_DELETE is delivered synchronously and may be
+  // cancelled; the others are asynchronous.
+  EVENT_TYPE_USER_CREATED = 200;
+  EVENT_TYPE_USER_UPDATED = 201;
+  EVENT_TYPE_USER_PRE_DELETE = 202;
+  EVENT_TYPE_USER_DELETED = 203;
+
+  // Task events
+  EVENT_TYPE_DAEMON_TASK_CREATED = 300;
+  EVENT_TYPE_DAEMON_TASK_COMPLETED = 301;
+  EVENT_TYPE_DAEMON_TASK_FAILED = 302;
+  // The daemon picked the task up (status "working"); the daemon reports no
+  // progress percentage, so this is the only intermediate transition.
+  EVENT_TYPE_DAEMON_TASK_STARTED = 303;
+
+  // Node events. NODE_PRE_DELETE is delivered synchronously and may be
+  // cancelled. NODE_ONLINE / NODE_OFFLINE follow the daemon session and are
+  // delivered on the panel instance that owns the session.
+  EVENT_TYPE_NODE_CREATED = 400;
+  EVENT_TYPE_NODE_UPDATED = 401;
+  EVENT_TYPE_NODE_PRE_DELETE = 402;
+  EVENT_TYPE_NODE_DELETED = 403;
+  EVENT_TYPE_NODE_ONLINE = 410;
+  EVENT_TYPE_NODE_OFFLINE = 411;
+
+  // Plugin lifecycle events, never delivered to the plugin they describe.
+  EVENT_TYPE_PLUGIN_LOADED = 500;
+  EVENT_TYPE_PLUGIN_UNLOADED = 501;
+  EVENT_TYPE_PLUGIN_ERROR = 502;
+}
+
+// Event is the main event message sent to plugins
+message Event {
+  EventType type = 1;
+  PluginContext context = 2;
+  int64 timestamp = 3;
+
+  oneof payload {
+    ServerEventPayload server_event = 10;
+    TaskEventPayload task_event = 11;
+    UserEventPayload user_event = 12;
+    NodeEventPayload node_event = 13;
+    ServerSettingsEventPayload server_settings_event = 14;
+    PluginEventPayload plugin_event = 15;
+  }
+}
+
+// PluginContext provides context for plugin calls. plugin_id names the
+// receiving plugin; permissions is reserved (empty) — a plugin reads its own
+// grants through gameap-host.
+message PluginContext {
+  string plugin_id = 1;
+  string request_id = 2;
+  optional uint64 user_id = 3;
+  repeated string permissions = 4;
+}
+
+// ServerEventPayload contains server-related event data
+message ServerEventPayload {
+  gameap.Server server = 1;
+  map<string, string> extra_data = 2;
+}
+
+// TaskEventPayload contains task-related event data
+message TaskEventPayload {
+  uint64 task_id = 1;
+  uint64 node_id = 2;
+  optional uint64 server_id = 3;
+  string task_type = 4;
+  string status = 5;
+  map<string, string> extra_data = 6;
+}
+
+// UserEventPayload contains user-related event data
+message UserEventPayload {
+  gameap.User user = 1;
+  map<string, string> extra_data = 2;
+}
+
+// NodeEventPayload contains node-related event data
+message NodeEventPayload {
+  gameap.Node node = 1;
+  map<string, string> extra_data = 2;
+}
+
+// ServerSettingsEventPayload lists the server settings a save changed
+message ServerSettingsEventPayload {
+  uint64 server_id = 1;
+  repeated gameap.ServerSetting settings = 2;
+  map<string, string> extra_data = 3;
+}
+
+// PluginEventPayload describes another plugin's lifecycle transition
+message PluginEventPayload {
+  // Compact database id, as the admin API reports it
+  string plugin_id = 1;
+  string name = 2;
+  string version = 3;
+  // active | error | unloaded | uninstalled
+  string status = 4;
+  optional string error = 5;
+  map<string, string> extra_data = 6;
+}
+
+// EventResult is returned by plugins after handling an event
+message EventResult {
+  bool handled = 1;
+  bool should_cancel = 2;
+  optional string message = 3;
+  map<string, string> modified_data = 4;
+}
+
+// ===============================
+// Plugin Service
+// ===============================
+
+// Result wrapper for operations that can fail
+message Result {
+  bool success = 1;
+  optional string error = 2;
+  optional string error_code = 3;
+}
+
+// PluginService is the interface that plugins must implement
+// go:plugin type=plugin version=1
+service PluginService {
+  // GetInfo returns plugin metadata
+  rpc GetInfo(GetInfoRequest) returns (PluginInfo);
+
+  // Initialize is called when the plugin is loaded
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+
+  // Shutdown is called when the plugin is being unloaded
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+
+  // HandleEvent is called when an event occurs
+  rpc HandleEvent(Event) returns (EventResult);
+
+  // GetSubscribedEvents returns the list of events this plugin wants to receive
+  rpc GetSubscribedEvents(GetSubscribedEventsRequest) returns (GetSubscribedEventsResponse);
+
+  // GetHTTPRoutes returns the HTTP routes this plugin provides
+  rpc GetHTTPRoutes(GetHTTPRoutesRequest) returns (GetHTTPRoutesResponse);
+
+  // HandleHTTPRequest handles an HTTP request for a plugin route
+  rpc HandleHTTPRequest(HTTPRequest) returns (HTTPResponse);
+
+  // GetFrontendBundle returns the pre-compiled frontend JavaScript bundle
+  rpc GetFrontendBundle(GetFrontendBundleRequest) returns (GetFrontendBundleResponse);
+
+  // GetServerAbilities returns the server permissions this plugin provides
+  rpc GetServerAbilities(GetServerAbilitiesRequest) returns (GetServerAbilitiesResponse);
+
+  // GetAssets returns static files the plugin contributes: translation files
+  // served under /lang/ and frontend static files served under the SPA root.
+  // The files layer over the built-in filesystems (plugin files win).
+  rpc GetAssets(GetAssetsRequest) returns (GetAssetsResponse);
+}
+
+// Plugin metadata
+message PluginInfo {
+  string id = 1;
+  string name = 2;
+  string version = 3;
+  string description = 4;
+  string author = 5;
+  string license = 6;
+  string homepage = 7;
+  repeated string required_permissions = 8;
+  string api_version = 9;
+}
+
+// GetInfo request/response
+message GetInfoRequest {}
+
+// Initialize request/response
+message InitializeRequest {
+  PluginContext context = 1;
+  map<string, string> config = 2;
+}
+
+message InitializeResponse {
+  Result result = 1;
+}
+
+// Shutdown request/response
+message ShutdownRequest {
+  PluginContext context = 1;
+}
+
+message ShutdownResponse {
+  Result result = 1;
+}
+
+// Event subscription
+message GetSubscribedEventsRequest {}
+
+message GetSubscribedEventsResponse {
+  repeated EventType events = 1;
+}
+
+// HTTP routes
+message GetHTTPRoutesRequest {}
+
+message GetHTTPRoutesResponse {
+  repeated HTTPRoute routes = 1;
+}
+
+message HTTPRoute {
+  string path = 1;
+  repeated string methods = 2;
+  bool requires_auth = 3;
+  bool admin_only = 4;
+  string description = 5;
+}
+
+// QueryParamValues supports multi-value query parameters (JSON API spec)
+message QueryParamValues {
+  repeated string values = 1;
+}
+
+// Session contains user session data passed to plugins
+message Session {
+  string id = 1;
+  gameap.User user = 2;
+  optional gameap.PersonalAccessToken token = 3;
+}
+
+message HTTPRequest {
+  PluginContext context = 1;
+  string method = 2;
+  string path = 3;
+  map<string, string> headers = 4;
+  map<string, string> path_params = 5;
+  map<string, QueryParamValues> query_params = 6;
+  reserved 7, 8;
+  bytes body = 9;
+  optional Session session = 10;
+}
+
+message HTTPResponse {
+  int32 status_code = 1;
+  map<string, string> headers = 2;
+  bytes body = 3;
+  // When set, body is ignored: the panel streams the referenced node file to
+  // the client itself, so the bytes never pass through the plugin. Requires
+  // the plugin's "files" grant (403 without it) and an authenticated client
+  // (401 otherwise, whatever the route's requires_auth says). Panels that
+  // predate this field ignore it and send an empty body.
+  optional FileRef file = 4;
+}
+
+// FileRef points at a file on a node for HTTPResponse.file. The panel owns
+// Content-Length and Content-Disposition (always an attachment); of the
+// HTTPResponse.headers only Content-Type, Content-Language, Cache-Control,
+// Expires, Pragma, Last-Modified, ETag, Vary and the plugin metadata
+// headers X-Plugin and X-Plugin-* reach the client. Other X-* names
+// (X-Accel-*, X-Sendfile, X-Frame-Options, …) are dropped like the rest.
+message FileRef {
+  uint64 node_id = 1;
+  // Absolute node path, the same form gameap-nodefs accepts; ".." segments
+  // are rejected.
+  string path = 2;
+  // Name offered to the client; empty means the base name of path.
+  string filename = 3;
+}
+
+// Frontend bundle request/response
+message GetFrontendBundleRequest {}
+
+message GetFrontendBundleResponse {
+  // Pre-compiled JavaScript bundle content
+  bytes bundle = 1;
+  // Whether the plugin has a frontend bundle
+  bool has_bundle = 2;
+  // CSS styles content
+  bytes styles = 3;
+  // Whether the plugin has styles
+  bool has_styles = 4;
+}
+
+// Server abilities (permissions) registration
+message ServerAbility {
+  string name = 1;
+  string title = 2;
+}
+
+message GetServerAbilitiesRequest {}
+
+message GetServerAbilitiesResponse {
+  repeated ServerAbility abilities = 1;
+}
+
+// Static assets (translations + frontend files) a plugin contributes.
+message AssetFile {
+  // Slash-separated, unrooted path (e.g. "es.json", "assets/plugin/app.js").
+  string path = 1;
+  bytes content = 2;
+}
+
+message GetAssetsRequest {}
+
+message GetAssetsResponse {
+  // Translation files, merged over the built-in i18n FS and served at /lang/.
+  repeated AssetFile i18n_files = 1;
+  // Frontend static files, merged over the built-in SPA FS and served at /.
+  repeated AssetFile frontend_files = 2;
+}

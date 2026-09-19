@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.cache;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/cache";
+
+// CacheService provides caching capabilities to plugins
+// go:plugin type=host module=gameap-cache
+service CacheService {
+  rpc Get(CacheGetRequest) returns (CacheGetResponse);
+  rpc Set(CacheSetRequest) returns (CacheSetResponse);
+  rpc Delete(CacheDeleteRequest) returns (CacheDeleteResponse);
+}
+
+message CacheGetRequest {
+  string key = 1;
+}
+
+message CacheGetResponse {
+  optional bytes value = 1;
+  bool found = 2;
+}
+
+message CacheSetRequest {
+  string key = 1;
+  bytes value = 2;
+  int64 ttl_seconds = 3;
+}
+
+message CacheSetResponse {
+  bool success = 1;
+  optional string error = 2;
+}
+
+message CacheDeleteRequest {
+  string key = 1;
+}
+
+message CacheDeleteResponse {
+  bool success = 1;
+}

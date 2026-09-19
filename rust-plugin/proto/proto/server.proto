@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package gameap;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+enum ServerInstalledStatus {
+  SERVER_INSTALLED_STATUS_NOT_INSTALLED = 0;
+  SERVER_INSTALLED_STATUS_INSTALLED = 1;
+  SERVER_INSTALLED_STATUS_INSTALLATION_IN_PROGRESS = 2;
+}
+
+message Server {
+  uint64 id = 1;
+  string uuid = 2;
+  string uuid_short = 3;
+  bool enabled = 4;
+  ServerInstalledStatus installed = 5;
+  bool blocked = 6;
+  string name = 7;
+  string game_id = 8;
+  uint64 ds_id = 9;
+  uint64 game_mod_id = 10;
+  optional google.protobuf.Timestamp expires = 11;
+  string server_ip = 12;
+  int32 server_port = 13;
+  optional int32 query_port = 14;
+  optional int32 rcon_port = 15;
+  optional string rcon = 16;
+  string dir = 17;
+  optional string su_user = 18;
+  optional int32 cpu_limit = 19;
+  optional int64 ram_limit = 20;
+  optional int32 net_limit = 21;
+  optional string start_command = 22;
+  optional string stop_command = 23;
+  optional string force_stop_command = 24;
+  optional string restart_command = 25;
+  bool process_active = 26;
+  optional google.protobuf.Timestamp last_process_check = 27;
+  optional string vars = 28;
+  optional google.protobuf.Timestamp created_at = 29;
+  optional google.protobuf.Timestamp updated_at = 30;
+  optional google.protobuf.Timestamp deleted_at = 31;
+  map<string, google.protobuf.Any> metadata = 32;
+}

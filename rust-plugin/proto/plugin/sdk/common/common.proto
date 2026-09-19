@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.common;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/common";
+
+message Pagination {
+  uint32 limit = 1;
+  uint32 offset = 2;
+}
+
+message Sorting {
+  string field = 1;
+  bool descending = 2;
+}

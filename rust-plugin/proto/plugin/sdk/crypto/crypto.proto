@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.crypto;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/crypto";
+
+// CryptoService provides cryptographic capabilities to plugins
+// go:plugin type=host module=gameap-crypto
+service CryptoService {
+  rpc RandomUint64(RandomUint64Request) returns (RandomUint64Response);
+  rpc RandomString(RandomStringRequest) returns (RandomStringResponse);
+  rpc Argon2Hash(Argon2HashRequest) returns (Argon2HashResponse);
+  rpc Argon2Verify(Argon2VerifyRequest) returns (Argon2VerifyResponse);
+}
+
+message RandomUint64Request {
+  uint64 max = 1;
+}
+
+message RandomUint64Response {
+  uint64 value = 1;
+  optional string error = 2;
+}
+
+message RandomStringRequest {
+  int32 length = 1;
+  optional string charset = 2;
+}
+
+message RandomStringResponse {
+  string value = 1;
+  optional string error = 2;
+}
+
+message Argon2Params {
+  uint32 memory = 1;
+  uint32 time = 2;
+  uint32 parallelism = 3;
+  uint32 salt_length = 4;
+  uint32 key_length = 5;
+}
+
+message Argon2HashRequest {
+  string password = 1;
+  optional Argon2Params params = 2;
+}
+
+message Argon2HashResponse {
+  string hash = 1;
+  optional string error = 2;
+}
+
+message Argon2VerifyRequest {
+  string password = 1;
+  string hash = 2;
+}
+
+message Argon2VerifyResponse {
+  bool match = 1;
+  optional string error = 2;
+}

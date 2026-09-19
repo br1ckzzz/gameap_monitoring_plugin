@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package gameap;
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+message ServerSetting {
+  uint64 id = 1;
+  uint64 server_id = 2;
+  string name = 3;
+  string value = 4;
+}

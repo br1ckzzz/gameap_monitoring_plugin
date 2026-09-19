@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.users;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/users";
+
+import "pkg/plugin/sdk/common/common.proto";
+import "pkg/proto/user.proto";
+
+// UsersService provides user repository access to plugins
+// go:plugin type=host module=gameap-users
+service UsersService {
+  rpc FindUsers(FindUsersRequest) returns (FindUsersResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message FindUsersRequest {
+  optional UserFilter filter = 1;
+  repeated gameap.plugin.sdk.common.Sorting sorting = 2;
+  optional gameap.plugin.sdk.common.Pagination pagination = 3;
+}
+
+message UserFilter {
+  repeated uint64 ids = 1;
+  optional string login = 2;
+  optional string email = 3;
+}
+
+message FindUsersResponse {
+  repeated gameap.User users = 1;
+  int32 total = 2;
+}
+
+message GetUserRequest {
+  uint64 id = 1;
+}
+
+message GetUserResponse {
+  optional gameap.User user = 1;
+  bool found = 2;
+}

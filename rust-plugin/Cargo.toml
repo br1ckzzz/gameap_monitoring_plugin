@@ -1,0 +1,25 @@
+[package]
+name = "gameap-web-monitoring"
+version = "1.0.5"
+edition = "2021"
+authors = ["GameAP Community"]
+description = "High-performance, ultra-compact WebAssembly monitoring plugin for GameAP written in Rust"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+prost = { version = "0.13", default-features = false, features = ["prost-derive"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+
+[build-dependencies]
+prost-build = "0.13"
+
+[profile.release]
+opt-level = "z"          # Optimize for minimal binary size
+lto = true               # Link-time optimization across all crates
+codegen-units = 1        # Reduce parallel code generation units to maximize LTO
+panic = "abort"          # Remove unwinding stack tables to save ~150KB
+strip = true             # Strip symbols from binary

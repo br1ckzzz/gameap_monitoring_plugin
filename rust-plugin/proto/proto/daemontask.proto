@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package gameap;
+
+option go_package = "github.com/gameap/gameap/pkg/proto";
+
+import "google/protobuf/timestamp.proto";
+
+enum DaemonTaskStatus {
+  DAEMON_TASK_STATUS_UNSPECIFIED = 0;
+  DAEMON_TASK_STATUS_WAITING = 1;
+  DAEMON_TASK_STATUS_WORKING = 2;
+  DAEMON_TASK_STATUS_ERROR = 3;
+  DAEMON_TASK_STATUS_SUCCESS = 4;
+  DAEMON_TASK_STATUS_CANCELED = 5;
+}
+
+enum DaemonTaskType {
+  DAEMON_TASK_TYPE_UNSPECIFIED = 0;
+  DAEMON_TASK_TYPE_SERVER_START = 1;
+  DAEMON_TASK_TYPE_SERVER_STOP = 2;
+  DAEMON_TASK_TYPE_SERVER_RESTART = 3;
+  DAEMON_TASK_TYPE_SERVER_UPDATE = 4;
+  DAEMON_TASK_TYPE_SERVER_INSTALL = 5;
+  DAEMON_TASK_TYPE_SERVER_DELETE = 6;
+  DAEMON_TASK_TYPE_SERVER_MOVE = 7;
+  DAEMON_TASK_TYPE_CMD_EXEC = 8;
+}
+
+message DaemonTask {
+  uint64 id = 1;
+  optional uint64 run_after_id = 2;
+  uint64 node_id = 3;
+  optional uint64 server_id = 4;
+  DaemonTaskType task_type = 5;
+  optional string data = 6;
+  optional string cmd = 7;
+  optional string output = 8;
+  DaemonTaskStatus status = 9;
+  optional google.protobuf.Timestamp created_at = 10;
+  optional google.protobuf.Timestamp updated_at = 11;
+}

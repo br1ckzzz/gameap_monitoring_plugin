@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.gamemods;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/gamemods";
+
+import "pkg/plugin/sdk/common/common.proto";
+import "pkg/proto/gamemod.proto";
+
+// GameModsService provides game mod repository access to plugins
+// go:plugin type=host module=gameap-gamemods
+service GameModsService {
+  rpc FindGameMods(FindGameModsRequest) returns (FindGameModsResponse);
+  rpc GetGameMod(GetGameModRequest) returns (GetGameModResponse);
+}
+
+message FindGameModsRequest {
+  optional GameModFilter filter = 1;
+  repeated gameap.plugin.sdk.common.Sorting sorting = 2;
+  optional gameap.plugin.sdk.common.Pagination pagination = 3;
+}
+
+message GameModFilter {
+  repeated uint64 ids = 1;
+  optional string game_code = 2;
+}
+
+message FindGameModsResponse {
+  repeated gameap.GameMod game_mods = 1;
+  int32 total = 2;
+}
+
+message GetGameModRequest {
+  uint64 id = 1;
+}
+
+message GetGameModResponse {
+  optional gameap.GameMod game_mod = 1;
+  bool found = 2;
+}

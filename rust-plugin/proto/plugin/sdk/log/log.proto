@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gameap.plugin.sdk.log;
+
+option go_package = "github.com/gameap/gameap/pkg/plugin/sdk/log";
+
+// LogService provides logging capabilities to plugins
+// go:plugin type=host module=gameap-log
+service LogService {
+  rpc Log(LogRequest) returns (LogResponse);
+}
+
+message LogRequest {
+  string level = 1;   // debug, info, warn, error
+  string message = 2;
+  map<string, string> fields = 3;
+}
+
+message LogResponse {}
