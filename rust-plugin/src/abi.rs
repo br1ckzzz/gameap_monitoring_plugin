@@ -3,7 +3,6 @@
 //! Handles low-level linear memory allocations, buffer marshaling,
 //! and packed `u64` return values (upper 32 bits = pointer, lower 32 bits = size).
 
-use std::alloc::{alloc, dealloc, Layout};
 use prost::Message;
 
 /// Packs a 32-bit pointer and 32-bit size into a 64-bit integer for WASM ABI return.
@@ -20,29 +19,28 @@ pub fn unpack_ptr_size(val: u64) -> (u32, u32) {
     (ptr, size)
 }
 
-/// Allocates raw linear memory of specified byte size.
+extern "C" {
+    fn malloc(size: usize) -> *mut u8;
+    fn free(ptr: *mut u8);
+}
+
+/// Allocates raw linear memory of specified byte size using libc dlmalloc.
 /// Exported to the GameAP host (Wazero) so it can write input protobuf buffers.
 #[no_mangle]
 pub extern "C" fn allocate(size: u32) -> u32 {
     if size == 0 {
         return 0;
     }
-    let layout = Layout::from_size_align(size as usize, 8).unwrap_or(
-        Layout::from_size_align(size as usize, 1).unwrap()
-    );
-    unsafe { alloc(layout) as u32 }
+    unsafe { malloc(size as usize) as u32 }
 }
 
-/// Deallocates previously allocated raw linear memory.
+/// Deallocates previously allocated raw linear memory using libc dlmalloc.
 #[no_mangle]
-pub extern "C" fn deallocate(ptr: u32, size: u32) {
-    if ptr == 0 || size == 0 {
+pub extern "C" fn deallocate(ptr: u32, _size: u32) {
+    if ptr == 0 {
         return;
     }
-    let layout = Layout::from_size_align(size as usize, 8).unwrap_or(
-        Layout::from_size_align(size as usize, 1).unwrap()
-    );
-    unsafe { dealloc(ptr as *mut u8, layout) }
+    unsafe { free(ptr as *mut u8) }
 }
 
 /// Reads a protobuf message from host-provided memory pointer and size.

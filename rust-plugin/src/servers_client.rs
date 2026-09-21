@@ -148,20 +148,40 @@ pub fn fetch_all_servers() -> Vec<PublicServerDTO> {
     list
 }
 
-static CACHED_PUBLIC_BYTES: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+struct CacheEntry {
+    payload: Vec<u8>,
+    timestamp_secs: u64,
+}
+
+static CACHED_PUBLIC_ENTRY: Mutex<Option<CacheEntry>> = Mutex::new(None);
+const MICRO_CACHE_TTL_SECS: u64 = 3;
+
+fn get_current_timestamp_secs() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
 
 pub fn invalidate_public_cache() {
-    if let Ok(mut g) = CACHED_PUBLIC_BYTES.lock() {
+    if let Ok(mut g) = CACHED_PUBLIC_ENTRY.lock() {
         *g = None;
     }
 }
 
-/// Fetches public servers filtered by visibility and cached for 4 seconds (Anti-DoS).
-pub fn fetch_public_servers() -> Vec<u8> {
-    // Check in-memory micro-cache
-    if let Ok(g) = CACHED_PUBLIC_BYTES.lock() {
-        if let Some(ref bytes) = *g {
-            return bytes.clone();
+/// Fetches public servers filtered by visibility and cached for up to 3 seconds (Anti-DoS).
+/// When `force_refresh` is true, bypasses the micro-cache completely and re-queries live state.
+pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
+    let now = get_current_timestamp_secs();
+
+    // Check in-memory micro-cache only if not forcing refresh and wall-clock is functional (>0)
+    if !force_refresh && now > 0 {
+        if let Ok(g) = CACHED_PUBLIC_ENTRY.lock() {
+            if let Some(ref entry) = *g {
+                if now.saturating_sub(entry.timestamp_secs) < MICRO_CACHE_TTL_SECS {
+                    return entry.payload.clone();
+                }
+            }
         }
     }
 
@@ -186,13 +206,23 @@ pub fn fetch_public_servers() -> Vec<u8> {
         total_servers: list.len(),
         online_count,
         servers: list,
-        timestamp: 0,
+        timestamp: now as i64,
+        refresh_interval: settings.refresh_interval,
     };
 
     let bytes = serde_json::to_vec(&resp).unwrap_or_default();
-    if let Ok(mut g) = CACHED_PUBLIC_BYTES.lock() {
-        *g = Some(bytes.clone());
+    if now > 0 {
+        if let Ok(mut g) = CACHED_PUBLIC_ENTRY.lock() {
+            *g = Some(CacheEntry {
+                payload: bytes.clone(),
+                timestamp_secs: now,
+            });
+        }
     }
 
     bytes
+}
+
+pub fn fetch_public_servers() -> Vec<u8> {
+    fetch_public_servers_with_opt(false)
 }

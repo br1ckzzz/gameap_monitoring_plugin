@@ -1,6 +1,6 @@
 // GameAP WebMonitoring Frontend Script
 
-const AUTO_REFRESH_SECONDS = 15;
+let autoRefreshSeconds = 15;
 
 const I18N = {
   ru: {
@@ -61,59 +61,7 @@ let allServers = [];
 let selectedGame = 'all';
 let searchQuery = '';
 let refreshInterval = null;
-let countdownSeconds = AUTO_REFRESH_SECONDS;
-
-// Demo mock data in case API is running standalone or offline
-const DEMO_SERVERS = [
-  {
-    id: 1,
-    name: "Classic Dust2 Only [128 Tick]",
-    game_code: "cs2",
-    game_name: "Counter-Strike 2",
-    address: "198.51.100.10",
-    port: 27015,
-    status: "online",
-    installed: true,
-    blocked: false,
-    connect_url: "steam://connect/198.51.100.10:27015"
-  },
-  {
-    id: 2,
-    name: "Public CS 1.6 #1 [FastDL]",
-    game_code: "cstrike",
-    game_name: "Counter-Strike 1.6",
-    address: "198.51.100.10",
-    port: 27016,
-    status: "online",
-    installed: true,
-    blocked: false,
-    connect_url: "steam://connect/198.51.100.10:27016"
-  },
-  {
-    id: 3,
-    name: "Vanilla Survival 1.21+",
-    game_code: "minecraft",
-    game_name: "Minecraft",
-    address: "198.51.100.10",
-    port: 25565,
-    status: "online",
-    installed: true,
-    blocked: false,
-    connect_url: ""
-  },
-  {
-    id: 4,
-    name: "Rust 2x Main [Wipe Friday]",
-    game_code: "rust",
-    game_name: "Rust",
-    address: "198.51.100.10",
-    port: 28015,
-    status: "offline",
-    installed: true,
-    blocked: false,
-    connect_url: "steam://connect/198.51.100.10:28015"
-  }
-];
+let countdownSeconds = autoRefreshSeconds;
 
 // DOM Elements
 const grid = document.getElementById('servers-grid');
@@ -200,6 +148,15 @@ if (langToggleBtn) {
 function initPreloadedData() {
   if (!window.INITIAL_DATA) return;
 
+  if (window.INITIAL_DATA.refresh_interval) {
+    const parsedInterval = parseInt(window.INITIAL_DATA.refresh_interval, 10);
+    if (!isNaN(parsedInterval) && parsedInterval > 0) {
+      autoRefreshSeconds = parsedInterval;
+      countdownSeconds = autoRefreshSeconds;
+      updateTimerDisplay();
+    }
+  }
+
   if (window.INITIAL_DATA.version && versionLink) {
     versionLink.textContent = `v${window.INITIAL_DATA.version}`;
   }
@@ -235,17 +192,20 @@ function getApiEndpoint(route) {
   return `${path}${route}${sep}action=${actionName}`;
 }
 
-async function fetchServers() {
+async function fetchServers(isManual = false) {
   if (allServers.length === 0) {
     setLoading(true);
   }
   
   try {
     let loadedData = null;
-    const primaryEndpoint = getApiEndpoint('/servers');
-    const directEndpoint = '/api/plugins/monitoring?action=servers';
-    const fallbackEndpoint = '/api/plugins/monitorine/servers';
-    const fallbackEndpoint2 = '/plugins/web-monitoring/servers';
+    const cacheBuster = `_t=${Date.now()}${isManual ? '&refresh=1' : ''}`;
+    const appendCb = (url) => url + (url.includes('?') ? '&' : '?') + cacheBuster;
+
+    const primaryEndpoint = appendCb(getApiEndpoint('/servers'));
+    const directEndpoint = appendCb('/api/plugins/monitoring?action=servers');
+    const fallbackEndpoint = appendCb('/api/plugins/monitorine/servers');
+    const fallbackEndpoint2 = appendCb('/plugins/web-monitoring/servers');
 
     function handleRateLimit(retrySec) {
       console.warn(`GameAP returned 429/503, backing off for ${retrySec}s`);
@@ -280,8 +240,16 @@ async function fetchServers() {
 
         if (res.ok) {
           const data = await res.json();
-          if (data && Array.isArray(data.servers)) {
-            return { success: true, servers: data.servers };
+          if (data) {
+            if (data.refresh_interval) {
+              const parsedInt = parseInt(data.refresh_interval, 10);
+              if (!isNaN(parsedInt) && parsedInt > 0 && parsedInt !== autoRefreshSeconds) {
+                autoRefreshSeconds = parsedInt;
+              }
+            }
+            if (Array.isArray(data.servers)) {
+              return { success: true, servers: data.servers };
+            }
           }
         }
       } catch (err) {
@@ -336,13 +304,13 @@ async function fetchServers() {
       }
     }
 
-    // 5. Fallback to preloaded INITIAL_DATA if present
-    if ((!loadedData || loadedData.length === 0) && window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.servers) && window.INITIAL_DATA.servers.length > 0) {
+    // 5. Fallback to preloaded INITIAL_DATA ONLY on initial load when allServers is empty
+    if ((!loadedData || loadedData.length === 0) && allServers.length === 0 && window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.servers) && window.INITIAL_DATA.servers.length > 0) {
       loadedData = window.INITIAL_DATA.servers;
     }
 
-    // 6. Fallback to localStorage cached servers from Admin panel
-    if (!loadedData || loadedData.length === 0) {
+    // 6. Fallback to localStorage cached servers from Admin panel (initial load only)
+    if ((!loadedData || loadedData.length === 0) && allServers.length === 0) {
       try {
         const cached = localStorage.getItem('web_monitoring_cached_servers');
         if (cached) {
@@ -354,8 +322,8 @@ async function fetchServers() {
       } catch (_) {}
     }
 
-    // 7. Fallback to settings payload cache
-    if (!loadedData || loadedData.length === 0) {
+    // 7. Fallback to settings payload cache (initial load only)
+    if ((!loadedData || loadedData.length === 0) && allServers.length === 0) {
       try {
         const sSaved = localStorage.getItem('web_monitoring_settings');
         if (sSaved) {
@@ -367,12 +335,15 @@ async function fetchServers() {
       } catch (_) {}
     }
 
-    if (loadedData && loadedData.length > 0) {
+    if (loadedData !== null && loadedData !== undefined) {
       allServers = loadedData;
       setError(false);
     } else if (allServers.length === 0) {
-      console.warn('No active servers returned, showing fallback demo servers');
-      allServers = DEMO_SERVERS;
+      console.warn('No active servers returned from API');
+      allServers = [];
+      setError(true);
+    } else if (isManual) {
+      showToast(t('errorTitle'));
     }
   } catch (outerErr) {
     console.error('fetchServers error:', outerErr);
@@ -582,13 +553,13 @@ function escapeHtml(str) {
 // Countdown & Auto Refresh
 function startTimer() {
   if (refreshInterval) clearInterval(refreshInterval);
-  countdownSeconds = AUTO_REFRESH_SECONDS;
+  countdownSeconds = autoRefreshSeconds;
   updateTimerDisplay();
 
   refreshInterval = setInterval(() => {
     countdownSeconds--;
     if (countdownSeconds <= 0) {
-      fetchServers();
+      fetchServers(false);
     } else {
       updateTimerDisplay();
     }
@@ -616,7 +587,7 @@ if (searchInput) {
 if (refreshBtn) {
   refreshBtn.addEventListener('click', () => {
     resetTimer();
-    fetchServers();
+    fetchServers(true);
   });
 }
 

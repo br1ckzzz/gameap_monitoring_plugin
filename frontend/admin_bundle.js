@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.4',
+    version: '1.0.6',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Плагин публичного онлайн-мониторинга для GameAP v1.0.5',
+                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.6',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
@@ -88,6 +88,7 @@ export const webMonitoringPlugin = {
                             botApiTokenLabel: 'Секретный токен доступа (API Token)',
                             botApiTokenPlaceholder: 'Нажмите «Сгенерировать» или введите токен',
                             botApiTokenHelp: 'Бот передаёт этот ключ в HTTP-заголовке X-WebMon-Token или параметре ?token=. Храните его в секрете!',
+                            botDevNotice: '🤖 Discord-бот GameAP WebMonBot находится в разработке (скоро релиз!)',
                             generateTokenBtn: 'Сгенерировать токен',
                             copyTokenBtn: 'Копировать токен',
                             copiedToken: '✓ Скопировано!',
@@ -100,7 +101,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.5',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.6',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
@@ -158,6 +159,7 @@ export const webMonitoringPlugin = {
                             botApiTokenLabel: 'Secret Access Token (API Token)',
                             botApiTokenPlaceholder: 'Click Generate or enter your token',
                             botApiTokenHelp: 'The bot transmits this key in the X-WebMon-Token header or ?token= param. Keep it secret!',
+                            botDevNotice: '🤖 GameAP WebMonBot (Discord bot) is currently in development (release coming soon!)',
                             generateTokenBtn: 'Generate Token',
                             copyTokenBtn: 'Copy Token',
                             copiedToken: '✓ Copied!',
@@ -967,7 +969,14 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
-                            const sEndpoints = ['/api/plugins/monitoring/settings?action=settings', '/api/plugins/monitorine/settings'];
+                            const sEndpoints = [
+                                '/api/plugins/monitoring/settings?action=settings',
+                                '/api/plugins/monitoring/settings',
+                                '/api/plugins/monitoring?action=settings',
+                                '/api/plugins/monitorine/settings?action=settings',
+                                '/api/plugins/monitorine/settings',
+                                '/api/plugins/monitorine?action=settings'
+                            ];
                             for (const sUrl of sEndpoints) {
                                 try {
                                     const sRes = await fetch(sUrl);
@@ -1025,7 +1034,14 @@ export const webMonitoringPlugin = {
                             };
                             localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
                             localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(servers));
-                            const sEndpoints = ['/api/plugins/monitoring/settings?action=settings', '/api/plugins/monitorine/settings'];
+                            const sEndpoints = [
+                                '/api/plugins/monitoring/settings?action=settings',
+                                '/api/plugins/monitoring/settings',
+                                '/api/plugins/monitoring?action=settings',
+                                '/api/plugins/monitorine/settings?action=settings',
+                                '/api/plugins/monitorine/settings',
+                                '/api/plugins/monitorine?action=settings'
+                            ];
                             for (const sUrl of sEndpoints) {
                                 try {
                                     const r = await fetch(sUrl, {
@@ -1072,7 +1088,14 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
-                            const sEndpoints = ['/api/plugins/monitoring/settings?action=settings', '/api/plugins/monitorine/settings'];
+                            const sEndpoints = [
+                                '/api/plugins/monitoring/settings?action=settings',
+                                '/api/plugins/monitoring/settings',
+                                '/api/plugins/monitoring?action=settings',
+                                '/api/plugins/monitorine/settings?action=settings',
+                                '/api/plugins/monitorine/settings',
+                                '/api/plugins/monitorine?action=settings'
+                            ];
                             let res = null;
                             for (const sUrl of sEndpoints) {
                                 try {
@@ -1459,7 +1482,13 @@ export const webMonitoringPlugin = {
                                             copiedToken.value ? t('copiedToken') : t('copyTokenBtn')
                                         ])
                                     ]),
-                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('botApiTokenHelp'))
+                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('botApiTokenHelp')),
+                                    h('div', {
+                                        style: 'display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--wm-primary-soft-text); background: var(--wm-primary-soft-bg); border: 1px solid var(--wm-primary-soft-border); padding: 6px 12px; border-radius: 8px; margin-top: 6px; width: fit-content;'
+                                    }, [
+                                        h('i', { class: 'fas fa-tools', style: 'color: var(--wm-primary);' }),
+                                        h('span', t('botDevNotice'))
+                                    ])
                                 ])
                             ])
                         ]),

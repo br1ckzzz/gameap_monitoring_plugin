@@ -26,14 +26,36 @@ pub struct MonitoringResponse {
     pub online_count: usize,
     pub servers: Vec<PublicServerDTO>,
     pub timestamp: i64,
+    #[serde(default = "default_refresh_interval")]
+    pub refresh_interval: u32,
+}
+
+fn default_refresh_interval() -> u32 {
+    15
+}
+
+fn default_title() -> String {
+    "GameAP Servers".to_string()
+}
+
+fn default_subtitle() -> String {
+    "Онлайн мониторинг игровых серверов".to_string()
+}
+
+fn default_theme() -> String {
+    "dark".to_string()
 }
 
 /// Customizable plugin settings persisted in GameAP storage.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginSettings {
+    #[serde(default = "default_title")]
     pub title: String,
+    #[serde(default = "default_subtitle")]
     pub subtitle: String,
+    #[serde(default = "default_theme")]
     pub theme: String, // "dark" or "light"
+    #[serde(default = "default_refresh_interval")]
     pub refresh_interval: u32,
     #[serde(default)]
     pub custom_css: String,

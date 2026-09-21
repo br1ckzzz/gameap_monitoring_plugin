@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/br1ckzzz/gameap_monitoring_plugin/releases"><img src="https://img.shields.io/github/v/release/br1ckzzz/gameap_monitoring_plugin?label=version&color=blue" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
-  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go" alt="Go 1.23+"></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-2021-DEA584?logo=rust&logoColor=white" alt="Rust 2021"></a>
   <a href="https://webassembly.org"><img src="https://img.shields.io/badge/target-wasip1%2Fwasm-654FF0" alt="Target: wasip1/wasm"></a>
 </p>
 
@@ -64,12 +64,9 @@ gameap_monitoring_plugin/
 │   ├── styles.css          # Modern responsive styling
 │   ├── app.js              # Client-side state, filtering, and auto-refresh
 │   └── admin_bundle.js     # GameAP Admin Panel Vue 3 component bundle
-├── plugin/                 # Go source code (WebAssembly/WASI)
-│   ├── main.go             # Plugin registration via GameAP SDK
-│   ├── handler.go          # HTTP routing and asset delivery
-│   ├── monitor.go          # Safe server status retrieval
-│   ├── settings.go         # Settings persistence and serialization
-│   └── assets/             # Bundled web assets compiled into the binary
+├── rust-plugin/            # Rust WebAssembly plugin crate (wasm32-wasip1)
+│   ├── src/                # Handlers, memory ABI, protobuf, host clients
+│   └── assets/             # Embedded frontend assets
 ├── scripts/                # Build scripts
 │   ├── build.sh            # Linux / macOS build script
 │   └── build.ps1           # Windows PowerShell build script
@@ -83,7 +80,7 @@ gameap_monitoring_plugin/
 
 ### 1. Download or Build the Plugin Binary
 
-Download `web_monitoring.wasm` (v1.0.5) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
+Download `web_monitoring.wasm` (v1.0.6) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
 Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/lib/gameap/plugins/` or your configured `PLUGINS_DIR`).
 
 ### 2. Activate in GameAP

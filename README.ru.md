@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/br1ckzzz/gameap_monitoring_plugin/releases"><img src="https://img.shields.io/github/v/release/br1ckzzz/gameap_monitoring_plugin?label=версия&color=blue" alt="Версия"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/Лицензия-MIT-green.svg" alt="Лицензия: MIT"></a>
-  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go" alt="Go 1.23+"></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-2021-DEA584?logo=rust&logoColor=white" alt="Rust 2021"></a>
   <a href="https://webassembly.org"><img src="https://img.shields.io/badge/таргет-wasip1%2Fwasm-654FF0" alt="Таргет: wasip1/wasm"></a>
 </p>
 
@@ -64,11 +64,8 @@ gameap_monitoring_plugin/
 │   ├── styles.css          # Стили оформления страницы
 │   ├── app.js              # Клиентская логика, таймеры, фильтры
 │   └── admin_bundle.js     # Компонент для панели администратора GameAP (Vue 3)
-├── plugin/                 # Исходный код на Go (WebAssembly/WASI)
-│   ├── main.go             # Регистрация плагина в GameAP SDK
-│   ├── handler.go          # HTTP-роуты и отдача веб-страниц
-│   ├── monitor.go          # Безопасное получение статусов серверов
-│   ├── settings.go         # Хранение и сохранение настроек
+├── rust-plugin/            # Rust WebAssembly плагин (wasm32-wasip1)
+│   ├── src/                # Обработчики, ABI памяти, protobuf, клиенты сервисов
 │   └── assets/             # Встроенные веб-ресурсы, упакованные в бинарник
 ├── scripts/                # Скрипты сборки
 │   ├── build.sh            # Сборка для Linux / macOS
@@ -82,7 +79,7 @@ gameap_monitoring_plugin/
 ## 🚀 Установка
 
 ### 1. Скачивание или сборка плагина
-Скачайте готовый файл `web_monitoring.wasm` (v1.0.5) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
+Скачайте готовый файл `web_monitoring.wasm` (v1.0.6) со страницы **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (либо соберите его из исходников согласно инструкции ниже).
 Поместите файл `web_monitoring.wasm` в каталог плагинов GameAP (по умолчанию `/var/lib/gameap/plugins/` или директорию, указанную в `PLUGINS_DIR`).
 
 ### 2. Активация плагина

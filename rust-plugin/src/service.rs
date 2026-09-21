@@ -2,7 +2,8 @@
 
 use crate::assets::{get_frontend_assets, ADMIN_BUNDLE_JS};
 
-pub const PLUGIN_VERSION: &str = "1.0.5";
+pub const PLUGIN_VERSION: &str = "1.0.6";
+pub const PLUGIN_REPO_URL: &str = "https://github.com/br1ckzzz/gameap_monitoring_plugin";
 
 /// Plugin metadata descriptor for GameAP.
 pub struct PluginInfoDescriptor {

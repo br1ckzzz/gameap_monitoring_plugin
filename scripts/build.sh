@@ -8,10 +8,10 @@ TARGET="wasm32-wasip1"
 
 echo "=========================================="
 echo " Building GameAP WebMonitoring (RUST WASM)"
-FRONTEND_BUNDLE="$ROOT_DIR/frontend/admin_bundle.js"
-ASSETS_BUNDLE="$RUST_DIR/assets/admin_bundle.js"
-if [ -f "$FRONTEND_BUNDLE" ]; then
-    cp -f "$FRONTEND_BUNDLE" "$ASSETS_BUNDLE"
+FRONTEND_DIR="$ROOT_DIR/frontend"
+ASSETS_DIR="$RUST_DIR/assets"
+if [ -d "$FRONTEND_DIR" ]; then
+    cp -rf "$FRONTEND_DIR"/* "$ASSETS_DIR/"
 fi
 
 if command -v cargo &> /dev/null; then

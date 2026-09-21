@@ -51,12 +51,10 @@ fn call_storage_set(req: &StorageSetRequest) -> Option<StorageSetResponse> {
 
 /// Retrieves active settings from memory cache or database storage.
 pub fn get_settings() -> PluginSettings {
-    // If in-memory settings has cached servers, return it directly
+    // If in-memory settings are already loaded/saved, return directly
     if let Ok(guard) = CURRENT_SETTINGS.lock() {
         if let Some(ref s) = *guard {
-            if !s.cached_servers.is_empty() {
-                return s.clone();
-            }
+            return s.clone();
         }
     }
 
@@ -70,11 +68,13 @@ pub fn get_settings() -> PluginSettings {
     if let Some(resp) = call_storage_get(&req) {
         if resp.found {
             if let Some(payload) = resp.payload {
-                if let Ok(loaded) = serde_json::from_slice::<PluginSettings>(&payload) {
-                    if let Ok(mut guard) = CURRENT_SETTINGS.lock() {
-                        *guard = Some(loaded.clone());
+                if !payload.is_empty() {
+                    if let Ok(loaded) = serde_json::from_slice::<PluginSettings>(&payload) {
+                        if let Ok(mut guard) = CURRENT_SETTINGS.lock() {
+                            *guard = Some(loaded.clone());
+                        }
+                        return loaded;
                     }
-                    return loaded;
                 }
             }
         }

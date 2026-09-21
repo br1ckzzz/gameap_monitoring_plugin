@@ -301,7 +301,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
             diag = {
                 "plugin_id": "monitoring",
-                "version": "1.0.5",
+                "version": "1.0.6",
                 "client_ip": client_ip,
                 "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
                 "servers_count": len(MOCK_SERVERS),
@@ -339,6 +339,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                 "online_count": online_count,
                 "servers": MOCK_SERVERS,
                 "all_servers": MOCK_SERVERS,
+                "refresh_interval": SETTINGS_CACHE.get("refresh_interval", 15),
                 "timestamp": int(time.time())
             }
             self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
@@ -413,7 +414,8 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
             initial_data = {
                 "servers": MOCK_SERVERS,
-                "version": "1.0.5"
+                "version": "1.0.6",
+                "refresh_interval": SETTINGS_CACHE.get("refresh_interval", 15)
             }
             injection = f"<script>window.INITIAL_DATA = {json.dumps(initial_data, ensure_ascii=False)};</script></head>"
             content = content.replace("</head>", injection)

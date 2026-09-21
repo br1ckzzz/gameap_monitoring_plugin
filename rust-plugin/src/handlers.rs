@@ -2,7 +2,7 @@
 
 use crate::assets::INDEX_HTML;
 use crate::proto::HttpRequest;
-use crate::servers_client::{fetch_all_servers, fetch_public_servers, invalidate_public_cache};
+use crate::servers_client::{fetch_all_servers, fetch_public_servers_with_opt, invalidate_public_cache};
 use crate::service::PLUGIN_VERSION;
 use crate::settings::{get_settings, save_settings};
 use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO};
@@ -84,20 +84,42 @@ fn extract_auth_token(req: &HttpRequest) -> Option<String> {
 pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     let path = req.path.trim_end_matches('/');
 
-    // Handle root path routing
-    if path.is_empty() || path == "/" {
-        if let Some(action_vals) = req.query_params.get("action") {
-            if let Some(action) = action_vals.values.first() {
-                match action.as_str() {
-                    "servers" | "admin_servers" | "all_servers" => return handle_servers(req),
-                    "settings" => return handle_settings(req),
-                    "diagnostic" => return handle_diagnostic(req),
-                    "view" => return handle_view(),
-                    _ => {}
-                }
+    // Global query parameter action dispatch (regardless of base path)
+    if let Some(action_vals) = req.query_params.get("action") {
+        if let Some(action) = action_vals.values.first() {
+            match action.as_str() {
+                "servers" | "admin_servers" | "all_servers" => return handle_servers(req),
+                "settings" => return handle_settings(req),
+                "diagnostic" => return handle_diagnostic(req),
+                "view" => return handle_view(),
+                _ => {}
             }
         }
+    }
 
+    // Path suffix matching to support arbitrary GameAP mount prefixes
+    if path == "/settings" || path.ends_with("/settings") {
+        return handle_settings(req);
+    }
+    if path == "/servers" || path.ends_with("/servers") || path.ends_with("/api/servers") || path.ends_with("/bot/servers") {
+        return handle_servers(req);
+    }
+    if path == "/view" || path.ends_with("/view") {
+        return handle_view();
+    }
+    if path == "/diagnostic" || path.ends_with("/diagnostic") {
+        return handle_diagnostic(req);
+    }
+    if path == "/icon.png" || path.ends_with("/icon.png") {
+        return HTTPResponseData {
+            status_code: 200,
+            content_type: "image/png",
+            body: crate::assets::ICON_PNG.to_vec(),
+        };
+    }
+
+    // Handle root path routing
+    if path.is_empty() || path == "/" {
         if req.method.eq_ignore_ascii_case("POST") {
             return handle_settings(req);
         }
@@ -111,21 +133,10 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
         return handle_view();
     }
 
-    match path {
-        "/servers" | "/api/servers" | "/bot/servers" => handle_servers(req),
-        "/view" => handle_view(),
-        "/settings" => handle_settings(req),
-        "/diagnostic" => handle_diagnostic(req),
-        "/icon.png" | "/plugins/web-monitoring/icon.png" => HTTPResponseData {
-            status_code: 200,
-            content_type: "image/png",
-            body: crate::assets::ICON_PNG.to_vec(),
-        },
-        _ => HTTPResponseData {
-            status_code: 404,
-            content_type: "application/json",
-            body: br#"{"error":"not found"}"#.to_vec(),
-        },
+    HTTPResponseData {
+        status_code: 404,
+        content_type: "application/json",
+        body: br#"{"error":"not found"}"#.to_vec(),
     }
 }
 
@@ -160,7 +171,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         }
     }
 
-    let mut show_all = false;
+    let mut show_all = is_explicit_bot_endpoint || provided_token.is_some();
     if let Some(vals) = req.query_params.get("all") {
         if let Some(first) = vals.values.first() {
             if first == "1" || first == "true" {
@@ -176,15 +187,27 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         }
     }
 
+    let force_refresh = req.query_params.get("refresh").is_some()
+        || req.query_params.get("nocache").is_some()
+        || req.query_params.get("_t").is_some();
+
     if show_all {
+        if force_refresh {
+            invalidate_public_cache();
+        }
         let all_servers = fetch_all_servers();
         let online_count = all_servers.iter().filter(|s| s.status == "online").count();
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
         let resp = MonitoringResponse {
             success: true,
             total_servers: all_servers.len(),
             online_count,
             servers: all_servers,
-            timestamp: 0,
+            timestamp: now as i64,
+            refresh_interval: settings.refresh_interval,
         };
         let body = serde_json::to_vec(&resp).unwrap_or_default();
         return HTTPResponseData {
@@ -194,7 +217,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         };
     }
 
-    let body = fetch_public_servers();
+    let body = fetch_public_servers_with_opt(force_refresh);
     HTTPResponseData {
         status_code: 200,
         content_type: "application/json; charset=utf-8",
@@ -259,16 +282,31 @@ fn handle_view() -> HTTPResponseData {
         }
     }
 
-    // Preload servers into HTML for instant 0ms first render (no spinner)
-    let pub_bytes = fetch_public_servers();
+    // Preload servers and configuration into HTML for instant 0ms first render (no spinner)
+    let pub_bytes = fetch_public_servers_with_opt(false);
     if !pub_bytes.is_empty() {
-        if let Ok(pub_str) = std::str::from_utf8(&pub_bytes) {
-            let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", pub_str);
-            page_content = page_content.replace("</head>", &preloaded);
+        if let Ok(mut initial_data) = serde_json::from_slice::<serde_json::Value>(&pub_bytes) {
+            if let Some(obj) = initial_data.as_object_mut() {
+                obj.insert("version".to_string(), serde_json::json!(PLUGIN_VERSION));
+                obj.insert("repo_url".to_string(), serde_json::json!(crate::service::PLUGIN_REPO_URL));
+                obj.insert("refresh_interval".to_string(), serde_json::json!(settings.refresh_interval));
+                if let Some(ref logo) = settings.logo_url {
+                    obj.insert("logo_url".to_string(), serde_json::json!(logo));
+                }
+                if let Some(ref fav) = settings.favicon_url {
+                    obj.insert("favicon_url".to_string(), serde_json::json!(fav));
+                }
+            }
+            if let Ok(initial_json) = serde_json::to_string(&initial_data) {
+                let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", initial_json);
+                page_content = page_content.replace("</head>", &preloaded);
+            }
         }
     }
 
     page_content = page_content.replace("v1.0.0", &format!("v{}", PLUGIN_VERSION));
+    page_content = page_content.replace(">15с<", &format!(">{}с<", settings.refresh_interval));
+    page_content = page_content.replace(">15s<", &format!(">{}s<", settings.refresh_interval));
 
     HTTPResponseData {
         status_code: 200,
@@ -290,7 +328,7 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
             };
         } else {
             return HTTPResponseData {
-                status_code: 200,
+                status_code: 400,
                 content_type: "application/json",
                 body: br#"{"success":false,"error":"Invalid settings JSON"}"#.to_vec(),
             };

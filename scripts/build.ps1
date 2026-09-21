@@ -19,10 +19,10 @@ if (-not (Get-Command "cargo" -ErrorAction SilentlyContinue)) {
         $CARGO_CMD = $USER_CARGO
     }
 }
-$FRONTEND_BUNDLE = Join-Path $ROOT_DIR "frontend\admin_bundle.js"
-$ASSETS_BUNDLE = Join-Path $RUST_DIR "assets\admin_bundle.js"
-if (Test-Path $FRONTEND_BUNDLE) {
-    Copy-Item -Path $FRONTEND_BUNDLE -Destination $ASSETS_BUNDLE -Force
+$FRONTEND_DIR = Join-Path $ROOT_DIR "frontend"
+$ASSETS_DIR = Join-Path $RUST_DIR "assets"
+if (Test-Path $FRONTEND_DIR) {
+    Copy-Item -Path (Join-Path $FRONTEND_DIR "*") -Destination $ASSETS_DIR -Recurse -Force
 }
 
 if (Get-Command $CARGO_CMD -ErrorAction SilentlyContinue) {
