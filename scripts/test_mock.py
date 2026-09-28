@@ -42,15 +42,15 @@ def run_tests():
         req = urllib.request.Request(f"{base_url}/")
         with urllib.request.urlopen(req) as resp:
             content = resp.read().decode("utf-8")
-            assert_test("Public monitoring view 200 OK with v1.0.8 & INITIAL_DATA",
-                        resp.status == 200 and "1.0.8" in content and "window.INITIAL_DATA" in content)
+            assert_test("Public monitoring view 200 OK with v1.0.9 & INITIAL_DATA",
+                        resp.status == 200 and "1.0.9" in content and "window.INITIAL_DATA" in content)
 
         # 2. Diagnostic endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/diagnostic")
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            assert_test("Diagnostic endpoint 200 OK with version 1.0.8",
-                        resp.status == 200 and data.get("version") == "1.0.8")
+            assert_test("Diagnostic endpoint 200 OK with version 1.0.9",
+                        resp.status == 200 and data.get("version") == "1.0.9")
 
         # 3. Servers endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/servers")
@@ -121,6 +121,18 @@ def run_tests():
             announcement = data.get("announcement")
             assert_test("13.3 Announcement banner present in /servers payload",
                         announcement is not None and "🔥" in announcement.get("text", ""))
+
+        # 11b. Announcement disabled explicitly returns null
+        SETTINGS_CACHE["announcement_enabled"] = False
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            assert_test("Announcement explicitly null in /servers payload when disabled",
+                        "announcement" in data and data["announcement"] is None)
+        with urllib.request.urlopen(f"{base_url}/") as resp:
+            html = resp.read().decode("utf-8")
+            assert_test("Announcement explicitly null in window.INITIAL_DATA when disabled",
+                        '"announcement": null' in html)
+        SETTINGS_CACHE["announcement_enabled"] = True
 
         # 12. 13.5 Server Clusters / Categories
         with urllib.request.urlopen(req) as resp:

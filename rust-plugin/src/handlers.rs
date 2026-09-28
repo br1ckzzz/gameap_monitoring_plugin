@@ -347,6 +347,8 @@ fn handle_view() -> HTTPResponseData {
                 "banner_type": settings.announcement_type,
                 "deadline": if settings.announcement_deadline.is_empty() { None } else { Some(settings.announcement_deadline.clone()) }
             }));
+        } else {
+            obj.insert("announcement".to_string(), serde_json::Value::Null);
         }
     }
     if let Ok(initial_json) = serde_json::to_string(&initial_data) {

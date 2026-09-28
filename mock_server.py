@@ -399,7 +399,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
             diag = {
                 "plugin_id": "monitoring",
-                "version": "1.0.8",
+                "version": "1.0.9",
                 "client_ip": client_ip,
                 "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
                 "servers_count": len(MOCK_SERVERS),
@@ -490,6 +490,8 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                     "banner_type": SETTINGS_CACHE.get("announcement_type", "info"),
                     "deadline": SETTINGS_CACHE.get("announcement_deadline") or None,
                 }
+            else:
+                payload["announcement"] = None
             self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
             return
 
@@ -615,7 +617,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
             initial_data = {
                 "servers": MOCK_SERVERS,
-                "version": "1.0.8",
+                "version": "1.0.9",
                 "refresh_interval": refresh_interval,
                 "title": title,
                 "subtitle": subtitle,
@@ -629,6 +631,8 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                     "banner_type": SETTINGS_CACHE.get("announcement_type", "info"),
                     "deadline": SETTINGS_CACHE.get("announcement_deadline") or None,
                 }
+            else:
+                initial_data["announcement"] = None
             injection = f"<script>window.INITIAL_DATA = {json.dumps(initial_data, ensure_ascii=False)};</script></head>"
             content = content.replace("</head>", injection)
 

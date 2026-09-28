@@ -214,9 +214,18 @@ const viewModeTabsBtn = document.getElementById('view-mode-tabs-btn');
 const viewModeAccordionBtn = document.getElementById('view-mode-accordion-btn');
 
 function loadCachedAnnouncement() {
-  if (window.INITIAL_DATA && window.INITIAL_DATA.announcement && window.INITIAL_DATA.announcement.text) {
-    announcementData = window.INITIAL_DATA.announcement;
-    return;
+  if (window.INITIAL_DATA && window.INITIAL_DATA.announcement !== undefined) {
+    if (window.INITIAL_DATA.announcement && window.INITIAL_DATA.announcement.text) {
+      announcementData = window.INITIAL_DATA.announcement;
+      return;
+    } else {
+      // Explicitly disabled/null in server preloaded data
+      announcementData = null;
+      try {
+        localStorage.removeItem('web_monitoring_announcement');
+      } catch (_) {}
+      return;
+    }
   }
   try {
     const raw = localStorage.getItem('web_monitoring_announcement');
@@ -244,6 +253,7 @@ function loadCachedAnnouncement() {
       }
     }
   } catch (_) {}
+  announcementData = null;
 }
 
 const DEFAULT_SUBTITLES = [
@@ -476,20 +486,16 @@ async function fetchServers(isManual = false) {
                 autoRefreshSeconds = parsedInt;
               }
             }
-            if (data.announcement !== undefined) {
-              if (data.announcement && data.announcement.text) {
-                announcementData = data.announcement;
-                try {
-                  localStorage.setItem('web_monitoring_announcement', JSON.stringify(announcementData));
-                } catch (_) {}
-              } else if (data.announcement === null || data.announcement === false) {
-                announcementData = null;
-                try {
-                  localStorage.removeItem('web_monitoring_announcement');
-                } catch (_) {}
-              }
-            } else if (!announcementData) {
-              loadCachedAnnouncement();
+            if (data.announcement && data.announcement.text) {
+              announcementData = data.announcement;
+              try {
+                localStorage.setItem('web_monitoring_announcement', JSON.stringify(announcementData));
+              } catch (_) {}
+            } else {
+              announcementData = null;
+              try {
+                localStorage.removeItem('web_monitoring_announcement');
+              } catch (_) {}
             }
             if (Array.isArray(data.servers)) {
               return { success: true, servers: data.servers };
@@ -592,9 +598,6 @@ async function fetchServers(isManual = false) {
   } catch (outerErr) {
     console.error('fetchServers error:', outerErr);
   } finally {
-    if (!announcementData) {
-      loadCachedAnnouncement();
-    }
     renderAll();
     setLoading(false);
     resetTimer();

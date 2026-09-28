@@ -1,6 +1,6 @@
 [package]
 name = "gameap-web-monitoring"
-version = "1.0.8"
+version = "1.0.9"
 edition = "2021"
 authors = ["GameAP Community"]
 description = "WebAssembly monitoring plugin for GameAP written in Rust"

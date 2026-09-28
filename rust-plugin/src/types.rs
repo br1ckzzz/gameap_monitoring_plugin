@@ -58,7 +58,7 @@ pub struct MonitoringResponse {
     pub timestamp: i64,
     #[serde(default = "default_refresh_interval")]
     pub refresh_interval: u32,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub announcement: Option<AnnouncementDTO>,
 }
 

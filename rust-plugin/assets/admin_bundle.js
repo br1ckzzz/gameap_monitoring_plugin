@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.8',
+    version: '1.0.9',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.8',
+                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.9',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
@@ -132,7 +132,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.8',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.9',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
@@ -1535,6 +1535,16 @@ export const webMonitoringPlugin = {
                             };
                             localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
                             localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(servers));
+                            if (announcementEnabled.value && announcementText.value.trim()) {
+                                localStorage.setItem('web_monitoring_announcement', JSON.stringify({
+                                    text: announcementText.value.trim(),
+                                    link: announcementLink.value.trim() || null,
+                                    banner_type: announcementType.value || 'info',
+                                    deadline: announcementDeadline.value.trim() || null
+                                }));
+                            } else {
+                                localStorage.removeItem('web_monitoring_announcement');
+                            }
                             const sEndpoints = [
                                 '/api/plugins/monitoring/settings?action=settings',
                                 '/api/plugins/monitoring/settings',
@@ -1593,6 +1603,16 @@ export const webMonitoringPlugin = {
                         try {
                             localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
                             localStorage.setItem('web_monitoring_theme', theme.value);
+                            if (announcementEnabled.value && announcementText.value.trim()) {
+                                localStorage.setItem('web_monitoring_announcement', JSON.stringify({
+                                    text: announcementText.value.trim(),
+                                    link: announcementLink.value.trim() || null,
+                                    banner_type: announcementType.value || 'info',
+                                    deadline: announcementDeadline.value.trim() || null
+                                }));
+                            } else {
+                                localStorage.removeItem('web_monitoring_announcement');
+                            }
                             if (serversList.value.length > 0) {
                                 localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(serversList.value));
                             }
