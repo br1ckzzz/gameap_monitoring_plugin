@@ -4,6 +4,19 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/), проект придерживается [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] (Запланировано для v1.0.9)
+
+### Известные ошибки / В работе (Known Issues / In Progress)
+- **Скрытие баннера анонсов при его выключении в панели управления (Bug):**
+  - **Симптом:** При отключении переключателя «Баннер анонсов» (`announcement_enabled: false`) или очистке его текста в админ-панели, баннер с таймером дедлайна продолжает отображаться на публичной странице мониторинга.
+  - **Причина:** В ответе API `/servers` и объекте `window.INITIAL_DATA` при выключенном баннере поле `announcement` опускается сериализатором (`skip_serializing_if = "Option::is_none"`), из-за чего клиентский скрипт `app.js` получает `undefined` и продолжает отображать баннер из локального кэша браузера (`localStorage: web_monitoring_announcement`).
+  - **План исправления в 1.0.9:**
+    1. Передавать явный `announcement: null` в JSON API и `window.INITIAL_DATA` при `announcement_enabled == false`.
+    2. В `app.js` при получении успешного ответа серверов без активного анонса безусловно очищать `announcementData = null`, удалять запись из `localStorage` и скрывать блок баннера.
+    3. В `admin_bundle.js` при сохранении настроек с отключённым анонсом инвалидировать локальный кэш баннера.
+
+---
+
 ## [1.0.8] - 2026-09-28
 
 ### Важное (Major Highlights)
