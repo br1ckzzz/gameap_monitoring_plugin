@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.6',
+    version: '1.0.8',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.6',
+                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.8',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
@@ -97,11 +97,42 @@ export const webMonitoringPlugin = {
                             saveSuccess: '✓ Настройки успешно сохранены!',
                             saveError: 'Ошибка сохранения',
                             expandBtn: 'Развернуть',
-                            collapseBtn: 'Свернуть'
+                            collapseBtn: 'Свернуть',
+                            announcementSection: '📢 Баннер анонсов с таймером',
+                            announcementEnabledLabel: 'Отображать баннер анонса',
+                            announcementEnabledHelp: 'Показывает заметный информационный баннер над списком серверов',
+                            announcementTextLabel: 'Текст анонса',
+                            announcementTextPlaceholder: 'Например: 🔥 Турнир CS2 5x5 и вайп на сервере Rust!',
+                            announcementLinkLabel: 'Ссылка кнопки «Подробнее» (опционально)',
+                            announcementLinkPlaceholder: 'https://discord.gg/... или https://gameap.dev',
+                            announcementTypeLabel: 'Тип / стиль баннера',
+                            announcementTypeInfo: 'ℹ️ Информация (Синий / Инфо)',
+                            announcementTypeWarning: '⚠️ Предупреждение / Вайп (Оранжевый)',
+                            announcementTypeSuccess: '✅ Успех / Событие (Зелёный)',
+                            announcementDeadlineLabel: 'Дедлайн таймера (ISO / Дата и время)',
+                            announcementDeadlinePlaceholder: '2026-10-01T18:00:00Z или 2026-10-01 18:00',
+                            announcementDeadlineHelp: 'Если указано, в баннере будет отображаться обратный отсчёт (дни, часы, минуты, секунды)',
+                            categoryLabel: 'Категория / Кластер',
+                            categoryPlaceholder: 'Категория',
+                            categoryHelp: 'Группирует серверы по вкладкам (кластерам) на странице мониторинга',
+                            autoHideSection: '🧹 Интеллектуальное авто-скрытие офлайн-серверов',
+                            autoHideEnabledLabel: 'Автоматически скрывать офлайн-серверы',
+                            autoHideEnabledHelp: 'Скрывает упавшие серверы из основного списка, оставляя кнопку «Показать скрытые офлайн-серверы»',
+                            autoHideMinutesLabel: 'Порог времени (минут)',
+                            autoHideMinutesHelp: '0 — скрывать сразу при переходе в оффлайн',
+                            statsSection: '📊 Аналитика переходов и кликов',
+                            statsHelp: 'Количество переходов по кнопкам «Подключиться» и копирований IP игроками',
+                            statsRefreshBtn: 'Обновить статистику',
+                            statsServerCol: 'Сервер',
+                            statsClicksCol: 'Переходов',
+                            statsRankCol: '#',
+                            statsShareCol: 'Доля',
+                            statsTotalClicks: 'Всего кликов',
+                            noStats: 'Пока нет данных о кликах'
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.6',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.8',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
@@ -168,7 +199,38 @@ export const webMonitoringPlugin = {
                             saveSuccess: '✓ Settings saved successfully!',
                             saveError: 'Save error',
                             expandBtn: 'Expand',
-                            collapseBtn: 'Collapse'
+                            collapseBtn: 'Collapse',
+                            announcementSection: '📢 Announcement Banner & Countdown',
+                            announcementEnabledLabel: 'Display Announcement Banner',
+                            announcementEnabledHelp: 'Displays a prominent notification banner above the server list',
+                            announcementTextLabel: 'Announcement Text',
+                            announcementTextPlaceholder: 'e.g. 🔥 Tournament CS2 5x5 and Rust Wipe!',
+                            announcementLinkLabel: 'Learn More Link (Optional)',
+                            announcementLinkPlaceholder: 'https://discord.gg/... or https://gameap.dev',
+                            announcementTypeLabel: 'Banner Style',
+                            announcementTypeInfo: 'ℹ️ Information (Blue / Info)',
+                            announcementTypeWarning: '⚠️ Warning / Wipe (Orange)',
+                            announcementTypeSuccess: '✅ Event / Success (Green)',
+                            announcementDeadlineLabel: 'Countdown Deadline (ISO / Date & Time)',
+                            announcementDeadlinePlaceholder: '2026-10-01T18:00:00Z or 2026-10-01 18:00',
+                            announcementDeadlineHelp: 'If set, displays a live countdown ticker',
+                            categoryLabel: 'Category / Cluster',
+                            categoryPlaceholder: 'Category',
+                            categoryHelp: 'Groups servers into cluster tabs on the monitoring page',
+                            autoHideSection: '🧹 Smart Auto-Hide Offline Servers',
+                            autoHideEnabledLabel: 'Automatically hide offline servers',
+                            autoHideEnabledHelp: 'Hides offline servers behind a toggle button to keep list clean',
+                            autoHideMinutesLabel: 'Threshold (minutes)',
+                            autoHideMinutesHelp: '0 — hide immediately when offline',
+                            statsSection: '📊 Click & Connect Analytics',
+                            statsHelp: 'Total player clicks on Connect buttons and IP copy events',
+                            statsRefreshBtn: 'Refresh Stats',
+                            statsServerCol: 'Server',
+                            statsClicksCol: 'Clicks',
+                            statsRankCol: '#',
+                            statsShareCol: 'Share',
+                            statsTotalClicks: 'Total Clicks',
+                            noStats: 'No click data recorded yet'
                         }
                     };
 
@@ -199,6 +261,16 @@ export const webMonitoringPlugin = {
                     const botApiEnabled = ref(false);
                     const botApiToken = ref('');
                     const copiedToken = ref(false);
+                    const announcementEnabled = ref(false);
+                    const announcementText = ref('');
+                    const announcementLink = ref('');
+                    const announcementType = ref('info');
+                    const announcementDeadline = ref('');
+                    const serverCategories = ref({});
+                    const autoHideOffline = ref(false);
+                    const autoHideOfflineMinutes = ref(0);
+                    const clickStats = ref({});
+                    const loadingStats = ref(false);
                     const serverOrder = ref([]);
                     const draggedServerId = ref(null);
                     const hiddenServers = ref([]);
@@ -211,6 +283,116 @@ export const webMonitoringPlugin = {
                     const selectedProxy = ref('nginx');
                     const showDdosAlert = ref(localStorage.getItem('web_monitoring_admin_ddos_open') === 'true');
                     const showInstructions = ref(localStorage.getItem('web_monitoring_admin_instructions_open') === 'true');
+
+                    const defaultOpenSections = {
+                        general: false,
+                        announcement: false,
+                        branding: false,
+                        botApi: false,
+                        autoHide: false,
+                        stats: false,
+                        customCss: false,
+                        customHeader: false
+                    };
+
+                    const getSavedOpenSections = () => {
+                        try {
+                            const stored = localStorage.getItem('web_monitoring_admin_open_sections');
+                            if (stored) {
+                                return { ...defaultOpenSections, ...JSON.parse(stored) };
+                            }
+                        } catch (_) {}
+                        return { ...defaultOpenSections };
+                    };
+
+                    const openSections = ref(getSavedOpenSections());
+
+                    const toggleSection = (key) => {
+                        openSections.value[key] = !openSections.value[key];
+                        try {
+                            localStorage.setItem('web_monitoring_admin_open_sections', JSON.stringify(openSections.value));
+                        } catch (_) {}
+                        autoSyncServers(serversList.value);
+                    };
+
+                    const renderSpoilerCard = (key, iconClass, titleText, badgeText, badgeActive, bodyVNodes) => {
+                        const isOpen = !!openSections.value[key];
+                        return h('div', { class: 'wm-accordion-card' }, [
+                            h('div', {
+                                class: 'wm-accordion-header',
+                                onClick: () => toggleSection(key),
+                                title: isOpen ? t('collapseBtn') : t('expandBtn')
+                            }, [
+                                h('div', { class: 'wm-accordion-title' }, [
+                                    h('i', { class: iconClass, style: 'color: var(--wm-primary); font-size: 15px;' }),
+                                    h('span', titleText),
+                                    badgeText ? h('span', {
+                                        class: 'wm-accordion-badge' + (badgeActive ? ' wm-badge-active' : '')
+                                    }, badgeText) : null
+                                ]),
+                                h('div', { class: 'wm-accordion-meta' }, [
+                                    h('span', { class: 'wm-spoiler-toggle' + (isOpen ? ' is-open' : '') }, [
+                                        h('span', isOpen ? t('collapseBtn') : t('expandBtn')),
+                                        h('i', { class: isOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down', style: 'font-size: 10px;' })
+                                    ])
+                                ])
+                            ]),
+                            isOpen ? h('div', { class: 'wm-accordion-body' }, bodyVNodes) : null
+                        ]);
+                    };
+
+                    const setServerCategory = (srvId, category) => {
+                        const updated = { ...serverCategories.value };
+                        if (category && category.trim()) {
+                            updated[String(srvId)] = category.trim();
+                        } else {
+                            delete updated[String(srvId)];
+                        }
+                        serverCategories.value = updated;
+                        autoSyncServers(serversList.value);
+                    };
+
+                    const loadClickStats = async () => {
+                        loadingStats.value = true;
+                        try {
+                            const endpoints = [
+                                '/api/plugins/monitoring?action=stats',
+                                '/api/plugins/monitoring/stats?action=stats',
+                                '/api/plugins/monitoring/stats',
+                                '/api/plugins/monitoring/settings?action=settings',
+                                '/api/plugins/monitoring?action=settings',
+                                '/api/plugins/monitorine?action=stats',
+                                '/plugins/web-monitoring/stats'
+                            ];
+                            for (const ep of endpoints) {
+                                try {
+                                    let data = null;
+                                    if (window.axios) {
+                                        try {
+                                            const axRes = await window.axios.get(ep);
+                                            if (axRes && axRes.data) data = axRes.data;
+                                        } catch (_) {}
+                                    }
+                                    if (!data) {
+                                        const res = await fetch(ep);
+                                        if (res.ok) {
+                                            data = await res.json();
+                                        }
+                                    }
+                                    if (data) {
+                                        if (data.clicks && typeof data.clicks === 'object') {
+                                            clickStats.value = data.clicks;
+                                            break;
+                                        } else if (data.click_stats && typeof data.click_stats === 'object') {
+                                            clickStats.value = data.click_stats;
+                                            break;
+                                        }
+                                    }
+                                } catch (_) {}
+                            }
+                        } catch (_) {}
+                        loadingStats.value = false;
+                    };
 
                     const toggleDdosAlert = () => {
                         showDdosAlert.value = !showDdosAlert.value;
@@ -323,12 +505,22 @@ export const webMonitoringPlugin = {
                     // Dynamic public URL based on current host/domain (canonical short URL)
                     const publicUrl = `${window.location.origin}/api/plugins/monitoring`;
 
-                    // Detect GameAP dark mode reactively
-                    const isGameApDark = ref(document.documentElement.classList.contains('dark'));
+                    // Detect GameAP dark mode reactively strictly from DOM without OS prefers-color-scheme
+                    const checkIsDark = () => {
+                        if (typeof document === 'undefined') return false;
+                        return document.documentElement.classList.contains('dark') ||
+                               document.documentElement.getAttribute('data-theme') === 'dark' ||
+                               document.body.classList.contains('dark') ||
+                               document.body.classList.contains('dark-mode') ||
+                               document.documentElement.classList.contains('theme-dark') ||
+                               document.body.classList.contains('theme-dark');
+                    };
+
+                    const isGameApDark = ref(checkIsDark());
                     let themeObserver = null;
 
                     const updateThemeState = () => {
-                        isGameApDark.value = document.documentElement.classList.contains('dark');
+                        isGameApDark.value = checkIsDark();
                     };
 
                     // Injects scoped styles matching GameAP CSS design tokens seamlessly
@@ -638,27 +830,241 @@ export const webMonitoringPlugin = {
                                 border-top: 1px solid var(--wm-border);
                             }
 
+                            /* Unified Spoiler / Accordion Toggle Button */
                             .wm-spoiler-toggle {
-                                font-size: 11.5px;
-                                font-weight: 600;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 6px;
-                                padding: 3px 8px;
-                                border-radius: 5px;
-                                background: rgba(0, 0, 0, 0.06);
-                                transition: all 0.15s ease;
+                                font-size: 12px !important;
+                                font-weight: 600 !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                gap: 7px !important;
+                                padding: 6px 14px !important;
+                                border-radius: 6px !important;
+                                cursor: pointer !important;
+                                user-select: none !important;
+                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                                line-height: 1.2 !important;
+
+                                /* Light mode default */
+                                background: #ffffff !important;
+                                color: #1e293b !important;
+                                border: 1px solid #cbd5e1 !important;
+                                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
                             }
+                            .wm-spoiler-toggle span {
+                                font-weight: 600 !important;
+                                letter-spacing: 0.2px !important;
+                                color: #1e293b !important;
+                            }
+                            .wm-spoiler-toggle i {
+                                color: #4d7c0f !important;
+                                font-size: 10px !important;
+                                transition: transform 0.2s ease, color 0.2s ease !important;
+                            }
+
+                            /* Light mode Hover */
                             .wm-spoiler-toggle:hover {
-                                background: rgba(0, 0, 0, 0.12);
+                                background: #f8fafc !important;
+                                color: #0f172a !important;
+                                border-color: #84cc16 !important;
+                                box-shadow: 0 2px 5px rgba(132, 204, 22, 0.15) !important;
                             }
+                            .wm-spoiler-toggle:hover span {
+                                color: #0f172a !important;
+                            }
+                            .wm-spoiler-toggle:hover i {
+                                color: #3f6212 !important;
+                            }
+
+                            /* Expanded state in Light mode: deep forest green text, NEVER washed out! */
+                            .wm-spoiler-toggle.is-open {
+                                background: #f0fdf4 !important;
+                                color: #166534 !important;
+                                border: 1px solid #84cc16 !important;
+                                box-shadow: 0 1px 3px rgba(22, 101, 52, 0.12) !important;
+                            }
+                            .wm-spoiler-toggle.is-open span {
+                                color: #166534 !important;
+                                font-weight: 700 !important;
+                            }
+                            .wm-spoiler-toggle.is-open i {
+                                color: #166534 !important;
+                            }
+                            .wm-spoiler-toggle.is-open:hover {
+                                background: #dcfce7 !important;
+                                border-color: #65a30d !important;
+                            }
+                            .wm-spoiler-toggle.is-open:hover span,
+                            .wm-spoiler-toggle.is-open:hover i {
+                                color: #14532d !important;
+                            }
+
+                            /* Dark mode: html.dark, .dark, [data-theme="dark"], body.dark-mode, .wm-dark */
                             html.dark .wm-spoiler-toggle,
-                            .dark .wm-spoiler-toggle {
-                                background: rgba(255, 255, 255, 0.08);
+                            .dark .wm-spoiler-toggle,
+                            [data-theme="dark"] .wm-spoiler-toggle,
+                            body.dark-mode .wm-spoiler-toggle,
+                            .wm-dark .wm-spoiler-toggle {
+                                background: #1c1917 !important;
+                                color: #f8fafc !important;
+                                border: 1px solid #57534e !important;
+                                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
                             }
+                            html.dark .wm-spoiler-toggle span,
+                            .dark .wm-spoiler-toggle span,
+                            [data-theme="dark"] .wm-spoiler-toggle span,
+                            body.dark-mode .wm-spoiler-toggle span,
+                            .wm-dark .wm-spoiler-toggle span {
+                                color: #f8fafc !important;
+                            }
+                            html.dark .wm-spoiler-toggle i,
+                            .dark .wm-spoiler-toggle i,
+                            [data-theme="dark"] .wm-spoiler-toggle i,
+                            body.dark-mode .wm-spoiler-toggle i,
+                            .wm-dark .wm-spoiler-toggle i {
+                                color: #a3e635 !important;
+                            }
+
+                            /* Dark mode Hover */
                             html.dark .wm-spoiler-toggle:hover,
-                            .dark .wm-spoiler-toggle:hover {
-                                background: rgba(255, 255, 255, 0.14);
+                            .dark .wm-spoiler-toggle:hover,
+                            [data-theme="dark"] .wm-spoiler-toggle:hover,
+                            body.dark-mode .wm-spoiler-toggle:hover,
+                            .wm-dark .wm-spoiler-toggle:hover {
+                                background: #292524 !important;
+                                color: #ffffff !important;
+                                border-color: #84cc16 !important;
+                                box-shadow: 0 2px 6px rgba(132, 204, 22, 0.25) !important;
+                            }
+                            html.dark .wm-spoiler-toggle:hover span,
+                            .dark .wm-spoiler-toggle:hover span,
+                            [data-theme="dark"] .wm-spoiler-toggle:hover span,
+                            body.dark-mode .wm-spoiler-toggle:hover span,
+                            .wm-dark .wm-spoiler-toggle:hover span {
+                                color: #ffffff !important;
+                            }
+                            html.dark .wm-spoiler-toggle:hover i,
+                            .dark .wm-spoiler-toggle:hover i,
+                            [data-theme="dark"] .wm-spoiler-toggle:hover i,
+                            body.dark-mode .wm-spoiler-toggle:hover i,
+                            .wm-dark .wm-spoiler-toggle:hover i {
+                                color: #bef264 !important;
+                            }
+
+                            /* Dark mode Expanded state (.is-open) */
+                            html.dark .wm-spoiler-toggle.is-open,
+                            .dark .wm-spoiler-toggle.is-open,
+                            [data-theme="dark"] .wm-spoiler-toggle.is-open,
+                            body.dark-mode .wm-spoiler-toggle.is-open,
+                            .wm-dark .wm-spoiler-toggle.is-open {
+                                background: rgba(132, 204, 22, 0.16) !important;
+                                border-color: #84cc16 !important;
+                                box-shadow: 0 0 10px rgba(132, 204, 22, 0.25) !important;
+                            }
+                            html.dark .wm-spoiler-toggle.is-open span,
+                            .dark .wm-spoiler-toggle.is-open span,
+                            [data-theme="dark"] .wm-spoiler-toggle.is-open span,
+                            body.dark-mode .wm-spoiler-toggle.is-open span,
+                            .wm-dark .wm-spoiler-toggle.is-open span {
+                                color: #ffffff !important;
+                                font-weight: 700 !important;
+                            }
+                            html.dark .wm-spoiler-toggle.is-open i,
+                            .dark .wm-spoiler-toggle.is-open i,
+                            [data-theme="dark"] .wm-spoiler-toggle.is-open i,
+                            body.dark-mode .wm-spoiler-toggle.is-open i,
+                            .wm-dark .wm-spoiler-toggle.is-open i {
+                                color: #a3e635 !important;
+                            }
+                            html.dark .wm-spoiler-toggle.is-open:hover,
+                            .dark .wm-spoiler-toggle.is-open:hover,
+                            [data-theme="dark"] .wm-spoiler-toggle.is-open:hover,
+                            body.dark-mode .wm-spoiler-toggle.is-open:hover,
+                            .wm-dark .wm-spoiler-toggle.is-open:hover {
+                                background: rgba(132, 204, 22, 0.25) !important;
+                                border-color: #a3e635 !important;
+                            }
+
+                            /* Stats Table Component */
+                            .wm-stats-wrapper {
+                                background: var(--wm-bg-inset) !important;
+                                border: 1px solid var(--wm-border) !important;
+                                border-radius: var(--wm-radius-control) !important;
+                                overflow: hidden !important;
+                                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+                            }
+                            .wm-stats-table {
+                                width: 100% !important;
+                                border-collapse: collapse !important;
+                                font-size: 13px !important;
+                            }
+                            .wm-stats-table thead tr {
+                                background: rgba(0, 0, 0, 0.03) !important;
+                                border-bottom: 1px solid var(--wm-border) !important;
+                            }
+                            html.dark .wm-stats-table thead tr,
+                            .dark .wm-stats-table thead tr,
+                            [data-theme="dark"] .wm-stats-table thead tr,
+                            body.dark-mode .wm-stats-table thead tr,
+                            .wm-dark .wm-stats-table thead tr {
+                                background: rgba(255, 255, 255, 0.04) !important;
+                            }
+                            .wm-stats-table th {
+                                padding: 10px 14px !important;
+                                font-size: 11.5px !important;
+                                font-weight: 700 !important;
+                                text-transform: uppercase !important;
+                                letter-spacing: 0.5px !important;
+                                color: var(--wm-text-muted) !important;
+                            }
+                            .wm-stats-table td {
+                                padding: 12px 14px !important;
+                                border-bottom: 1px solid var(--wm-border) !important;
+                                color: var(--wm-text) !important;
+                                vertical-align: middle !important;
+                            }
+                            .wm-stats-table tbody tr:last-child td {
+                                border-bottom: none !important;
+                            }
+                            .wm-stats-table tbody tr {
+                                transition: background-color 0.15s ease !important;
+                            }
+                            .wm-stats-table tbody tr:hover {
+                                background: var(--wm-surface-hover) !important;
+                            }
+                            .wm-stats-rank {
+                                width: 36px !important;
+                                font-weight: 700 !important;
+                                font-size: 12px !important;
+                                color: var(--wm-text-muted) !important;
+                                text-align: center !important;
+                            }
+                            .wm-stats-clicks-badge {
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                gap: 6px !important;
+                                padding: 4px 12px !important;
+                                border-radius: 20px !important;
+                                font-weight: 700 !important;
+                                font-size: 12.5px !important;
+                                font-family: monospace !important;
+                                background: var(--wm-primary-soft) !important;
+                                color: var(--wm-primary-soft-text) !important;
+                                border: 1px solid var(--wm-primary) !important;
+                            }
+                            .wm-stats-bar-wrapper {
+                                width: 90px !important;
+                                height: 6px !important;
+                                background: var(--wm-border) !important;
+                                border-radius: 3px !important;
+                                overflow: hidden !important;
+                                display: inline-block !important;
+                                vertical-align: middle !important;
+                                margin-right: 8px !important;
+                            }
+                            .wm-stats-bar-fill {
+                                height: 100% !important;
+                                background: var(--wm-primary) !important;
+                                border-radius: 3px !important;
                             }
 
                             /* Responsive adjustments for mobile, tablet, and wide screens */
@@ -817,6 +1223,66 @@ export const webMonitoringPlugin = {
                                 from { transform: rotate(0deg); }
                                 to { transform: rotate(360deg); }
                             }
+
+                            /* Accordion / Spoiler Cards */
+                            .wm-accordion-card {
+                                background: var(--wm-surface) !important;
+                                border: 1px solid var(--wm-border) !important;
+                                border-radius: var(--wm-radius-card) !important;
+                                margin-bottom: 14px !important;
+                                box-shadow: var(--wm-shadow) !important;
+                                overflow: hidden !important;
+                                transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+                            }
+                            .wm-accordion-card:hover {
+                                border-color: var(--wm-border-strong) !important;
+                            }
+                            .wm-accordion-header {
+                                display: flex !important;
+                                align-items: center !important;
+                                justify-content: space-between !important;
+                                padding: 14px 18px !important;
+                                cursor: pointer !important;
+                                user-select: none !important;
+                                transition: background-color 0.15s ease !important;
+                            }
+                            .wm-accordion-header:hover {
+                                background: var(--wm-surface-hover) !important;
+                            }
+                            .wm-accordion-title {
+                                font-size: 14.5px !important;
+                                font-weight: 600 !important;
+                                color: var(--wm-text) !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                gap: 10px !important;
+                                margin: 0 !important;
+                                flex-wrap: wrap !important;
+                            }
+                            .wm-accordion-meta {
+                                display: flex !important;
+                                align-items: center !important;
+                                gap: 10px !important;
+                            }
+                            .wm-accordion-badge {
+                                font-size: 11px !important;
+                                font-weight: 600 !important;
+                                padding: 2px 8px !important;
+                                border-radius: 10px !important;
+                                border: 1px solid var(--wm-border) !important;
+                                background: var(--wm-bg-inset) !important;
+                                color: var(--wm-text-muted) !important;
+                            }
+                            .wm-accordion-badge.wm-badge-active {
+                                background: var(--wm-primary-soft) !important;
+                                color: var(--wm-primary-soft-text) !important;
+                                border-color: var(--wm-primary) !important;
+                            }
+                            .wm-accordion-body {
+                                padding: 20px !important;
+                                border-top: 1px solid var(--wm-border) !important;
+                                background: var(--wm-surface) !important;
+                            }
                         `;
                     };
 
@@ -953,6 +1419,14 @@ export const webMonitoringPlugin = {
                                 if (localData.favicon_url !== undefined) faviconUrl.value = localData.favicon_url;
                                 if (localData.bot_api_enabled !== undefined) botApiEnabled.value = localData.bot_api_enabled;
                                 if (localData.bot_api_token !== undefined) botApiToken.value = localData.bot_api_token;
+                                if (localData.announcement_enabled !== undefined) announcementEnabled.value = localData.announcement_enabled;
+                                if (localData.announcement_text !== undefined) announcementText.value = localData.announcement_text;
+                                if (localData.announcement_link !== undefined) announcementLink.value = localData.announcement_link;
+                                if (localData.announcement_type !== undefined) announcementType.value = localData.announcement_type;
+                                if (localData.announcement_deadline !== undefined) announcementDeadline.value = localData.announcement_deadline;
+                                if (localData.server_categories && typeof localData.server_categories === 'object') serverCategories.value = localData.server_categories;
+                                if (localData.auto_hide_offline !== undefined) autoHideOffline.value = localData.auto_hide_offline;
+                                if (localData.auto_hide_offline_minutes !== undefined) autoHideOfflineMinutes.value = localData.auto_hide_offline_minutes;
                                 if (Array.isArray(localData.server_order)) serverOrder.value = localData.server_order;
                                 if (Array.isArray(localData.hidden_servers)) hiddenServers.value = localData.hidden_servers;
                                 if (Array.isArray(localData.cached_servers) && localData.cached_servers.length > 0) {
@@ -993,8 +1467,25 @@ export const webMonitoringPlugin = {
                                         if (data.favicon_url !== undefined) faviconUrl.value = data.favicon_url;
                                         if (data.bot_api_enabled !== undefined) botApiEnabled.value = data.bot_api_enabled;
                                         if (data.bot_api_token !== undefined) botApiToken.value = data.bot_api_token;
+                                        if (data.announcement_enabled !== undefined) announcementEnabled.value = data.announcement_enabled;
+                                        if (data.announcement_text !== undefined) announcementText.value = data.announcement_text;
+                                        if (data.announcement_link !== undefined) announcementLink.value = data.announcement_link;
+                                        if (data.announcement_type !== undefined) announcementType.value = data.announcement_type;
+                                        if (data.announcement_deadline !== undefined) announcementDeadline.value = data.announcement_deadline;
+                                        if (data.server_categories && typeof data.server_categories === 'object') serverCategories.value = data.server_categories;
+                                        if (data.auto_hide_offline !== undefined) autoHideOffline.value = data.auto_hide_offline;
+                                        if (data.auto_hide_offline_minutes !== undefined) autoHideOfflineMinutes.value = data.auto_hide_offline_minutes;
                                         if (Array.isArray(data.server_order)) serverOrder.value = data.server_order;
                                         if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
+                                        if (data.click_stats && typeof data.click_stats === 'object') {
+                                            clickStats.value = data.click_stats;
+                                        } else if (data.clicks && typeof data.clicks === 'object') {
+                                            clickStats.value = data.clicks;
+                                        }
+                                        if (data.open_sections && typeof data.open_sections === 'object') {
+                                            const saved = getSavedOpenSections();
+                                            openSections.value = { ...defaultOpenSections, ...data.open_sections, ...saved };
+                                        }
 
                                         // If we don't have servers loaded yet, use incoming servers from settings
                                         const incomingServers = data.all_servers || data.servers || data.cached_servers;
@@ -1028,9 +1519,19 @@ export const webMonitoringPlugin = {
                                 favicon_url: faviconUrl.value.trim(),
                                 bot_api_enabled: botApiEnabled.value,
                                 bot_api_token: botApiToken.value.trim(),
+                                announcement_enabled: announcementEnabled.value,
+                                announcement_text: announcementText.value.trim(),
+                                announcement_link: announcementLink.value.trim(),
+                                announcement_type: announcementType.value,
+                                announcement_deadline: announcementDeadline.value.trim(),
+                                server_categories: serverCategories.value,
+                                auto_hide_offline: autoHideOffline.value,
+                                auto_hide_offline_minutes: parseInt(autoHideOfflineMinutes.value, 10) || 0,
                                 server_order: serversList.value.map(s => s.id),
                                 hidden_servers: hiddenServers.value,
-                                cached_servers: servers
+                                cached_servers: servers,
+                                open_sections: openSections.value,
+                                click_stats: clickStats.value
                             };
                             localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
                             localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(servers));
@@ -1074,9 +1575,19 @@ export const webMonitoringPlugin = {
                             favicon_url: faviconUrl.value.trim(),
                             bot_api_enabled: botApiEnabled.value,
                             bot_api_token: botApiToken.value.trim(),
+                            announcement_enabled: announcementEnabled.value,
+                            announcement_text: announcementText.value.trim(),
+                            announcement_link: announcementLink.value.trim(),
+                            announcement_type: announcementType.value,
+                            announcement_deadline: announcementDeadline.value.trim(),
+                            server_categories: serverCategories.value,
+                            auto_hide_offline: autoHideOffline.value,
+                            auto_hide_offline_minutes: parseInt(autoHideOfflineMinutes.value, 10) || 0,
                             server_order: serversList.value.map(s => s.id),
                             hidden_servers: hiddenServers.value,
-                            cached_servers: serversList.value
+                            cached_servers: serversList.value,
+                            open_sections: openSections.value,
+                            click_stats: clickStats.value
                         };
 
                         try {
@@ -1156,8 +1667,9 @@ export const webMonitoringPlugin = {
 
                     onMounted(() => {
                         loadData();
+                        loadClickStats();
                         updateThemeState();
-                        // Listen to GameAP light/dark theme switches on <html> element
+                        // Listen to GameAP light/dark theme switches on <html> and <body> elements
                         if (typeof MutationObserver !== 'undefined') {
                             themeObserver = new MutationObserver(() => {
                                 updateThemeState();
@@ -1166,6 +1678,12 @@ export const webMonitoringPlugin = {
                                 attributes: true,
                                 attributeFilter: ['class', 'data-theme']
                             });
+                            if (document.body) {
+                                themeObserver.observe(document.body, {
+                                    attributes: true,
+                                    attributeFilter: ['class', 'data-theme']
+                                });
+                            }
                         }
                     });
 
@@ -1175,7 +1693,7 @@ export const webMonitoringPlugin = {
                         }
                     });
 
-                    return () => h('div', { class: 'wm-admin-root' }, [
+                    return () => h('div', { class: 'wm-admin-root' + (isGameApDark.value ? ' wm-dark' : '') }, [
                         // Header Card
                         h('div', { class: 'wm-card' }, [
                             h('div', { style: 'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;' }, [
@@ -1240,7 +1758,7 @@ export const webMonitoringPlugin = {
                                         h('i', { class: 'fas fa-shield-alt', style: 'color: var(--wm-danger); font-size: 14px;' }),
                                         h('span', { style: 'font-weight: 700; font-size: 13px;' }, t('securityWarningTitle'))
                                     ]),
-                                    h('span', { class: 'wm-spoiler-toggle' }, [
+                                    h('span', { class: 'wm-spoiler-toggle' + (showDdosAlert.value ? ' is-open' : '') }, [
                                         h('span', showDdosAlert.value ? t('collapseBtn') : t('expandBtn')),
                                         h('i', { class: showDdosAlert.value ? 'fas fa-chevron-up' : 'fas fa-chevron-down', style: 'font-size: 10px;' })
                                     ])
@@ -1261,7 +1779,7 @@ export const webMonitoringPlugin = {
                                         h('i', { class: 'fas fa-info-circle', style: 'color: var(--wm-primary); font-size: 14px;' }),
                                         h('span', { style: 'font-weight: 600; color: var(--wm-text); font-size: 13px;' }, t('instructionTitle'))
                                     ]),
-                                    h('span', { class: 'wm-spoiler-toggle' }, [
+                                    h('span', { class: 'wm-spoiler-toggle' + (showInstructions.value ? ' is-open' : '') }, [
                                         h('span', showInstructions.value ? t('collapseBtn') : t('expandBtn')),
                                         h('i', { class: showInstructions.value ? 'fas fa-chevron-up' : 'fas fa-chevron-down', style: 'font-size: 10px;' })
                                     ])
@@ -1312,188 +1830,7 @@ export const webMonitoringPlugin = {
                             ])
                         ]),
 
-                        // General Settings Card
-                        h('div', { class: 'wm-card' }, [
-                            h('h3', { class: 'wm-title' }, t('generalSettings')),
-                            h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;' }, [
-                                h('div', { class: 'wm-form-group' }, [
-                                    h('label', { class: 'wm-label', title: t('titleLabel') }, t('titleLabel')),
-                                    h('input', {
-                                        type: 'text',
-                                        value: title.value,
-                                        onInput: (e) => { title.value = e.target.value; },
-                                        class: 'wm-input'
-                                    })
-                                ]),
-                                h('div', { class: 'wm-form-group' }, [
-                                    h('label', { class: 'wm-label', title: t('subtitleLabel') }, t('subtitleLabel')),
-                                    h('input', {
-                                        type: 'text',
-                                        value: subtitle.value,
-                                        onInput: (e) => { subtitle.value = e.target.value; },
-                                        class: 'wm-input'
-                                    })
-                                ]),
-                                h('div', { class: 'wm-form-group' }, [
-                                    h('label', { class: 'wm-label', title: t('themeLabel') }, t('themeLabel')),
-                                    h('select', {
-                                        value: theme.value,
-                                        onChange: (e) => { theme.value = e.target.value; },
-                                        class: 'wm-select'
-                                    }, [
-                                        h('option', { value: 'dark' }, t('darkTheme')),
-                                        h('option', { value: 'light' }, t('lightTheme'))
-                                    ])
-                                ]),
-                                h('div', { class: 'wm-form-group' }, [
-                                    h('label', { class: 'wm-label', title: t('refreshIntervalLabel') }, t('refreshIntervalLabel')),
-                                    h('input', {
-                                        type: 'number',
-                                        min: '5',
-                                        max: '300',
-                                        value: refreshInterval.value,
-                                        onInput: (e) => { refreshInterval.value = e.target.value; },
-                                        class: 'wm-input'
-                                    })
-                                ]),
-                                h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
-                                    h('label', { class: 'wm-label', title: t('addressKeyLabel') }, t('addressKeyLabel')),
-                                    h('input', {
-                                        type: 'text',
-                                        value: addressKey.value,
-                                        placeholder: t('addressKeyPlaceholder'),
-                                        onInput: (e) => { addressKey.value = e.target.value; },
-                                        class: 'wm-input'
-                                    }),
-                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('addressKeyHelp'))
-                                ])
-                            ])
-                        ]),
-
-                        // Branding Card (Logo & Favicon)
-                        h('div', { class: 'wm-card' }, [
-                            h('h3', { class: 'wm-title' }, t('brandingSection')),
-                            h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;' }, [
-                                h('div', { class: 'wm-form-group' }, [
-                                    h('label', { class: 'wm-label', title: t('logoUrlLabel') }, t('logoUrlLabel')),
-                                    h('div', { style: 'display: flex; gap: 10px; align-items: center;' }, [
-                                        h('input', {
-                                            type: 'text',
-                                            value: logoUrl.value,
-                                            placeholder: t('logoUrlPlaceholder'),
-                                            onInput: (e) => { logoUrl.value = e.target.value; },
-                                            class: 'wm-input'
-                                        }),
-                                        logoUrl.value ? h('div', { class: 'wm-img-preview', title: 'Предпросмотр логотипа' }, [
-                                            h('img', {
-                                                src: logoUrl.value,
-                                                alt: 'Logo preview',
-                                                style: 'max-height: 32px; max-width: 60px; object-fit: contain;',
-                                                onError: (e) => { e.target.style.display = 'none'; }
-                                            })
-                                        ]) : null
-                                    ]),
-                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('logoUrlHelp'))
-                                ]),
-                                h('div', { class: 'wm-form-group' }, [
-                                    h('label', { class: 'wm-label', title: t('faviconUrlLabel') }, t('faviconUrlLabel')),
-                                    h('div', { style: 'display: flex; gap: 10px; align-items: center;' }, [
-                                        h('input', {
-                                            type: 'text',
-                                            value: faviconUrl.value,
-                                            placeholder: t('faviconUrlPlaceholder'),
-                                            onInput: (e) => { faviconUrl.value = e.target.value; },
-                                            class: 'wm-input'
-                                        }),
-                                        faviconUrl.value ? h('div', { class: 'wm-img-preview', style: 'padding: 4px 8px;', title: 'Предпросмотр фавикона' }, [
-                                            h('img', {
-                                                src: faviconUrl.value,
-                                                alt: 'Favicon preview',
-                                                style: 'width: 20px; height: 20px; object-fit: contain;',
-                                                onError: (e) => { e.target.style.display = 'none'; }
-                                            })
-                                        ]) : null
-                                    ]),
-                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('faviconUrlHelp'))
-                                ])
-                            ])
-                        ]),
-
-                        // Bot API Integration Card
-                        h('div', { class: 'wm-card' }, [
-                            h('h3', { class: 'wm-title' }, t('botApiSection')),
-                            h('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
-                                // Checkbox: Allow external bots
-                                h('label', {
-                                    style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;'
-                                }, [
-                                    h('input', {
-                                        type: 'checkbox',
-                                        checked: botApiEnabled.value,
-                                        onChange: (e) => {
-                                            botApiEnabled.value = e.target.checked;
-                                            if (botApiEnabled.value && !botApiToken.value) {
-                                                generateBotToken();
-                                            }
-                                        },
-                                        style: 'width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--wm-primary);'
-                                    }),
-                                    h('div', [
-                                        h('span', { style: 'font-size: 14px; font-weight: 600; color: var(--wm-text); display: block;' }, t('botApiEnabledLabel')),
-                                        h('p', { style: 'font-size: 12px; color: var(--wm-text-muted); margin: 3px 0 0 0;' }, t('botApiEnabledHelp'))
-                                    ])
-                                ]),
-
-                                // Secret API Token input and buttons
-                                h('div', {
-                                    style: `display: flex; flex-direction: column; gap: 6px; transition: opacity 0.2s ease; ${botApiEnabled.value ? '' : 'opacity: 0.55;'}`
-                                }, [
-                                    h('label', { class: 'wm-label', title: t('botApiTokenLabel') }, t('botApiTokenLabel')),
-                                    h('div', { style: 'display: flex; gap: 10px; flex-wrap: wrap; align-items: center;' }, [
-                                        h('div', { style: 'flex: 1; min-width: 260px;' }, [
-                                            h('input', {
-                                                type: 'text',
-                                                value: botApiToken.value,
-                                                placeholder: t('botApiTokenPlaceholder'),
-                                                onInput: (e) => { botApiToken.value = e.target.value; },
-                                                class: 'wm-input',
-                                                style: 'font-family: monospace; font-size: 13px;'
-                                            })
-                                        ]),
-                                        h('button', {
-                                            type: 'button',
-                                            onClick: generateBotToken,
-                                            class: 'wm-btn-refresh',
-                                            style: 'height: 42px; padding: 0 16px; font-weight: 600;',
-                                            title: t('generateTokenBtn')
-                                        }, [
-                                            h('i', { class: 'fas fa-dice', style: 'margin-right: 6px;' }),
-                                            t('generateTokenBtn')
-                                        ]),
-                                        h('button', {
-                                            type: 'button',
-                                            onClick: copyBotToken,
-                                            disabled: !botApiToken.value,
-                                            class: 'wm-copy-btn',
-                                            style: 'height: 42px; padding: 0 16px; font-weight: 600; margin: 0;',
-                                            title: t('copyTokenBtn')
-                                        }, [
-                                            h('i', { class: copiedToken.value ? 'fas fa-check' : 'fas fa-copy', style: 'margin-right: 6px;' }),
-                                            copiedToken.value ? t('copiedToken') : t('copyTokenBtn')
-                                        ])
-                                    ]),
-                                    h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('botApiTokenHelp')),
-                                    h('div', {
-                                        style: 'display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--wm-primary-soft-text); background: var(--wm-primary-soft-bg); border: 1px solid var(--wm-primary-soft-border); padding: 6px 12px; border-radius: 8px; margin-top: 6px; width: fit-content;'
-                                    }, [
-                                        h('i', { class: 'fas fa-tools', style: 'color: var(--wm-primary);' }),
-                                        h('span', t('botDevNotice'))
-                                    ])
-                                ])
-                            ])
-                        ]),
-
-                        // Server Visibility Card
+                        // Server Visibility Card (Open by default)
                         h('div', { class: 'wm-card' }, [
                             h('div', { style: 'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 6px;' }, [
                                 h('h3', { class: 'wm-title', style: 'margin: 0;' }, t('serversVisibility')),
@@ -1579,6 +1916,15 @@ export const webMonitoringPlugin = {
                                                 h('span', { style: 'font-size: 14px; font-weight: 500; color: var(--wm-text);' }, srv.name),
                                                 h('span', { style: 'font-size: 12px; color: var(--wm-text-muted); font-family: monospace;' }, `${srv.address}:${srv.port}`)
                                             ]),
+                                            // Category input for cluster grouping
+                                            h('input', {
+                                                type: 'text',
+                                                placeholder: t('categoryPlaceholder'),
+                                                value: serverCategories.value[String(srv.id)] || '',
+                                                onInput: (e) => setServerCategory(srv.id, e.target.value),
+                                                style: 'max-width: 120px; height: 30px; font-size: 12px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--wm-border-strong); background: var(--wm-surface); color: var(--wm-text);',
+                                                title: t('categoryHelp')
+                                            }),
                                             // Status pill
                                             h('span', {
                                                 style: isOnline
@@ -1589,31 +1935,447 @@ export const webMonitoringPlugin = {
                                     }))
                         ]),
 
-                        // Custom CSS Editor Card
-                        h('div', { class: 'wm-card' }, [
-                            h('h3', { class: 'wm-title' }, t('customCss')),
-                            h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 12px 0;' }, t('customCssHelp')),
-                            h('textarea', {
-                                rows: 6,
-                                value: customCss.value,
-                                onInput: (e) => { customCss.value = e.target.value; },
-                                placeholder: t('customCssPlaceholder'),
-                                class: 'wm-textarea'
-                            })
-                        ]),
+                        // General Settings Spoiler
+                        renderSpoilerCard(
+                            'general',
+                            'fas fa-cog',
+                            t('generalSettings'),
+                            `${refreshInterval.value}s • ${theme.value === 'dark' ? 'Dark' : 'Light'}`,
+                            false,
+                            [
+                                h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;' }, [
+                                    h('div', { class: 'wm-form-group' }, [
+                                        h('label', { class: 'wm-label', title: t('titleLabel') }, t('titleLabel')),
+                                        h('input', {
+                                            type: 'text',
+                                            value: title.value,
+                                            onInput: (e) => { title.value = e.target.value; },
+                                            class: 'wm-input'
+                                        })
+                                    ]),
+                                    h('div', { class: 'wm-form-group' }, [
+                                        h('label', { class: 'wm-label', title: t('subtitleLabel') }, t('subtitleLabel')),
+                                        h('input', {
+                                            type: 'text',
+                                            value: subtitle.value,
+                                            onInput: (e) => { subtitle.value = e.target.value; },
+                                            class: 'wm-input'
+                                        })
+                                    ]),
+                                    h('div', { class: 'wm-form-group' }, [
+                                        h('label', { class: 'wm-label', title: t('themeLabel') }, t('themeLabel')),
+                                        h('select', {
+                                            value: theme.value,
+                                            onChange: (e) => { theme.value = e.target.value; },
+                                            class: 'wm-select'
+                                        }, [
+                                            h('option', { value: 'dark' }, t('darkTheme')),
+                                            h('option', { value: 'light' }, t('lightTheme'))
+                                        ])
+                                    ]),
+                                    h('div', { class: 'wm-form-group' }, [
+                                        h('label', { class: 'wm-label', title: t('refreshIntervalLabel') }, t('refreshIntervalLabel')),
+                                        h('input', {
+                                            type: 'number',
+                                            min: '5',
+                                            max: '300',
+                                            value: refreshInterval.value,
+                                            onInput: (e) => { refreshInterval.value = e.target.value; },
+                                            class: 'wm-input'
+                                        })
+                                    ]),
+                                    h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                        h('label', { class: 'wm-label', title: t('addressKeyLabel') }, t('addressKeyLabel')),
+                                        h('input', {
+                                            type: 'text',
+                                            value: addressKey.value,
+                                            placeholder: t('addressKeyPlaceholder'),
+                                            onInput: (e) => { addressKey.value = e.target.value; },
+                                            class: 'wm-input'
+                                        }),
+                                        h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('addressKeyHelp'))
+                                    ])
+                                ])
+                            ]
+                        ),
 
-                        // Custom Header HTML Card
-                        h('div', { class: 'wm-card' }, [
-                            h('h3', { class: 'wm-title' }, t('customHeader')),
-                            h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 12px 0;' }, t('customHeaderHelp')),
-                            h('textarea', {
-                                rows: 4,
-                                value: customHeaderHtml.value,
-                                onInput: (e) => { customHeaderHtml.value = e.target.value; },
-                                placeholder: t('customHeaderPlaceholder'),
-                                class: 'wm-textarea'
-                            })
-                        ]),
+                        // Announcement Bar Spoiler
+                        renderSpoilerCard(
+                            'announcement',
+                            'fas fa-bullhorn',
+                            t('announcementSection'),
+                            announcementEnabled.value ? (currentLang.value === 'ru' ? 'Включен' : 'Enabled') : (currentLang.value === 'ru' ? 'Отключен' : 'Disabled'),
+                            announcementEnabled.value,
+                            [
+                                h('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
+                                    h('label', {
+                                        style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;'
+                                    }, [
+                                        h('input', {
+                                            type: 'checkbox',
+                                            checked: announcementEnabled.value,
+                                            onChange: (e) => { announcementEnabled.value = e.target.checked; },
+                                            style: 'width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--wm-primary);'
+                                        }),
+                                        h('div', [
+                                            h('span', { style: 'font-size: 14px; font-weight: 600; color: var(--wm-text); display: block;' }, t('announcementEnabledLabel')),
+                                            h('p', { style: 'font-size: 12px; color: var(--wm-text-muted); margin: 3px 0 0 0;' }, t('announcementEnabledHelp'))
+                                        ])
+                                    ]),
+                                    h('div', {
+                                        style: `display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; transition: opacity 0.2s ease; ${announcementEnabled.value ? '' : 'opacity: 0.55;'}`
+                                    }, [
+                                        h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                            h('label', { class: 'wm-label' }, t('announcementTextLabel')),
+                                            h('input', {
+                                                type: 'text',
+                                                value: announcementText.value,
+                                                placeholder: t('announcementTextPlaceholder'),
+                                                onInput: (e) => { announcementText.value = e.target.value; },
+                                                class: 'wm-input'
+                                            })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('announcementLinkLabel')),
+                                            h('input', {
+                                                type: 'text',
+                                                value: announcementLink.value,
+                                                placeholder: t('announcementLinkPlaceholder'),
+                                                onInput: (e) => { announcementLink.value = e.target.value; },
+                                                class: 'wm-input'
+                                            })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('announcementTypeLabel')),
+                                            h('select', {
+                                                value: announcementType.value,
+                                                onChange: (e) => { announcementType.value = e.target.value; },
+                                                class: 'wm-select'
+                                            }, [
+                                                h('option', { value: 'info' }, t('announcementTypeInfo')),
+                                                h('option', { value: 'warning' }, t('announcementTypeWarning')),
+                                                h('option', { value: 'success' }, t('announcementTypeSuccess'))
+                                            ])
+                                        ]),
+                                        h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                            h('label', { class: 'wm-label' }, t('announcementDeadlineLabel')),
+                                            h('input', {
+                                                type: 'text',
+                                                value: announcementDeadline.value,
+                                                placeholder: t('announcementDeadlinePlaceholder'),
+                                                onInput: (e) => { announcementDeadline.value = e.target.value; },
+                                                class: 'wm-input'
+                                            }),
+                                            h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('announcementDeadlineHelp'))
+                                        ])
+                                    ])
+                                ])
+                            ]
+                        ),
+
+                        // Branding Spoiler (Logo & Favicon)
+                        renderSpoilerCard(
+                            'branding',
+                            'fas fa-palette',
+                            t('brandingSection'),
+                            (logoUrl.value || faviconUrl.value) ? (currentLang.value === 'ru' ? 'Задано' : 'Custom') : (currentLang.value === 'ru' ? 'По умолчанию' : 'Default'),
+                            !!(logoUrl.value || faviconUrl.value),
+                            [
+                                h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;' }, [
+                                    h('div', { class: 'wm-form-group' }, [
+                                        h('label', { class: 'wm-label', title: t('logoUrlLabel') }, t('logoUrlLabel')),
+                                        h('div', { style: 'display: flex; gap: 10px; align-items: center;' }, [
+                                            h('input', {
+                                                type: 'text',
+                                                value: logoUrl.value,
+                                                placeholder: t('logoUrlPlaceholder'),
+                                                onInput: (e) => { logoUrl.value = e.target.value; },
+                                                class: 'wm-input'
+                                            }),
+                                            logoUrl.value ? h('div', { class: 'wm-img-preview', title: 'Предпросмотр логотипа' }, [
+                                                h('img', {
+                                                    src: logoUrl.value,
+                                                    alt: 'Logo preview',
+                                                    style: 'max-height: 32px; max-width: 60px; object-fit: contain;',
+                                                    onError: (e) => { e.target.style.display = 'none'; }
+                                                })
+                                            ]) : null
+                                        ]),
+                                        h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('logoUrlHelp'))
+                                    ]),
+                                    h('div', { class: 'wm-form-group' }, [
+                                        h('label', { class: 'wm-label', title: t('faviconUrlLabel') }, t('faviconUrlLabel')),
+                                        h('div', { style: 'display: flex; gap: 10px; align-items: center;' }, [
+                                            h('input', {
+                                                type: 'text',
+                                                value: faviconUrl.value,
+                                                placeholder: t('faviconUrlPlaceholder'),
+                                                onInput: (e) => { faviconUrl.value = e.target.value; },
+                                                class: 'wm-input'
+                                            }),
+                                            faviconUrl.value ? h('div', { class: 'wm-img-preview', style: 'padding: 4px 8px;', title: 'Предпросмотр фавикона' }, [
+                                                h('img', {
+                                                    src: faviconUrl.value,
+                                                    alt: 'Favicon preview',
+                                                    style: 'width: 20px; height: 20px; object-fit: contain;',
+                                                    onError: (e) => { e.target.style.display = 'none'; }
+                                                })
+                                            ]) : null
+                                        ]),
+                                        h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('faviconUrlHelp'))
+                                    ])
+                                ])
+                            ]
+                        ),
+
+                        // Bot API Spoiler
+                        renderSpoilerCard(
+                            'botApi',
+                            'fas fa-robot',
+                            t('botApiSection'),
+                            botApiEnabled.value ? (currentLang.value === 'ru' ? 'Включен' : 'Enabled') : (currentLang.value === 'ru' ? 'Отключен' : 'Disabled'),
+                            botApiEnabled.value,
+                            [
+                                h('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
+                                    h('label', {
+                                        style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;'
+                                    }, [
+                                        h('input', {
+                                            type: 'checkbox',
+                                            checked: botApiEnabled.value,
+                                            onChange: (e) => {
+                                                botApiEnabled.value = e.target.checked;
+                                                if (botApiEnabled.value && !botApiToken.value) {
+                                                    generateBotToken();
+                                                }
+                                            },
+                                            style: 'width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--wm-primary);'
+                                        }),
+                                        h('div', [
+                                            h('span', { style: 'font-size: 14px; font-weight: 600; color: var(--wm-text); display: block;' }, t('botApiEnabledLabel')),
+                                            h('p', { style: 'font-size: 12px; color: var(--wm-text-muted); margin: 3px 0 0 0;' }, t('botApiEnabledHelp'))
+                                        ])
+                                    ]),
+                                    h('div', {
+                                        style: `display: flex; flex-direction: column; gap: 6px; transition: opacity 0.2s ease; ${botApiEnabled.value ? '' : 'opacity: 0.55;'}`
+                                    }, [
+                                        h('label', { class: 'wm-label', title: t('botApiTokenLabel') }, t('botApiTokenLabel')),
+                                        h('div', { style: 'display: flex; gap: 10px; flex-wrap: wrap; align-items: center;' }, [
+                                            h('div', { style: 'flex: 1; min-width: 260px;' }, [
+                                                h('input', {
+                                                    type: 'text',
+                                                    value: botApiToken.value,
+                                                    placeholder: t('botApiTokenPlaceholder'),
+                                                    onInput: (e) => { botApiToken.value = e.target.value; },
+                                                    class: 'wm-input',
+                                                    style: 'font-family: monospace; font-size: 13px;'
+                                                })
+                                            ]),
+                                            h('button', {
+                                                type: 'button',
+                                                onClick: generateBotToken,
+                                                class: 'wm-btn-refresh',
+                                                style: 'height: 42px; padding: 0 16px; font-weight: 600;',
+                                                title: t('generateTokenBtn')
+                                            }, [
+                                                h('i', { class: 'fas fa-dice', style: 'margin-right: 6px;' }),
+                                                t('generateTokenBtn')
+                                            ]),
+                                            h('button', {
+                                                type: 'button',
+                                                onClick: copyBotToken,
+                                                disabled: !botApiToken.value,
+                                                class: 'wm-copy-btn',
+                                                style: 'height: 42px; padding: 0 16px; font-weight: 600; margin: 0;',
+                                                title: t('copyTokenBtn')
+                                            }, [
+                                                h('i', { class: copiedToken.value ? 'fas fa-check' : 'fas fa-copy', style: 'margin-right: 6px;' }),
+                                                copiedToken.value ? t('copiedToken') : t('copyTokenBtn')
+                                            ])
+                                        ]),
+                                        h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('botApiTokenHelp')),
+                                        h('div', {
+                                            style: 'display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--wm-primary-soft-text); background: var(--wm-primary-soft-bg); border: 1px solid var(--wm-primary-soft-border); padding: 6px 12px; border-radius: 8px; margin-top: 6px; width: fit-content;'
+                                        }, [
+                                            h('i', { class: 'fas fa-tools', style: 'color: var(--wm-primary);' }),
+                                            h('span', t('botDevNotice'))
+                                        ])
+                                    ])
+                                ])
+                            ]
+                        ),
+
+                        // Smart Auto-Hide Offline Servers Spoiler
+                        renderSpoilerCard(
+                            'autoHide',
+                            'fas fa-eye-slash',
+                            t('autoHideSection'),
+                            autoHideOffline.value ? `${autoHideOfflineMinutes.value}m` : (currentLang.value === 'ru' ? 'Отключено' : 'Disabled'),
+                            autoHideOffline.value,
+                            [
+                                h('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
+                                    h('label', {
+                                        style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;'
+                                    }, [
+                                        h('input', {
+                                            type: 'checkbox',
+                                            checked: autoHideOffline.value,
+                                            onChange: (e) => { autoHideOffline.value = e.target.checked; },
+                                            style: 'width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--wm-primary);'
+                                        }),
+                                        h('div', [
+                                            h('span', { style: 'font-size: 14px; font-weight: 600; color: var(--wm-text); display: block;' }, t('autoHideEnabledLabel')),
+                                            h('p', { style: 'font-size: 12px; color: var(--wm-text-muted); margin: 3px 0 0 0;' }, t('autoHideEnabledHelp'))
+                                        ])
+                                    ]),
+                                    h('div', {
+                                        style: `display: flex; flex-direction: column; gap: 6px; max-width: 320px; transition: opacity 0.2s ease; ${autoHideOffline.value ? '' : 'opacity: 0.55;'}`
+                                    }, [
+                                        h('label', { class: 'wm-label', title: t('autoHideMinutesLabel') }, t('autoHideMinutesLabel')),
+                                        h('input', {
+                                            type: 'number',
+                                            min: '0',
+                                            max: '10080',
+                                            value: autoHideOfflineMinutes.value,
+                                            onInput: (e) => { autoHideOfflineMinutes.value = parseInt(e.target.value, 10) || 0; },
+                                            class: 'wm-input'
+                                        }),
+                                        h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('autoHideMinutesHelp'))
+                                    ])
+                                ])
+                            ]
+                        ),
+
+                        // Click Analytics Spoiler
+                        renderSpoilerCard(
+                            'stats',
+                            'fas fa-chart-bar',
+                            t('statsSection'),
+                            `${Object.keys(clickStats.value).length} srv`,
+                            Object.keys(clickStats.value).length > 0,
+                            [
+                                (() => {
+                                    const totalClicks = Object.values(clickStats.value).reduce((acc, c) => acc + (parseInt(c, 10) || 0), 0);
+                                    const sortedItems = Object.entries(clickStats.value)
+                                        .map(([srvId, clicks]) => ({ srvId, clicks: parseInt(clicks, 10) || 0 }))
+                                        .sort((a, b) => b.clicks - a.clicks);
+
+                                    return h('div', [
+                                        h('div', { style: 'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;' }, [
+                                            h('div', { style: 'display: flex; flex-direction: column; gap: 3px;' }, [
+                                                h('p', { style: 'font-size: 12.5px; color: var(--wm-text-muted); margin: 0;' }, t('statsHelp')),
+                                                totalClicks > 0 ? h('div', { style: 'font-size: 12px; color: var(--wm-text); font-weight: 600;' }, [
+                                                    h('span', { style: 'color: var(--wm-text-muted); font-weight: 400;' }, `${t('statsTotalClicks')}: `),
+                                                    h('strong', { style: 'color: var(--wm-primary); font-family: monospace; font-size: 13px;' }, String(totalClicks))
+                                                ]) : null
+                                            ]),
+                                            h('button', {
+                                                type: 'button',
+                                                onClick: loadClickStats,
+                                                disabled: loadingStats.value,
+                                                class: 'wm-btn-refresh',
+                                                title: t('statsRefreshBtn')
+                                            }, [
+                                                h('i', {
+                                                    class: 'fas fa-sync-alt',
+                                                    style: loadingStats.value ? 'animation: wm-spin 1s linear infinite;' : ''
+                                                }),
+                                                h('span', { style: 'margin-left: 6px;' }, t('statsRefreshBtn'))
+                                            ])
+                                        ]),
+
+                                        sortedItems.length === 0
+                                            ? h('div', { style: 'color: var(--wm-text-muted); font-size: 13px; padding: 20px 0; text-align: center;' }, [
+                                                h('i', { class: 'fas fa-chart-line', style: 'font-size: 24px; opacity: 0.4; display: block; margin-bottom: 8px;' }),
+                                                h('span', t('noStats'))
+                                            ])
+                                            : h('div', { class: 'wm-stats-wrapper' }, [
+                                                h('table', { class: 'wm-stats-table' }, [
+                                                    h('thead', [
+                                                        h('tr', [
+                                                            h('th', { style: 'width: 36px; text-align: center;' }, t('statsRankCol') || '#'),
+                                                            h('th', { style: 'text-align: left;' }, t('statsServerCol')),
+                                                            h('th', { style: 'text-align: right; width: 140px;' }, t('statsClicksCol')),
+                                                            h('th', { style: 'text-align: right; width: 160px;' }, t('statsShareCol') || 'Доля')
+                                                        ])
+                                                    ]),
+                                                    h('tbody', sortedItems.map((item, idx) => {
+                                                        const found = serversList.value.find(s => String(s.id) === String(item.srvId));
+                                                        const srvName = found ? found.name : `Server #${item.srvId}`;
+                                                        const gameInfo = found ? (found.game_name || found.game_code || '') : '';
+                                                        const sharePercent = totalClicks > 0 ? Math.round((item.clicks / totalClicks) * 100) : 0;
+
+                                                        return h('tr', { key: item.srvId }, [
+                                                            h('td', { class: 'wm-stats-rank' }, `#${idx + 1}`),
+                                                            h('td', [
+                                                                h('div', { style: 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap;' }, [
+                                                                    h('i', { class: 'fas fa-server', style: 'color: var(--wm-primary); font-size: 12px;' }),
+                                                                    h('span', { style: 'font-weight: 600; color: var(--wm-text); font-size: 13.5px;' }, srvName),
+                                                                    gameInfo ? h('span', {
+                                                                        style: 'font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--wm-surface); border: 1px solid var(--wm-border); color: var(--wm-text-muted);'
+                                                                    }, gameInfo) : null
+                                                                ])
+                                                            ]),
+                                                            h('td', { style: 'text-align: right;' }, [
+                                                                h('span', { class: 'wm-stats-clicks-badge' }, [
+                                                                    h('i', { class: 'fas fa-mouse-pointer', style: 'font-size: 9.5px;' }),
+                                                                    h('span', String(item.clicks))
+                                                                ])
+                                                            ]),
+                                                            h('td', { style: 'text-align: right;' }, [
+                                                                h('div', { style: 'display: inline-flex; align-items: center; justify-content: flex-end;' }, [
+                                                                    h('div', { class: 'wm-stats-bar-wrapper' }, [
+                                                                        h('div', { class: 'wm-stats-bar-fill', style: `width: ${Math.max(sharePercent, 4)}%;` })
+                                                                    ]),
+                                                                    h('span', { style: 'font-size: 11.5px; font-weight: 600; color: var(--wm-text-muted); width: 34px; text-align: right;' }, `${sharePercent}%`)
+                                                                ])
+                                                            ])
+                                                        ]);
+                                                    }))
+                                                ])
+                                            ])
+                                    ]);
+                                })()
+                            ]
+                        ),
+
+                        // Custom CSS Editor Spoiler
+                        renderSpoilerCard(
+                            'customCss',
+                            'fas fa-paint-brush',
+                            t('customCss'),
+                            customCss.value.trim() ? `${customCss.value.trim().length} chars` : (currentLang.value === 'ru' ? 'Пусто' : 'Empty'),
+                            !!customCss.value.trim(),
+                            [
+                                h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 12px 0;' }, t('customCssHelp')),
+                                h('textarea', {
+                                    rows: 6,
+                                    value: customCss.value,
+                                    onInput: (e) => { customCss.value = e.target.value; },
+                                    placeholder: t('customCssPlaceholder'),
+                                    class: 'wm-textarea'
+                                })
+                            ]
+                        ),
+
+                        // Custom Header HTML Spoiler
+                        renderSpoilerCard(
+                            'customHeader',
+                            'fas fa-code',
+                            t('customHeader'),
+                            customHeaderHtml.value.trim() ? `${customHeaderHtml.value.trim().length} chars` : (currentLang.value === 'ru' ? 'Пусто' : 'Empty'),
+                            !!customHeaderHtml.value.trim(),
+                            [
+                                h('p', { style: 'font-size: 13px; color: var(--wm-text-muted); margin: 0 0 12px 0;' }, t('customHeaderHelp')),
+                                h('textarea', {
+                                    rows: 4,
+                                    value: customHeaderHtml.value,
+                                    onInput: (e) => { customHeaderHtml.value = e.target.value; },
+                                    placeholder: t('customHeaderPlaceholder'),
+                                    class: 'wm-textarea'
+                                })
+                            ]
+                        ),
 
                         // Save Actions
                         h('div', { style: 'display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 10px;' }, [

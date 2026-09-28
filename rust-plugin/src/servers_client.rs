@@ -1,7 +1,7 @@
 //! Client for querying GameAP host services (servers, games) via WebAssembly imports.
 
 use crate::abi::{deallocate, read_proto, unpack_ptr_size, write_bytes};
-use crate::address::{resolve_server_address, sort_servers_by_order};
+use crate::address::{extract_metadata_string, extract_vars_map, resolve_server_address, sort_servers_by_order};
 use crate::proto::{FindGamesRequest, FindGamesResponse, FindServersRequest, FindServersResponse, ServerProto};
 use crate::settings::get_settings;
 use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO};
@@ -62,8 +62,34 @@ pub fn format_game_name(code: &str) -> String {
 pub fn is_steam_game(code: &str) -> bool {
     matches!(
         code,
-        "cstrike" | "csgo" | "cs2" | "rust" | "tf2" | "valheim" | "ark" | "left4dead2" | "garrysmod"
+        "cstrike" | "csgo" | "cs2" | "rust" | "tf2" | "valheim" | "ark" | "left4dead2" | "garrysmod" | "cssource" | "css"
     )
+}
+
+pub fn get_raw_servers_diagnostic() -> Vec<serde_json::Value> {
+    let host_resp = call_host::<FindServersRequest, FindServersResponse>(
+        &FindServersRequest {},
+        host_find_servers,
+    );
+    let raw_servers = host_resp.map(|r| r.servers).unwrap_or_default();
+    raw_servers
+        .into_iter()
+        .map(|s| {
+            let meta_keys: Vec<String> = s.metadata.keys().cloned().collect();
+            let vars_raw = s.vars.clone().unwrap_or_default();
+            serde_json::json!({
+                "id": s.id,
+                "name": s.name,
+                "game_id": s.game_id,
+                "server_ip": s.server_ip,
+                "server_port": s.server_port,
+                "query_port": s.query_port,
+                "process_active": s.process_active,
+                "vars": vars_raw,
+                "metadata_keys": meta_keys,
+            })
+        })
+        .collect()
 }
 
 pub fn convert_proto_server_to_dto(
@@ -91,6 +117,65 @@ pub fn convert_proto_server_to_dto(
         String::new()
     };
 
+    let vars_map = extract_vars_map(s.vars.as_deref());
+
+    let map = s.metadata.get("map")
+        .or_else(|| s.metadata.get("default_map"))
+        .map(extract_metadata_string)
+        .filter(|v| !v.is_empty())
+        .or_else(|| vars_map.get("default_map").cloned())
+        .or_else(|| vars_map.get("map").cloned());
+
+    let max_players = s.metadata.get("max_players")
+        .or_else(|| s.metadata.get("maxplayers"))
+        .or_else(|| s.metadata.get("slots"))
+        .map(extract_metadata_string)
+        .and_then(|v| v.parse::<i32>().ok())
+        .or_else(|| vars_map.get("max_players").and_then(|v| v.parse::<i32>().ok()))
+        .or_else(|| vars_map.get("maxplayers").and_then(|v| v.parse::<i32>().ok()))
+        .or_else(|| vars_map.get("slots").and_then(|v| v.parse::<i32>().ok()));
+
+    let players = s.metadata.get("players")
+        .or_else(|| s.metadata.get("players_num"))
+        .map(extract_metadata_string)
+        .and_then(|v| v.parse::<i32>().ok())
+        .or_else(|| vars_map.get("players").and_then(|v| v.parse::<i32>().ok()))
+        .or_else(|| vars_map.get("players_num").and_then(|v| v.parse::<i32>().ok()));
+
+    let ping = s.metadata.get("ping")
+        .map(extract_metadata_string)
+        .and_then(|v| v.parse::<i32>().ok())
+        .or_else(|| vars_map.get("ping").and_then(|v| v.parse::<i32>().ok()));
+
+    let version = s.metadata.get("version")
+        .or_else(|| s.metadata.get("game_version"))
+        .map(extract_metadata_string)
+        .filter(|v| !v.is_empty())
+        .or_else(|| vars_map.get("version").cloned())
+        .or_else(|| vars_map.get("game_version").cloned());
+
+    let build_id = s.metadata.get("build_id")
+        .map(extract_metadata_string)
+        .filter(|v| !v.is_empty())
+        .or_else(|| vars_map.get("build_id").cloned());
+
+    let category = settings.server_categories.get(&s.id).cloned()
+        .or_else(|| s.metadata.get("category").map(extract_metadata_string).filter(|v| !v.is_empty()))
+        .or_else(|| vars_map.get("category").cloned());
+
+    let uptime_seconds = s.metadata.get("uptime_seconds")
+        .or_else(|| s.metadata.get("uptime"))
+        .map(extract_metadata_string)
+        .and_then(|v| v.parse::<u64>().ok())
+        .or_else(|| vars_map.get("uptime_seconds").and_then(|v| v.parse::<u64>().ok()))
+        .or_else(|| vars_map.get("uptime").and_then(|v| v.parse::<u64>().ok()));
+
+    let is_hidden_offline = if settings.auto_hide_offline && status != "online" {
+        Some(true)
+    } else {
+        None
+    };
+
     PublicServerDTO {
         id: s.id,
         name: s.name.clone(),
@@ -102,17 +187,26 @@ pub fn convert_proto_server_to_dto(
         installed: s.installed == 1,
         blocked: s.blocked,
         connect_url,
+        map,
+        players,
+        max_players,
+        ping,
+        version,
+        build_id,
+        category,
+        uptime_seconds,
+        is_hidden_offline,
     }
 }
 
 /// Fetches all servers from GameAP host, matching game names and applying settings.
 pub fn fetch_all_servers() -> Vec<PublicServerDTO> {
-    let raw_servers: Vec<ServerProto> = call_host::<FindServersRequest, FindServersResponse>(
+    let host_resp = call_host::<FindServersRequest, FindServersResponse>(
         &FindServersRequest {},
         host_find_servers,
-    )
-    .map(|r| r.servers)
-    .unwrap_or_default();
+    );
+    let host_succeeded = host_resp.is_some();
+    let raw_servers: Vec<ServerProto> = host_resp.map(|r| r.servers).unwrap_or_default();
 
     let mut game_names = HashMap::new();
     if let Some(games_resp) = call_host::<FindGamesRequest, FindGamesResponse>(
@@ -135,8 +229,8 @@ pub fn fetch_all_servers() -> Vec<PublicServerDTO> {
         list.push(dto);
     }
 
-    // Fallback to cached_servers if host returned empty list
-    if list.is_empty() && !settings.cached_servers.is_empty() {
+    // Fallback to cached_servers ONLY if host call failed (error / unreachable)
+    if !host_succeeded && list.is_empty() && !settings.cached_servers.is_empty() {
         list.extend(settings.cached_servers.clone());
     }
 
@@ -201,6 +295,17 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         list.push(s);
     }
 
+    let announcement = if settings.announcement_enabled && !settings.announcement_text.is_empty() {
+        Some(crate::types::AnnouncementDTO {
+            text: settings.announcement_text.clone(),
+            link: if settings.announcement_link.is_empty() { None } else { Some(settings.announcement_link.clone()) },
+            banner_type: settings.announcement_type.clone(),
+            deadline: if settings.announcement_deadline.is_empty() { None } else { Some(settings.announcement_deadline.clone()) },
+        })
+    } else {
+        None
+    };
+
     let resp = MonitoringResponse {
         success: true,
         total_servers: list.len(),
@@ -208,6 +313,7 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         servers: list,
         timestamp: now as i64,
         refresh_interval: settings.refresh_interval,
+        announcement,
     };
 
     let bytes = serde_json::to_vec(&resp).unwrap_or_default();

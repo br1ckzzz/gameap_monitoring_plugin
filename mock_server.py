@@ -5,6 +5,7 @@ Emulates GameAP WASM plugin endpoint and serves frontend for live browser testin
 Includes /admin emulator with GameAP Light/Dark theme switcher.
 """
 
+import html
 import http.server
 import json
 import os
@@ -26,7 +27,12 @@ MOCK_SERVERS = [
         "status": "online",
         "installed": True,
         "blocked": False,
-        "connect_url": "steam://connect/198.51.100.10:27015"
+        "connect_url": "steam://connect/198.51.100.10:27015",
+        "map": "de_mirage",
+        "players": 18,
+        "max_players": 20,
+        "ping": 18,
+        "uptime_seconds": 1254300
     },
     {
         "id": 2,
@@ -38,7 +44,12 @@ MOCK_SERVERS = [
         "status": "online",
         "installed": True,
         "blocked": False,
-        "connect_url": "steam://connect/198.51.100.10:27016"
+        "connect_url": "steam://connect/198.51.100.10:27016",
+        "map": "de_dust2",
+        "players": 28,
+        "max_players": 32,
+        "ping": 25,
+        "uptime_seconds": 453200
     },
     {
         "id": 3,
@@ -50,7 +61,12 @@ MOCK_SERVERS = [
         "status": "online",
         "installed": True,
         "blocked": False,
-        "connect_url": ""
+        "connect_url": "",
+        "map": "world",
+        "players": 12,
+        "max_players": 50,
+        "ping": 42,
+        "uptime_seconds": 864000
     },
     {
         "id": 4,
@@ -62,7 +78,11 @@ MOCK_SERVERS = [
         "status": "offline",
         "installed": True,
         "blocked": False,
-        "connect_url": "steam://connect/198.51.100.10:28015"
+        "connect_url": "steam://connect/198.51.100.10:28015",
+        "map": "Procedural Map",
+        "players": 0,
+        "max_players": 150,
+        "ping": 0
     },
     {
         "id": 5,
@@ -74,9 +94,50 @@ MOCK_SERVERS = [
         "status": "online",
         "installed": True,
         "blocked": False,
-        "connect_url": "steam://connect/198.51.100.10:27020"
+        "connect_url": "steam://connect/198.51.100.10:27020",
+        "map": "pl_badwater",
+        "players": 22,
+        "max_players": 24,
+        "ping": 35,
+        "uptime_seconds": 98200
+    },
+    {
+        "id": 6,
+        "name": "★ CS2 Aim & Fun [AWP Only]",
+        "game_code": "cs2",
+        "game_name": "Counter-Strike 2",
+        "address": "198.51.100.10",
+        "port": 27025,
+        "status": "online",
+        "installed": True,
+        "blocked": False,
+        "connect_url": "steam://connect/198.51.100.10:27025",
+        "map": "awp_lego_2",
+        "players": 10,
+        "max_players": 16,
+        "ping": 19,
+        "uptime_seconds": 520000
+    },
+    {
+        "id": 7,
+        "name": "🔧 Garry's Mod Sandbox & Wire",
+        "game_code": "garrysmod",
+        "game_name": "Garry's Mod",
+        "address": "198.51.100.10",
+        "port": 27030,
+        "status": "online",
+        "installed": True,
+        "blocked": False,
+        "connect_url": "steam://connect/198.51.100.10:27030",
+        "map": "gm_construct",
+        "players": 16,
+        "max_players": 32,
+        "ping": 28,
+        "uptime_seconds": 312000
     }
 ]
+
+CLICK_COUNTERS = {}
 
 SETTINGS_CACHE = {
     "title": "GameAP Servers",
@@ -88,7 +149,25 @@ SETTINGS_CACHE = {
     "hidden_servers": [],
     "cached_servers": MOCK_SERVERS,
     "servers": MOCK_SERVERS,
-    "all_servers": MOCK_SERVERS
+    "all_servers": MOCK_SERVERS,
+    "bot_api_enabled": True,
+    "bot_api_token": "",
+    "announcement_enabled": True,
+    "announcement_text": "🔥 Глобальный турнир CS2 5x5 и вайп на сервере Rust!",
+    "announcement_link": "https://gameap.dev",
+    "announcement_type": "info",
+    "announcement_deadline": "2026-10-01T18:00:00Z",
+    "server_categories": {
+        "1": "Основные",
+        "2": "Классика",
+        "3": "Выживание",
+        "4": "Выживание",
+        "5": "Развлечения",
+        "6": "Основные",
+        "7": "Развлечения"
+    },
+    "auto_hide_offline": False,
+    "auto_hide_offline_minutes": 0,
 }
 
 ADMIN_HTML = """<!DOCTYPE html>
@@ -232,6 +311,25 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=FRONTEND_DIR, **kwargs)
 
+    def extract_auth_token(self, parsed_query):
+        tok = self.headers.get("X-WebMon-Token")
+        if tok and tok.strip():
+            return tok.strip()
+        auth = self.headers.get("Authorization")
+        if auth and auth.startswith("Bearer "):
+            stripped = auth[7:].strip()
+            if stripped:
+                return stripped
+        if "token" in parsed_query and parsed_query["token"]:
+            val = parsed_query["token"][0].strip()
+            if val:
+                return val
+        if "api_token" in parsed_query and parsed_query["api_token"]:
+            val = parsed_query["api_token"][0].strip()
+            if val:
+                return val
+        return None
+
     def do_GET(self):
         parsed_url = urllib.parse.urlparse(self.path)
         clean_path = parsed_url.path.rstrip("/")
@@ -301,7 +399,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
             diag = {
                 "plugin_id": "monitoring",
-                "version": "1.0.6",
+                "version": "1.0.8",
                 "client_ip": client_ip,
                 "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
                 "servers_count": len(MOCK_SERVERS),
@@ -314,10 +412,23 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(diag, ensure_ascii=False, indent=2).encode("utf-8"))
             return
 
-        # Emulate GameAP Plugin API route for servers
+        # Emulate GameAP Plugin API route for servers and external Bot API
+        is_bot_endpoint = (
+            clean_path in (
+                "/bot/servers",
+                "/api/bot/servers",
+                "/api/plugins/monitoring/bot/servers",
+                "/api/plugins/monitoring/api/servers"
+            )
+            or clean_path.endswith("/bot/servers")
+        )
+        provided_token = self.extract_auth_token(parsed_query)
+
         is_servers_route = (
             action == "servers"
+            or is_bot_endpoint
             or clean_path in (
+                "/servers",
                 "/plugins/web-monitoring/servers",
                 "/api/plugins/monitoring/servers",
                 "/api/plugins/monitorine/servers",
@@ -326,6 +437,24 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
         )
 
         if is_servers_route:
+            # Check Bot API authentication if accessing bot endpoint or supplying token
+            if is_bot_endpoint or provided_token is not None:
+                if not SETTINGS_CACHE.get("bot_api_enabled", False):
+                    self.send_response(403)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "Bot API is disabled in plugin settings"}).encode("utf-8"))
+                    return
+                configured_token = SETTINGS_CACHE.get("bot_api_token", "")
+                if configured_token and provided_token != configured_token:
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "Unauthorized: invalid or missing Bot API token"}).encode("utf-8"))
+                    return
+
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -333,16 +462,54 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
 
             online_count = sum(1 for s in MOCK_SERVERS if s["status"] == "online")
+            enriched_servers = []
+            categories_map = SETTINGS_CACHE.get("server_categories", {})
+            auto_hide = SETTINGS_CACHE.get("auto_hide_offline", False)
+            for s in MOCK_SERVERS:
+                item = dict(s)
+                cat = categories_map.get(str(s["id"])) or categories_map.get(s["id"])
+                if cat:
+                    item["category"] = cat
+                if auto_hide and s["status"] != "online":
+                    item["is_hidden_offline"] = True
+                enriched_servers.append(item)
+
             payload = {
                 "success": True,
-                "total_servers": len(MOCK_SERVERS),
+                "total_servers": len(enriched_servers),
                 "online_count": online_count,
-                "servers": MOCK_SERVERS,
-                "all_servers": MOCK_SERVERS,
+                "servers": enriched_servers,
+                "all_servers": enriched_servers,
                 "refresh_interval": SETTINGS_CACHE.get("refresh_interval", 15),
                 "timestamp": int(time.time())
             }
+            if SETTINGS_CACHE.get("announcement_enabled") and SETTINGS_CACHE.get("announcement_text"):
+                payload["announcement"] = {
+                    "text": SETTINGS_CACHE["announcement_text"],
+                    "link": SETTINGS_CACHE.get("announcement_link") or None,
+                    "banner_type": SETTINGS_CACHE.get("announcement_type", "info"),
+                    "deadline": SETTINGS_CACHE.get("announcement_deadline") or None,
+                }
             self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
+            return
+
+        if clean_path in ("/stats", "/api/plugins/monitoring/stats") or action == "stats":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "clicks": CLICK_COUNTERS}).encode("utf-8"))
+            return
+
+        if clean_path in ("/stats/click", "/api/plugins/monitoring/stats/click") or action in ("click", "stats/click"):
+            server_id = parsed_query.get("server_id", [""])[0]
+            if server_id:
+                CLICK_COUNTERS[server_id] = CLICK_COUNTERS.get(server_id, 0) + 1
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
             return
 
         # Emulate GameAP native API route for servers (/api/servers)
@@ -412,11 +579,56 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             with open(index_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
+            title = SETTINGS_CACHE.get("title", "")
+            subtitle = SETTINGS_CACHE.get("subtitle", "")
+            theme = SETTINGS_CACHE.get("theme", "dark")
+            custom_css = SETTINGS_CACHE.get("custom_css", "")
+            custom_header_html = SETTINGS_CACHE.get("custom_header_html", "")
+            logo_url = SETTINGS_CACHE.get("logo_url", "")
+            favicon_url = SETTINGS_CACHE.get("favicon_url", "")
+            refresh_interval = SETTINGS_CACHE.get("refresh_interval", 15)
+
+            if title:
+                escaped_title = html.escape(title)
+                content = content.replace("<title>GameAP | Servers Monitoring</title>", f"<title>{escaped_title} | GameAP</title>")
+                content = content.replace("<title>Мониторинг игровых серверов | GameAP</title>", f"<title>{escaped_title} | GameAP</title>")
+                content = content.replace("GameAP Servers", escaped_title)
+
+            if subtitle:
+                escaped_subtitle = html.escape(subtitle)
+                content = content.replace("Онлайн мониторинг игровых серверов", escaped_subtitle)
+
+            if custom_header_html:
+                content = content.replace("<!-- CUSTOM_HEADER -->", custom_header_html)
+
+            if custom_css:
+                content = content.replace("</head>", f"<style id=\"admin-custom-css\">\n{custom_css}\n</style>\n</head>")
+
+            if theme == "light":
+                content = content.replace("<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">")
+
+            if favicon_url:
+                content = content.replace("</head>", f"<link rel=\"icon\" href=\"{html.escape(favicon_url)}\">\n</head>")
+
+            if logo_url:
+                content = content.replace("<div class=\"brand-icon\">🎮</div>", f"<img src=\"{html.escape(logo_url)}\" alt=\"Logo\" class=\"brand-logo\">")
+
             initial_data = {
                 "servers": MOCK_SERVERS,
-                "version": "1.0.6",
-                "refresh_interval": SETTINGS_CACHE.get("refresh_interval", 15)
+                "version": "1.0.8",
+                "refresh_interval": refresh_interval,
+                "title": title,
+                "subtitle": subtitle,
+                "logo_url": logo_url,
+                "favicon_url": favicon_url
             }
+            if SETTINGS_CACHE.get("announcement_enabled") and SETTINGS_CACHE.get("announcement_text"):
+                initial_data["announcement"] = {
+                    "text": SETTINGS_CACHE["announcement_text"],
+                    "link": SETTINGS_CACHE.get("announcement_link") or None,
+                    "banner_type": SETTINGS_CACHE.get("announcement_type", "info"),
+                    "deadline": SETTINGS_CACHE.get("announcement_deadline") or None,
+                }
             injection = f"<script>window.INITIAL_DATA = {json.dumps(initial_data, ensure_ascii=False)};</script></head>"
             content = content.replace("</head>", injection)
 
@@ -464,6 +676,25 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
 
+        if clean_path in ("/stats/click", "/api/plugins/monitoring/stats/click") or action in ("click", "stats/click"):
+            server_id = parsed_query.get("server_id", [""])[0]
+            if not server_id:
+                content_length = int(self.headers.get("Content-Length", 0))
+                if content_length > 0:
+                    try:
+                        p_data = json.loads(self.rfile.read(content_length).decode("utf-8"))
+                        server_id = str(p_data.get("server_id", ""))
+                    except Exception:
+                        pass
+            if server_id:
+                CLICK_COUNTERS[server_id] = CLICK_COUNTERS.get(server_id, 0) + 1
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+            return
+
         self.send_response(404)
         self.end_headers()
 
@@ -480,7 +711,7 @@ def run():
     print("==================================================")
     
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), MockMonitoringHandler) as httpd:
+    with socketserver.ThreadingTCPServer(("", PORT), MockMonitoringHandler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

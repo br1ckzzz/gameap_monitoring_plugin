@@ -16,6 +16,36 @@ pub struct PublicServerDTO {
     pub installed: bool,
     pub blocked: bool,
     pub connect_url: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub map: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub players: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_players: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ping: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uptime_seconds: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_hidden_offline: Option<bool>,
+}
+
+/// Announcement payload for public monitoring banner.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnnouncementDTO {
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<String>,
+    #[serde(default)]
+    pub banner_type: String, // "info", "warning", "success"
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deadline: Option<String>,
 }
 
 /// JSON payload returned by `/servers` endpoint.
@@ -28,6 +58,8 @@ pub struct MonitoringResponse {
     pub timestamp: i64,
     #[serde(default = "default_refresh_interval")]
     pub refresh_interval: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub announcement: Option<AnnouncementDTO>,
 }
 
 fn default_refresh_interval() -> u32 {
@@ -79,6 +111,36 @@ pub struct PluginSettings {
     pub bot_api_enabled: bool,
     #[serde(default)]
     pub bot_api_token: String,
+
+    // 13.3 Announcement Bar
+    #[serde(default)]
+    pub announcement_enabled: bool,
+    #[serde(default)]
+    pub announcement_text: String,
+    #[serde(default)]
+    pub announcement_link: String,
+    #[serde(default)]
+    pub announcement_type: String, // "info", "warning", "success"
+    #[serde(default)]
+    pub announcement_deadline: String,
+
+    // 13.5 Server Clusters / Categories
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub server_categories: HashMap<u64, String>,
+
+    // 13.7 Smart Auto-Hide Offline Servers
+    #[serde(default)]
+    pub auto_hide_offline: bool,
+    #[serde(default)]
+    pub auto_hide_offline_minutes: u32,
+
+    // Click analytics persisted
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub click_stats: HashMap<u64, u64>,
+
+    // Admin UI accordion open/closed state persisted
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub open_sections: HashMap<String, bool>,
 }
 
 impl Default for PluginSettings {
@@ -99,6 +161,16 @@ impl Default for PluginSettings {
             favicon_url: None,
             bot_api_enabled: false,
             bot_api_token: String::new(),
+            announcement_enabled: false,
+            announcement_text: String::new(),
+            announcement_link: String::new(),
+            announcement_type: "info".to_string(),
+            announcement_deadline: String::new(),
+            server_categories: HashMap::new(),
+            auto_hide_offline: false,
+            auto_hide_offline_minutes: 0,
+            click_stats: HashMap::new(),
+            open_sections: HashMap::new(),
         }
     }
 }

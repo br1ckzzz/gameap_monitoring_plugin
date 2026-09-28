@@ -9,8 +9,12 @@ RUN apk add --no-cache git
 # Add WASI target
 RUN rustup target add wasm32-wasip1
 
-# Copy rust crate files
+# Copy frontend and rust crate files
+COPY frontend/ ./frontend/
 COPY rust-plugin/ ./rust-plugin/
+
+# Sync frontend assets into rust-plugin
+RUN mkdir -p rust-plugin/assets && cp -rf frontend/* rust-plugin/assets/
 
 WORKDIR /src/rust-plugin
 

@@ -23,13 +23,29 @@ $FRONTEND_DIR = Join-Path $ROOT_DIR "frontend"
 $ASSETS_DIR = Join-Path $RUST_DIR "assets"
 if (Test-Path $FRONTEND_DIR) {
     Copy-Item -Path (Join-Path $FRONTEND_DIR "*") -Destination $ASSETS_DIR -Recurse -Force
+    $ASSETS_RS = Join-Path $RUST_DIR "src\assets.rs"
+    if (Test-Path $ASSETS_RS) {
+        (Get-Item $ASSETS_RS).LastWriteTime = Get-Date
+    }
 }
 
 if (Get-Command $CARGO_CMD -ErrorAction SilentlyContinue) {
     Push-Location $RUST_DIR
     try {
         Write-Host "-> Compiling Rust crate to $TARGET (Release mode)..." -ForegroundColor Yellow
-        & $CARGO_CMD +stable-x86_64-pc-windows-gnu build --target $TARGET --release
+
+        $TOOLCHAIN_ARGS = @()
+        if (Get-Command "rustup" -ErrorAction SilentlyContinue) {
+            $installedToolchains = rustup toolchain list
+            if ($installedToolchains -match "stable-x86_64-pc-windows-gnu") {
+                $TOOLCHAIN_ARGS = @("+stable-x86_64-pc-windows-gnu")
+            }
+        }
+
+        & $CARGO_CMD @TOOLCHAIN_ARGS build --target $TARGET --release
+        if ($LASTEXITCODE -ne 0) {
+            throw "Cargo build failed with exit code $LASTEXITCODE"
+        }
 
         $ARTIFACT = Join-Path $RUST_DIR "target\$TARGET\release\gameap_web_monitoring.wasm"
         $OUTPUT = Join-Path $ROOT_DIR "web_monitoring.wasm"

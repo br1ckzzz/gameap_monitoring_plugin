@@ -32,6 +32,16 @@ struct AdminSettingsResponse {
     pub favicon_url: String,
     pub bot_api_enabled: bool,
     pub bot_api_token: String,
+    pub announcement_enabled: bool,
+    pub announcement_text: String,
+    pub announcement_link: String,
+    pub announcement_type: String,
+    pub announcement_deadline: String,
+    pub server_categories: HashMap<u64, String>,
+    pub auto_hide_offline: bool,
+    pub auto_hide_offline_minutes: u32,
+    pub click_stats: HashMap<u64, u64>,
+    pub open_sections: HashMap<String, bool>,
     pub servers: Vec<PublicServerDTO>,
     pub all_servers: Vec<PublicServerDTO>,
 }
@@ -91,6 +101,8 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
                 "servers" | "admin_servers" | "all_servers" => return handle_servers(req),
                 "settings" => return handle_settings(req),
                 "diagnostic" => return handle_diagnostic(req),
+                "click" | "stats/click" => return handle_click(req),
+                "stats" => return handle_stats(req),
                 "view" => return handle_view(),
                 _ => {}
             }
@@ -98,6 +110,12 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     }
 
     // Path suffix matching to support arbitrary GameAP mount prefixes
+    if path == "/stats/click" || path.ends_with("/stats/click") {
+        return handle_click(req);
+    }
+    if path == "/stats" || path.ends_with("/stats") {
+        return handle_stats(req);
+    }
     if path == "/settings" || path.ends_with("/settings") {
         return handle_settings(req);
     }
@@ -201,6 +219,16 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs())
             .unwrap_or(0);
+        let announcement = if settings.announcement_enabled && !settings.announcement_text.is_empty() {
+            Some(crate::types::AnnouncementDTO {
+                text: settings.announcement_text.clone(),
+                link: if settings.announcement_link.is_empty() { None } else { Some(settings.announcement_link.clone()) },
+                banner_type: settings.announcement_type.clone(),
+                deadline: if settings.announcement_deadline.is_empty() { None } else { Some(settings.announcement_deadline.clone()) },
+            })
+        } else {
+            None
+        };
         let resp = MonitoringResponse {
             success: true,
             total_servers: all_servers.len(),
@@ -208,6 +236,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             servers: all_servers,
             timestamp: now as i64,
             refresh_interval: settings.refresh_interval,
+            announcement,
         };
         let body = serde_json::to_vec(&resp).unwrap_or_default();
         return HTTPResponseData {
@@ -240,6 +269,10 @@ fn handle_view() -> HTTPResponseData {
 
     if !settings.title.is_empty() {
         let escaped = html_escape(&settings.title);
+        page_content = page_content.replace(
+            "<title>GameAP | Servers Monitoring</title>",
+            &format!("<title>{} | GameAP</title>", escaped),
+        );
         page_content = page_content.replace(
             "<title>Мониторинг игровых серверов | GameAP</title>",
             &format!("<title>{} | GameAP</title>", escaped),
@@ -284,24 +317,41 @@ fn handle_view() -> HTTPResponseData {
 
     // Preload servers and configuration into HTML for instant 0ms first render (no spinner)
     let pub_bytes = fetch_public_servers_with_opt(false);
-    if !pub_bytes.is_empty() {
-        if let Ok(mut initial_data) = serde_json::from_slice::<serde_json::Value>(&pub_bytes) {
-            if let Some(obj) = initial_data.as_object_mut() {
-                obj.insert("version".to_string(), serde_json::json!(PLUGIN_VERSION));
-                obj.insert("repo_url".to_string(), serde_json::json!(crate::service::PLUGIN_REPO_URL));
-                obj.insert("refresh_interval".to_string(), serde_json::json!(settings.refresh_interval));
-                if let Some(ref logo) = settings.logo_url {
-                    obj.insert("logo_url".to_string(), serde_json::json!(logo));
-                }
-                if let Some(ref fav) = settings.favicon_url {
-                    obj.insert("favicon_url".to_string(), serde_json::json!(fav));
-                }
-            }
-            if let Ok(initial_json) = serde_json::to_string(&initial_data) {
-                let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", initial_json);
-                page_content = page_content.replace("</head>", &preloaded);
-            }
+    let mut initial_data = if !pub_bytes.is_empty() {
+        serde_json::from_slice::<serde_json::Value>(&pub_bytes)
+            .unwrap_or_else(|_| serde_json::json!({ "servers": [] }))
+    } else {
+        serde_json::json!({ "servers": [] })
+    };
+
+    if let Some(obj) = initial_data.as_object_mut() {
+        obj.insert("version".to_string(), serde_json::json!(PLUGIN_VERSION));
+        obj.insert("repo_url".to_string(), serde_json::json!(crate::service::PLUGIN_REPO_URL));
+        obj.insert("refresh_interval".to_string(), serde_json::json!(settings.refresh_interval));
+        if !settings.title.is_empty() {
+            obj.insert("title".to_string(), serde_json::json!(settings.title));
         }
+        if !settings.subtitle.is_empty() {
+            obj.insert("subtitle".to_string(), serde_json::json!(settings.subtitle));
+        }
+        if let Some(ref logo) = settings.logo_url {
+            obj.insert("logo_url".to_string(), serde_json::json!(logo));
+        }
+        if let Some(ref fav) = settings.favicon_url {
+            obj.insert("favicon_url".to_string(), serde_json::json!(fav));
+        }
+        if settings.announcement_enabled && !settings.announcement_text.is_empty() {
+            obj.insert("announcement".to_string(), serde_json::json!({
+                "text": settings.announcement_text,
+                "link": if settings.announcement_link.is_empty() { None } else { Some(settings.announcement_link.clone()) },
+                "banner_type": settings.announcement_type,
+                "deadline": if settings.announcement_deadline.is_empty() { None } else { Some(settings.announcement_deadline.clone()) }
+            }));
+        }
+    }
+    if let Ok(initial_json) = serde_json::to_string(&initial_data) {
+        let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", initial_json);
+        page_content = page_content.replace("</head>", &preloaded);
     }
 
     page_content = page_content.replace("v1.0.0", &format!("v{}", PLUGIN_VERSION));
@@ -360,6 +410,16 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
         favicon_url: settings.favicon_url.unwrap_or_default(),
         bot_api_enabled: settings.bot_api_enabled,
         bot_api_token: settings.bot_api_token,
+        announcement_enabled: settings.announcement_enabled,
+        announcement_text: settings.announcement_text,
+        announcement_link: settings.announcement_link,
+        announcement_type: settings.announcement_type,
+        announcement_deadline: settings.announcement_deadline,
+        server_categories: settings.server_categories,
+        auto_hide_offline: settings.auto_hide_offline,
+        auto_hide_offline_minutes: settings.auto_hide_offline_minutes,
+        click_stats: settings.click_stats,
+        open_sections: settings.open_sections,
         servers: all_servers.clone(),
         all_servers,
     };
@@ -385,6 +445,8 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
     let all_servers = fetch_all_servers();
     let settings = get_settings();
 
+    let raw_diagnostic = crate::servers_client::get_raw_servers_diagnostic();
+
     let resp = serde_json::json!({
         "status": "ok",
         "plugin": "monitoring",
@@ -392,6 +454,7 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
         "engine": "rust-wasm",
         "client_ip": client_ip,
         "servers_count": all_servers.len(),
+        "raw_servers": raw_diagnostic,
         "settings": settings,
     });
 
@@ -399,6 +462,67 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
     HTTPResponseData {
         status_code: 200,
         content_type: "application/json",
+        body,
+    }
+}
+
+/// Handles click beacon tracking (POST /stats/click?server_id=X or ?action=click&server_id=X).
+fn handle_click(req: &HttpRequest) -> HTTPResponseData {
+    let mut server_id = None;
+    if let Some(vals) = req.query_params.get("server_id") {
+        if let Some(first) = vals.values.first() {
+            server_id = first.parse::<u64>().ok();
+        }
+    }
+    if server_id.is_none() {
+        if let Some(pos) = req.path.find("server_id=") {
+            let slice = &req.path[pos + "server_id=".len()..];
+            let end = slice.find('&').unwrap_or(slice.len());
+            server_id = slice[..end].parse::<u64>().ok();
+        }
+    }
+    if server_id.is_none() && !req.body.is_empty() {
+        if let Ok(json) = serde_json::from_slice::<serde_json::Value>(&req.body) {
+            if let Some(id) = json.get("server_id").and_then(|v| v.as_u64()) {
+                server_id = Some(id);
+            } else if let Some(s) = json.get("server_id").and_then(|v| v.as_str()) {
+                server_id = s.parse::<u64>().ok();
+            }
+        } else if let Ok(s) = std::str::from_utf8(&req.body) {
+            if let Some(pos) = s.find("server_id=") {
+                let slice = &s[pos + "server_id=".len()..];
+                let end = slice.find('&').unwrap_or(slice.len());
+                server_id = slice[..end].parse::<u64>().ok();
+            } else {
+                server_id = s.trim().parse::<u64>().ok();
+            }
+        }
+    }
+
+    if let Some(id) = server_id {
+        let mut settings = get_settings();
+        *settings.click_stats.entry(id).or_insert(0) += 1;
+        save_settings(settings);
+    }
+
+    HTTPResponseData {
+        status_code: 200,
+        content_type: "application/json; charset=utf-8",
+        body: br#"{"success":true}"#.to_vec(),
+    }
+}
+
+/// Returns aggregated click analytics (GET /stats or ?action=stats).
+fn handle_stats(_req: &HttpRequest) -> HTTPResponseData {
+    let settings = get_settings();
+    let body = serde_json::to_vec(&serde_json::json!({
+        "success": true,
+        "clicks": settings.click_stats,
+    })).unwrap_or_default();
+
+    HTTPResponseData {
+        status_code: 200,
+        content_type: "application/json; charset=utf-8",
         body,
     }
 }

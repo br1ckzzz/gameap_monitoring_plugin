@@ -6,7 +6,6 @@
 pub mod abi;
 pub mod address;
 pub mod assets;
-pub mod cache;
 pub mod handlers;
 pub mod proto;
 pub mod servers_client;
@@ -230,6 +229,10 @@ pub extern "C" fn plugin_service_handle_http_request(ptr: u32, size: u32) -> u64
     headers.insert(
         "Cache-Control".to_string(),
         "no-cache, no-store, must-revalidate".to_string(),
+    );
+    headers.insert(
+        "Content-Security-Policy".to_string(),
+        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https: http:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:; frame-src 'self'; worker-src 'self' blob:".to_string(),
     );
 
     let resp = HttpResponse {

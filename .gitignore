@@ -52,3 +52,7 @@ docs/RUST_MIGRATION.local.md
 # Legacy Go sources
 legacy-go/
 go-legacy/
+
+# Agent customizations
+.agents/
+
