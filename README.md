@@ -45,6 +45,8 @@ The plugin compiles into a single WebAssembly module (`web_monitoring.wasm`, tar
   - Real-time search by server name, game, or IP address.
   - 1-click IP address copying and `steam://connect` direct launch links.
 - ⏱️ **Live Countdown & Auto-Refresh:** Periodic status refresh with countdown timer and manual reload button.
+- 📢 **Announcement Banner & Event Countdown:** Interactive banner for announcements (tournaments, wipes, maintenance) with live real-time countdown timer, call-to-action button, and custom styling presets.
+- 📊 **Click & Connect Analytics:** Track player engagement with persistent click counters and visual statistics in the admin panel.
 - ⚙️ **GameAP Admin Panel Integration:**
   - Server visibility toggles to hide private or maintenance servers.
   - Customizable title, subtitle, default theme, and refresh intervals.
