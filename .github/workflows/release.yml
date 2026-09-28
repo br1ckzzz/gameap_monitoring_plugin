@@ -29,14 +29,11 @@ jobs:
           mkdir -p rust-plugin/assets
           cp -rf frontend/* rust-plugin/assets/
 
-      - name: Install wasm-opt (binaryen)
-        run: sudo apt-get update && sudo apt-get install -y binaryen
-
-      - name: Compile & Optimize WASM Plugin (Rust wasm32-wasip1)
+      - name: Compile WASM Plugin (Rust wasm32-wasip1)
         working-directory: rust-plugin
         run: |
           cargo build --target wasm32-wasip1 --release
-          wasm-opt -Oz target/wasm32-wasip1/release/gameap_web_monitoring.wasm -o ../web_monitoring.wasm
+          cp target/wasm32-wasip1/release/gameap_web_monitoring.wasm ../web_monitoring.wasm
 
       - name: Sign wasm (Optional GPG)
         env:
