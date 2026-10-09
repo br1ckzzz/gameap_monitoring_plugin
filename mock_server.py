@@ -5,6 +5,7 @@ Emulates GameAP WASM plugin endpoint and serves frontend for live browser testin
 Includes /admin emulator with GameAP Light/Dark theme switcher.
 """
 
+import hashlib
 import html
 import http.server
 import json
@@ -399,7 +400,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
             diag = {
                 "plugin_id": "monitoring",
-                "version": "1.0.9",
+                "version": "1.0.10",
                 "client_ip": client_ip,
                 "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
                 "servers_count": len(MOCK_SERVERS),
@@ -455,12 +456,6 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"success": False, "error": "Unauthorized: invalid or missing Bot API token"}).encode("utf-8"))
                     return
 
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-
             online_count = sum(1 for s in MOCK_SERVERS if s["status"] == "online")
             enriched_servers = []
             categories_map = SETTINGS_CACHE.get("server_categories", {})
@@ -492,7 +487,25 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                 }
             else:
                 payload["announcement"] = None
-            self.wfile.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
+
+            resp_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+            etag = f'"{hashlib.md5(resp_bytes).hexdigest()}"'
+            if_none_match = self.headers.get("If-None-Match", "").strip().strip('"')
+            if if_none_match and if_none_match in (etag.strip('"'), "*"):
+                self.send_response(304)
+                self.send_header("ETag", etag)
+                self.send_header("Cache-Control", "public, max-age=3, stale-while-revalidate=10")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                return
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", "public, max-age=3, stale-while-revalidate=10")
+            self.end_headers()
+            self.wfile.write(resp_bytes)
             return
 
         if clean_path in ("/stats", "/api/plugins/monitoring/stats") or action == "stats":
@@ -617,7 +630,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
             initial_data = {
                 "servers": MOCK_SERVERS,
-                "version": "1.0.9",
+                "version": "1.0.10",
                 "refresh_interval": refresh_interval,
                 "title": title,
                 "subtitle": subtitle,
@@ -698,6 +711,59 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
             return
+
+        is_query_update = (
+            action in ("query-update", "query_update")
+            or clean_path in (
+                "/servers/query-update",
+                "/api/plugins/monitoring/servers/query-update",
+                "/plugins/web-monitoring/servers/query-update"
+            )
+            or clean_path.endswith("/servers/query-update")
+        )
+        if is_query_update:
+            provided_token = self.extract_auth_token(parsed_query)
+            configured_token = SETTINGS_CACHE.get("bot_api_token", "")
+            if configured_token and provided_token != configured_token:
+                self.send_response(401)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": "Unauthorized"}).encode("utf-8"))
+                return
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                data = json.loads(post_data.decode("utf-8"))
+                servers_data = data.get("servers", {})
+                updated_count = 0
+                for s in MOCK_SERVERS:
+                    sid = str(s["id"])
+                    if sid in servers_data:
+                        t = servers_data[sid]
+                        s["status"] = "online" if t.get("online", True) else "offline"
+                        if "map" in t and t["map"]:
+                            s["map"] = t["map"]
+                        if "players" in t and t["players"] is not None:
+                            s["players"] = t["players"]
+                        if "max_players" in t and t["max_players"] is not None:
+                            s["max_players"] = t["max_players"]
+                        if "ping" in t and t["ping"] is not None:
+                            s["ping"] = t["ping"]
+                        updated_count += 1
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": True, "updated_servers": updated_count}).encode("utf-8"))
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+                return
 
         self.send_response(404)
         self.end_headers()

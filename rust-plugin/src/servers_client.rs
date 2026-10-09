@@ -4,10 +4,49 @@ use crate::abi::{deallocate, read_proto, unpack_ptr_size, write_bytes};
 use crate::address::{extract_metadata_string, extract_vars_map, resolve_server_address, sort_servers_by_order};
 use crate::proto::{FindGamesRequest, FindGamesResponse, FindServersRequest, FindServersResponse, ServerProto};
 use crate::settings::get_settings;
-use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO};
+use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO, QueryTelemetryPayload, ServerTelemetryDTO};
 use prost::Message;
 use std::collections::HashMap;
 use std::sync::Mutex;
+
+#[derive(Clone)]
+struct TelemetryEntry {
+    data: ServerTelemetryDTO,
+    received_at_secs: u64,
+}
+
+static LIVE_TELEMETRY: Mutex<Option<HashMap<u64, TelemetryEntry>>> = Mutex::new(None);
+const TELEMETRY_TTL_SECS: u64 = 90;
+
+pub fn update_live_telemetry(payload: QueryTelemetryPayload) -> usize {
+    let now = get_current_timestamp_secs();
+    let count = payload.servers.len();
+    if let Ok(mut g) = LIVE_TELEMETRY.lock() {
+        let map = g.get_or_insert_with(HashMap::new);
+        for (id, telemetry) in payload.servers {
+            map.insert(id, TelemetryEntry {
+                data: telemetry,
+                received_at_secs: now,
+            });
+        }
+    }
+    invalidate_public_cache();
+    count
+}
+
+pub fn get_live_telemetry_for(server_id: u64) -> Option<ServerTelemetryDTO> {
+    let now = get_current_timestamp_secs();
+    if let Ok(g) = LIVE_TELEMETRY.lock() {
+        if let Some(ref map) = *g {
+            if let Some(entry) = map.get(&server_id) {
+                if now == 0 || now.saturating_sub(entry.received_at_secs) < TELEMETRY_TTL_SECS {
+                    return Some(entry.data.clone());
+                }
+            }
+        }
+    }
+    None
+}
 
 #[link(wasm_import_module = "gameap-servers")]
 extern "C" {
@@ -103,7 +142,17 @@ pub fn convert_proto_server_to_dto(
         format_game_name(&s.game_id)
     };
 
-    let status = if s.process_active {
+    let telemetry = get_live_telemetry_for(s.id);
+
+    // Bug 10 fix: if live telemetry reports offline (e.g. node crash / UDP unreachable),
+    // override host GameAP's stuck process_active=true
+    let status = if let Some(ref t) = telemetry {
+        if t.online {
+            "online".to_string()
+        } else {
+            "offline".to_string()
+        }
+    } else if s.process_active {
         "online".to_string()
     } else {
         "offline".to_string()
@@ -119,33 +168,52 @@ pub fn convert_proto_server_to_dto(
 
     let vars_map = extract_vars_map(s.vars.as_deref());
 
-    let map = s.metadata.get("map")
-        .or_else(|| s.metadata.get("default_map"))
-        .map(extract_metadata_string)
-        .filter(|v| !v.is_empty())
-        .or_else(|| vars_map.get("default_map").cloned())
-        .or_else(|| vars_map.get("map").cloned());
+    let map = telemetry.as_ref()
+        .and_then(|t| t.map.clone())
+        .filter(|v| !v.is_empty() && v != "—")
+        .or_else(|| {
+            s.metadata.get("map")
+                .or_else(|| s.metadata.get("default_map"))
+                .map(extract_metadata_string)
+                .filter(|v| !v.is_empty())
+                .or_else(|| vars_map.get("default_map").cloned())
+                .or_else(|| vars_map.get("map").cloned())
+        });
 
-    let max_players = s.metadata.get("max_players")
-        .or_else(|| s.metadata.get("maxplayers"))
-        .or_else(|| s.metadata.get("slots"))
-        .map(extract_metadata_string)
-        .and_then(|v| v.parse::<i32>().ok())
-        .or_else(|| vars_map.get("max_players").and_then(|v| v.parse::<i32>().ok()))
-        .or_else(|| vars_map.get("maxplayers").and_then(|v| v.parse::<i32>().ok()))
-        .or_else(|| vars_map.get("slots").and_then(|v| v.parse::<i32>().ok()));
+    let max_players = telemetry.as_ref()
+        .and_then(|t| t.max_players)
+        .filter(|&v| v > 0)
+        .or_else(|| {
+            s.metadata.get("max_players")
+                .or_else(|| s.metadata.get("maxplayers"))
+                .or_else(|| s.metadata.get("slots"))
+                .map(extract_metadata_string)
+                .and_then(|v| v.parse::<i32>().ok())
+                .or_else(|| vars_map.get("max_players").and_then(|v| v.parse::<i32>().ok()))
+                .or_else(|| vars_map.get("maxplayers").and_then(|v| v.parse::<i32>().ok()))
+                .or_else(|| vars_map.get("slots").and_then(|v| v.parse::<i32>().ok()))
+        });
 
-    let players = s.metadata.get("players")
-        .or_else(|| s.metadata.get("players_num"))
-        .map(extract_metadata_string)
-        .and_then(|v| v.parse::<i32>().ok())
-        .or_else(|| vars_map.get("players").and_then(|v| v.parse::<i32>().ok()))
-        .or_else(|| vars_map.get("players_num").and_then(|v| v.parse::<i32>().ok()));
+    let players = telemetry.as_ref()
+        .and_then(|t| t.players)
+        .or_else(|| {
+            s.metadata.get("players")
+                .or_else(|| s.metadata.get("players_num"))
+                .map(extract_metadata_string)
+                .and_then(|v| v.parse::<i32>().ok())
+                .or_else(|| vars_map.get("players").and_then(|v| v.parse::<i32>().ok()))
+                .or_else(|| vars_map.get("players_num").and_then(|v| v.parse::<i32>().ok()))
+        });
 
-    let ping = s.metadata.get("ping")
-        .map(extract_metadata_string)
-        .and_then(|v| v.parse::<i32>().ok())
-        .or_else(|| vars_map.get("ping").and_then(|v| v.parse::<i32>().ok()));
+    let ping = telemetry.as_ref()
+        .and_then(|t| t.ping)
+        .filter(|&v| v > 0)
+        .or_else(|| {
+            s.metadata.get("ping")
+                .map(extract_metadata_string)
+                .and_then(|v| v.parse::<i32>().ok())
+                .or_else(|| vars_map.get("ping").and_then(|v| v.parse::<i32>().ok()))
+        });
 
     let version = s.metadata.get("version")
         .or_else(|| s.metadata.get("game_version"))

@@ -13,6 +13,23 @@ pub struct HTTPResponseData {
     pub status_code: i32,
     pub content_type: &'static str,
     pub body: Vec<u8>,
+    pub etag: Option<String>,
+    pub cache_control: Option<&'static str>,
+}
+
+fn compute_etag(body: &[u8]) -> String {
+    let mut hash: u64 = 0xcbf29ce484222325;
+    for &byte in body {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("\"wm-{:x}-{:x}\"", body.len(), hash)
+}
+
+fn etag_matches(if_none_match: &str, etag: &str) -> bool {
+    let raw_req = if_none_match.trim().trim_start_matches("W/").trim_matches('"');
+    let raw_etag = etag.trim().trim_start_matches("W/").trim_matches('"');
+    raw_req == "*" || raw_req == raw_etag
 }
 
 #[derive(Serialize)]
@@ -98,6 +115,7 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     if let Some(action_vals) = req.query_params.get("action") {
         if let Some(action) = action_vals.values.first() {
             match action.as_str() {
+                "query-update" | "query_update" => return handle_query_update(req),
                 "servers" | "admin_servers" | "all_servers" => return handle_servers(req),
                 "settings" => return handle_settings(req),
                 "diagnostic" => return handle_diagnostic(req),
@@ -110,6 +128,12 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     }
 
     // Path suffix matching to support arbitrary GameAP mount prefixes
+    if path == "/servers/query-update"
+        || path.ends_with("/servers/query-update")
+        || path.ends_with("/query-update")
+    {
+        return handle_query_update(req);
+    }
     if path == "/stats/click" || path.ends_with("/stats/click") {
         return handle_click(req);
     }
@@ -133,6 +157,8 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
             status_code: 200,
             content_type: "image/png",
             body: crate::assets::ICON_PNG.to_vec(),
+            etag: None,
+            cache_control: Some("public, max-age=86400"),
         };
     }
 
@@ -155,6 +181,53 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
         status_code: 404,
         content_type: "application/json",
         body: br#"{"error":"not found"}"#.to_vec(),
+        etag: None,
+        cache_control: None,
+    }
+}
+
+/// Ingests live telemetry from companion bot or external query daemon.
+fn handle_query_update(req: &HttpRequest) -> HTTPResponseData {
+    let settings = get_settings();
+    let provided_token = extract_auth_token(req);
+
+    if !settings.bot_api_token.is_empty() {
+        match provided_token {
+            Some(ref token) if token == &settings.bot_api_token => {},
+            _ => {
+                return HTTPResponseData {
+                    status_code: 401,
+                    content_type: "application/json; charset=utf-8",
+                    body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+                    etag: None,
+                    cache_control: None,
+                };
+            }
+        }
+    }
+
+    match serde_json::from_slice::<crate::types::QueryTelemetryPayload>(&req.body) {
+        Ok(payload) => {
+            let count = crate::servers_client::update_live_telemetry(payload);
+            let resp_json = format!("{{\"success\":true,\"updated_servers\":{}}}", count);
+            HTTPResponseData {
+                status_code: 200,
+                content_type: "application/json; charset=utf-8",
+                body: resp_json.into_bytes(),
+                etag: None,
+                cache_control: None,
+            }
+        }
+        Err(e) => {
+            let err_json = format!("{{\"success\":false,\"error\":\"Invalid telemetry JSON: {}\"}}", e);
+            HTTPResponseData {
+                status_code: 400,
+                content_type: "application/json; charset=utf-8",
+                body: err_json.into_bytes(),
+                etag: None,
+                cache_control: None,
+            }
+        }
     }
 }
 
@@ -172,6 +245,8 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
                 status_code: 403,
                 content_type: "application/json; charset=utf-8",
                 body: br#"{"success":false,"error":"Bot API is disabled in plugin settings"}"#.to_vec(),
+                etag: None,
+                cache_control: None,
             };
         }
 
@@ -183,6 +258,8 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
                         status_code: 401,
                         content_type: "application/json; charset=utf-8",
                         body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+                        etag: None,
+                        cache_control: None,
                     };
                 }
             }
@@ -239,18 +316,51 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             announcement,
         };
         let body = serde_json::to_vec(&resp).unwrap_or_default();
+        let etag = compute_etag(&body);
+        if !force_refresh {
+            if let Some(inm) = get_header_ignore_case(&req.headers, "If-None-Match") {
+                if etag_matches(inm, &etag) {
+                    return HTTPResponseData {
+                        status_code: 304,
+                        content_type: "application/json; charset=utf-8",
+                        body: Vec::new(),
+                        etag: Some(etag),
+                        cache_control: Some("no-cache"),
+                    };
+                }
+            }
+        }
         return HTTPResponseData {
             status_code: 200,
             content_type: "application/json; charset=utf-8",
             body,
+            etag: Some(etag),
+            cache_control: Some("no-cache"),
         };
     }
 
     let body = fetch_public_servers_with_opt(force_refresh);
+    let etag = compute_etag(&body);
+    if !force_refresh {
+        if let Some(inm) = get_header_ignore_case(&req.headers, "If-None-Match") {
+            if etag_matches(inm, &etag) {
+                return HTTPResponseData {
+                    status_code: 304,
+                    content_type: "application/json; charset=utf-8",
+                    body: Vec::new(),
+                    etag: Some(etag),
+                    cache_control: Some("public, max-age=3, stale-while-revalidate=10"),
+                };
+            }
+        }
+    }
+
     HTTPResponseData {
         status_code: 200,
         content_type: "application/json; charset=utf-8",
         body,
+        etag: Some(etag),
+        cache_control: Some("public, max-age=3, stale-while-revalidate=10"),
     }
 }
 
@@ -364,6 +474,8 @@ fn handle_view() -> HTTPResponseData {
         status_code: 200,
         content_type: "text/html; charset=utf-8",
         body: page_content.into_bytes(),
+        etag: None,
+        cache_control: None,
     }
 }
 
@@ -377,12 +489,16 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
                 status_code: 200,
                 content_type: "application/json",
                 body: br#"{"success":true}"#.to_vec(),
+                etag: None,
+                cache_control: None,
             };
         } else {
             return HTTPResponseData {
                 status_code: 400,
                 content_type: "application/json",
                 body: br#"{"success":false,"error":"Invalid settings JSON"}"#.to_vec(),
+                etag: None,
+                cache_control: None,
             };
         }
     }
@@ -431,6 +547,8 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
         status_code: 200,
         content_type: "application/json; charset=utf-8",
         body,
+        etag: None,
+        cache_control: None,
     }
 }
 
@@ -465,6 +583,8 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
         status_code: 200,
         content_type: "application/json",
         body,
+        etag: None,
+        cache_control: None,
     }
 }
 
@@ -511,6 +631,8 @@ fn handle_click(req: &HttpRequest) -> HTTPResponseData {
         status_code: 200,
         content_type: "application/json; charset=utf-8",
         body: br#"{"success":true}"#.to_vec(),
+        etag: None,
+        cache_control: None,
     }
 }
 
@@ -526,5 +648,7 @@ fn handle_stats(_req: &HttpRequest) -> HTTPResponseData {
         status_code: 200,
         content_type: "application/json; charset=utf-8",
         body,
+        etag: None,
+        cache_control: None,
     }
 }

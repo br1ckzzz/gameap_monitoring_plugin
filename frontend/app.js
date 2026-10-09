@@ -174,6 +174,8 @@ let announcementTimerInterval = null;
 let searchQuery = '';
 let refreshInterval = null;
 let countdownSeconds = autoRefreshSeconds;
+let lastETag = null;
+let lastSuccessfulFetchTime = Date.now();
 let baseDocumentTitle = document.title || 'GameAP | Servers Monitoring';
 let currentViewMode = localStorage.getItem('web_monitoring_view_mode') || 'tabs';
 
@@ -459,8 +461,21 @@ async function fetchServers(isManual = false) {
         const controller = new AbortController();
         // Synchronized with GameAP v4.5.3 PLUGINS_ROUTES_QUEUE_TIMEOUT (10s)
         const timeoutId = setTimeout(() => controller.abort(), 9500);
-        const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+        const reqHeaders = { 'Accept': 'application/json' };
+        if (lastETag) {
+          reqHeaders['If-None-Match'] = lastETag;
+        }
+        const res = await fetch(url, {
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: reqHeaders
+        });
         clearTimeout(timeoutId);
+
+        // Handle HTTP 304 Not Modified: servers unchanged, skip DOM render and save CPU
+        if (res.status === 304) {
+          return { notModified: true };
+        }
 
         // Handle GameAP v4.5.3 DoS protection and rate-limiting
         if (res.status === 429 || res.status === 503) {
@@ -478,6 +493,10 @@ async function fetchServers(isManual = false) {
         }
 
         if (res.ok) {
+          const etagHeader = res.headers.get('ETag');
+          if (etagHeader) {
+            lastETag = etagHeader;
+          }
           const data = await res.json();
           if (data) {
             if (data.refresh_interval) {
@@ -514,8 +533,18 @@ async function fetchServers(isManual = false) {
       handleRateLimit(primaryRes.retryAfter);
       return;
     }
+    if (primaryRes && primaryRes.notModified) {
+      countdownSeconds = autoRefreshSeconds;
+      updateTimerDisplay();
+      lastSuccessfulFetchTime = Date.now();
+      setError(false);
+      setLoading(false);
+      resetTimer();
+      return;
+    }
     if (primaryRes && primaryRes.success) {
       loadedData = primaryRes.servers;
+      lastSuccessfulFetchTime = Date.now();
     }
 
     // 2. If primary failed, try direct canonical action endpoint
@@ -525,8 +554,18 @@ async function fetchServers(isManual = false) {
         handleRateLimit(dirRes.retryAfter);
         return;
       }
+      if (dirRes && dirRes.notModified) {
+        countdownSeconds = autoRefreshSeconds;
+        updateTimerDisplay();
+        lastSuccessfulFetchTime = Date.now();
+        setError(false);
+        setLoading(false);
+        resetTimer();
+        return;
+      }
       if (dirRes && dirRes.success) {
         loadedData = dirRes.servers;
+        lastSuccessfulFetchTime = Date.now();
       }
     }
 
@@ -1453,6 +1492,10 @@ function startTimer() {
   updateTimerDisplay();
 
   refreshInterval = setInterval(() => {
+    // Smart sleep: if tab is hidden in background, pause countdown to avoid overloading GameAP DoS queue
+    if (document.hidden) {
+      return;
+    }
     countdownSeconds--;
     if (countdownSeconds <= 0) {
       fetchServers(false);
@@ -1461,6 +1504,16 @@ function startTimer() {
     }
   }, 1000);
 }
+
+// Page Visibility API: Smart wakeup when visitor returns to tab
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    const elapsed = Date.now() - lastSuccessfulFetchTime;
+    if (elapsed > 5000) {
+      fetchServers(false);
+    }
+  }
+});
 
 function resetTimer() {
   startTimer();

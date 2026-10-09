@@ -48,6 +48,29 @@ pub struct AnnouncementDTO {
     pub deadline: Option<String>,
 }
 
+/// Live query telemetry ingested from Companion Bot or external worker.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ServerTelemetryDTO {
+    pub online: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub map: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub players: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_players: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ping: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+/// Ingestion request payload for POST /servers/query-update.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct QueryTelemetryPayload {
+    #[serde(default)]
+    pub servers: HashMap<u64, ServerTelemetryDTO>,
+}
+
 /// JSON payload returned by `/servers` endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringResponse {

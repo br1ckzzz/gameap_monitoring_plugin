@@ -226,10 +226,17 @@ pub extern "C" fn plugin_service_handle_http_request(ptr: u32, size: u32) -> u64
     let mut headers = HashMap::new();
     headers.insert("Content-Type".to_string(), res_data.content_type.to_string());
     headers.insert("Access-Control-Allow-Origin".to_string(), "*".to_string());
-    headers.insert(
-        "Cache-Control".to_string(),
-        "no-cache, no-store, must-revalidate".to_string(),
-    );
+    if let Some(cc) = res_data.cache_control {
+        headers.insert("Cache-Control".to_string(), cc.to_string());
+    } else {
+        headers.insert(
+            "Cache-Control".to_string(),
+            "no-cache, no-store, must-revalidate".to_string(),
+        );
+    }
+    if let Some(ref etag) = res_data.etag {
+        headers.insert("ETag".to_string(), etag.clone());
+    }
     headers.insert(
         "Content-Security-Policy".to_string(),
         "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https: http:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:; frame-src 'self'; worker-src 'self' blob:".to_string(),

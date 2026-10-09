@@ -42,15 +42,15 @@ def run_tests():
         req = urllib.request.Request(f"{base_url}/")
         with urllib.request.urlopen(req) as resp:
             content = resp.read().decode("utf-8")
-            assert_test("Public monitoring view 200 OK with v1.0.9 & INITIAL_DATA",
-                        resp.status == 200 and "1.0.9" in content and "window.INITIAL_DATA" in content)
+            assert_test("Public monitoring view 200 OK with v1.0.10 & INITIAL_DATA",
+                        resp.status == 200 and "1.0.10" in content and "window.INITIAL_DATA" in content)
 
         # 2. Diagnostic endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/diagnostic")
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            assert_test("Diagnostic endpoint 200 OK with version 1.0.9",
-                        resp.status == 200 and data.get("version") == "1.0.9")
+            assert_test("Diagnostic endpoint 200 OK with version 1.0.10",
+                        resp.status == 200 and data.get("version") == "1.0.10")
 
         # 3. Servers endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/servers")
@@ -167,6 +167,58 @@ def run_tests():
             all_marked = all(s.get("is_hidden_offline") is True for s in offline_servers)
             assert_test("13.7 Auto-hide marks offline servers as is_hidden_offline", all_marked and len(offline_servers) > 0)
         SETTINGS_CACHE["auto_hide_offline"] = False
+
+        # 16. ETag & HTTP 304 Not Modified conditional requests
+        req_etag = urllib.request.Request(f"{base_url}/plugins/web-monitoring/servers")
+        server_etag = None
+        with urllib.request.urlopen(req_etag) as resp:
+            server_etag = resp.headers.get("ETag")
+            assert_test("ETag header present on GET /servers response", server_etag is not None and len(server_etag) > 0)
+
+        if server_etag:
+            req_inm = urllib.request.Request(f"{base_url}/plugins/web-monitoring/servers")
+            req_inm.add_header("If-None-Match", server_etag)
+            try:
+                with urllib.request.urlopen(req_inm) as resp_inm:
+                    assert_test("If-None-Match returned 304 Not Modified", resp_inm.status == 304)
+            except urllib.error.HTTPError as e:
+                assert_test("If-None-Match returned 304 Not Modified", e.code == 304)
+
+        # 17. Telemetry Ingestion (POST /servers/query-update) overrides node down server status
+        telemetry_payload = json.dumps({
+            "servers": {
+                "1": {
+                    "online": False,
+                    "reason": "node_unreachable"
+                }
+            }
+        }).encode("utf-8")
+        telemetry_req = urllib.request.Request(
+            f"{base_url}/api/plugins/monitoring/servers/query-update",
+            data=telemetry_payload,
+            method="POST"
+        )
+        telemetry_req.add_header("Content-Type", "application/json")
+        with urllib.request.urlopen(telemetry_req) as resp:
+            t_data = json.loads(resp.read().decode("utf-8"))
+            assert_test("POST /servers/query-update returns 200 OK and updated_servers count",
+                        resp.status == 200 and t_data.get("updated_servers") == 1)
+
+        # Verify server 1 is now marked offline in /servers
+        with urllib.request.urlopen(f"{base_url}/plugins/web-monitoring/servers") as resp:
+            updated_servers_data = json.loads(resp.read().decode("utf-8"))
+            s1 = next((s for s in updated_servers_data.get("servers", []) if s["id"] == 1), None)
+            assert_test("Server 1 status correctly updated to offline via telemetry ingestion",
+                        s1 is not None and s1.get("status") == "offline")
+        # Reset server 1 back to online
+        restore_payload = json.dumps({"servers": {"1": {"online": True}}}).encode("utf-8")
+        restore_req = urllib.request.Request(
+            f"{base_url}/api/plugins/monitoring/servers/query-update",
+            data=restore_payload,
+            method="POST"
+        )
+        restore_req.add_header("Content-Type", "application/json")
+        urllib.request.urlopen(restore_req)
 
     finally:
         httpd.shutdown()

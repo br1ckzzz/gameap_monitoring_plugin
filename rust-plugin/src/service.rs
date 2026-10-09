@@ -2,7 +2,7 @@
 
 use crate::assets::{get_frontend_assets, ADMIN_BUNDLE_JS};
 
-pub const PLUGIN_VERSION: &str = "1.0.9";
+pub const PLUGIN_VERSION: &str = "1.0.10";
 pub const PLUGIN_REPO_URL: &str = "https://github.com/br1ckzzz/gameap_monitoring_plugin";
 
 /// Plugin metadata descriptor for GameAP.
@@ -49,6 +49,13 @@ pub const HTTP_ROUTES: &[HTTPRouteDescriptor] = &[
         requires_auth: false,
         admin_only: false,
         description: "Get public list of active servers",
+    },
+    HTTPRouteDescriptor {
+        path: "/servers/query-update",
+        methods: &["POST"],
+        requires_auth: false,
+        admin_only: false,
+        description: "Ingest live query telemetry from companion bot/worker",
     },
     HTTPRouteDescriptor {
         path: "/api/servers",
