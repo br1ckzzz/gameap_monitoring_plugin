@@ -42,15 +42,15 @@ def run_tests():
         req = urllib.request.Request(f"{base_url}/")
         with urllib.request.urlopen(req) as resp:
             content = resp.read().decode("utf-8")
-            assert_test("Public monitoring view 200 OK with v1.0.10 & INITIAL_DATA",
-                        resp.status == 200 and "1.0.10" in content and "window.INITIAL_DATA" in content)
+            assert_test("Public monitoring view 200 OK with v1.0.11 & INITIAL_DATA",
+                        resp.status == 200 and "1.0.11" in content and "window.INITIAL_DATA" in content)
 
         # 2. Diagnostic endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/diagnostic")
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            assert_test("Diagnostic endpoint 200 OK with version 1.0.10",
-                        resp.status == 200 and data.get("version") == "1.0.10")
+            assert_test("Diagnostic endpoint 200 OK with version 1.0.11",
+                        resp.status == 200 and data.get("version") == "1.0.11")
 
         # 3. Servers endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/servers")
@@ -219,6 +219,46 @@ def run_tests():
         )
         restore_req.add_header("Content-Type", "application/json")
         urllib.request.urlopen(restore_req)
+
+        # Idea 14. Games Catalog Manifest integration test
+        games_req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/games.json")
+        with urllib.request.urlopen(games_req) as resp:
+            games_data = json.loads(resp.read().decode("utf-8"))
+            games_etag = resp.headers.get("ETag")
+            assert_test("games.json endpoint 200 OK with schema 1.0.0",
+                        resp.status == 200 and games_data.get("schema_version") == "1.0.0")
+            enshrouded_entry = next((g for g in games_data.get("games", []) if g["id"] == "enshrouded"), None)
+            assert_test("games.json contains verified Enshrouded AppID 1203620 (Bug #16)",
+                        enshrouded_entry is not None and enshrouded_entry.get("steam_appid") == 1203620)
+            svencoop_entry = next((g for g in games_data.get("games", []) if g["id"] == "svencoop"), None)
+            assert_test("games.json contains verified Sven Co-op AppID 225840 (not 225300 Tomb Raider II)",
+                        svencoop_entry is not None and svencoop_entry.get("steam_appid") == 225840
+                        and "225840" in svencoop_entry.get("banner", ""))
+            dayofdragons_entry = next((g for g in games_data.get("games", []) if g["id"] == "dayofdragons"), None)
+            assert_test("games.json contains verified Day of Dragons AppID 1088090 (not 981770)",
+                        dayofdragons_entry is not None and dayofdragons_entry.get("steam_appid") == 1088090)
+            mordhau_entry = next((g for g in games_data.get("games", []) if g["id"] == "mordhau"), None)
+            assert_test("games.json contains verified Mordhau AppID 629760",
+                        mordhau_entry is not None and mordhau_entry.get("steam_appid") == 629760)
+            ut2004_entry = next((g for g in games_data.get("games", []) if g["id"] == "ut2004"), None)
+            assert_test("games.json contains verified Unreal Tournament 2004 AppID 13230",
+                        ut2004_entry is not None and ut2004_entry.get("steam_appid") == 13230)
+            sdtd_entry = next((g for g in games_data.get("games", []) if g["id"] == "7d2d"), None)
+            assert_test("games.json contains verified 7 Days to Die AppID 251570",
+                        sdtd_entry is not None and sdtd_entry.get("steam_appid") == 251570)
+            ges_entry = next((g for g in games_data.get("games", []) if g["id"] == "ges"), None)
+            assert_test("games.json contains stub banner for GoldenEye Source (no steam_appid)",
+                        ges_entry is not None and "steam_appid" not in ges_entry and "icon.png" in ges_entry.get("banner", ""))
+
+            # Test ETag / 304 on games.json
+            if games_etag:
+                cond_games_req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/games.json")
+                cond_games_req.add_header("If-None-Match", games_etag)
+                try:
+                    with urllib.request.urlopen(cond_games_req) as cond_resp:
+                        assert_test("games.json 304 Not Modified with ETag", cond_resp.status == 304)
+                except urllib.error.HTTPError as he:
+                    assert_test("games.json 304 Not Modified with ETag", he.code == 304)
 
     finally:
         httpd.shutdown()

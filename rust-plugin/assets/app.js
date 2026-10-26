@@ -131,6 +131,26 @@ function toggleFavorite(serverId) {
 }
 window.toggleFavorite = toggleFavorite;
 
+// Bug #15 Fix: Reconcile favorites with currently active servers in GameAP
+function pruneFavorites(servers) {
+  if (!servers || !Array.isArray(servers) || servers.length === 0) return;
+  const validIds = new Set(servers.map(s => Number(s.id)));
+  let changed = false;
+  for (const id of Array.from(favoriteServers)) {
+    if (!validIds.has(id)) {
+      favoriteServers.delete(id);
+      changed = true;
+    }
+  }
+  if (changed) {
+    saveFavorites();
+    if (favoriteServers.size === 0 && selectedGame === 'favorites') {
+      selectedGame = 'all';
+    }
+  }
+}
+window.pruneFavorites = pruneFavorites;
+
 // 13.12 Anonymous Click Analytics Beacon
 function trackServerClick(serverId) {
   if (!serverId) return;
@@ -644,6 +664,7 @@ async function fetchServers(isManual = false) {
 }
 
 function renderAll() {
+  pruneFavorites(allServers);
   renderAnnouncement();
   renderCategoryTabs();
   renderGameFilters();
@@ -780,16 +801,19 @@ function renderGameFilters() {
 
   gameFiltersContainer.innerHTML = '';
 
-  // 13.1 Favorites Button
-  if (favoriteServers.size > 0) {
+  // 13.1 Favorites Button with Bug #15 fix: count only active, existing servers
+  const activeFavoritesCount = allServers.filter(s => favoriteServers.has(Number(s.id))).length;
+  if (activeFavoritesCount > 0) {
     const favBtn = document.createElement('button');
     favBtn.className = `filter-chip filter-chip-fav ${selectedGame === 'favorites' ? 'active' : ''}`;
-    favBtn.innerHTML = `<span>★</span> ${t('favoritesFilter')} <span class="fav-count">${favoriteServers.size}</span>`;
+    favBtn.innerHTML = `<span>★</span> ${t('favoritesFilter')} <span class="fav-count">${activeFavoritesCount}</span>`;
     favBtn.onclick = () => {
       selectedGame = (selectedGame === 'favorites') ? 'all' : 'favorites';
       renderAll();
     };
     gameFiltersContainer.appendChild(favBtn);
+  } else if (selectedGame === 'favorites') {
+    selectedGame = 'all';
   }
 
   // "All" button
@@ -907,7 +931,7 @@ const STEAM_APP_MAP = {
   garrysmod: 4000,
   gmod: 4000,
   synergy: 17520,
-  svencoop: 225300,
+  svencoop: 225840,
 
   // Survival & Sandbox
   rust: 252490,
@@ -915,7 +939,7 @@ const STEAM_APP_MAP = {
   astroneer: 361420,
   palworld: 1623730,
   palwrld: 1623730,
-  enshrouded: 1203630,
+  enshrouded: 1203620,
   corekeeper: 1621690,
   spaceengineers: 244850,
   barotrauma: 602960,
@@ -977,10 +1001,52 @@ const STEAM_APP_MAP = {
   fivem: 271590,
 };
 
+// Idea 14: Centralized Game Catalog Manifest Cache & Loader
+const DYNAMIC_GAMES_CATALOG = {};
+
+async function loadGameCatalog() {
+  try {
+    const endpoint = getApiEndpoint('games.json');
+    const resp = await fetch(endpoint, { cache: 'no-cache' });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (data && Array.isArray(data.games)) {
+      let updated = false;
+      data.games.forEach(g => {
+        if (!g.id) return;
+        const normalizedId = String(g.id).toLowerCase().replace(/[^a-z0-9]/g, '');
+        DYNAMIC_GAMES_CATALOG[normalizedId] = g;
+        if (g.steam_appid) {
+          STEAM_APP_MAP[normalizedId] = g.steam_appid;
+        }
+        if (Array.isArray(g.aliases)) {
+          g.aliases.forEach(alias => {
+            const normalizedAlias = String(alias).toLowerCase().replace(/[^a-z0-9]/g, '');
+            DYNAMIC_GAMES_CATALOG[normalizedAlias] = g;
+            if (g.steam_appid) {
+              STEAM_APP_MAP[normalizedAlias] = g.steam_appid;
+            }
+          });
+        }
+        updated = true;
+      });
+      if (updated && allServers.length > 0) {
+        renderAll();
+      }
+    }
+  } catch (err) {
+    // Graceful offline fallback: continue using embedded STEAM_APP_MAP & banners
+  }
+}
+window.loadGameCatalog = loadGameCatalog;
+
 function getGameBannerUrl(gameCode) {
   if (!gameCode) return null;
   const c = String(gameCode).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (!c) return null;
+  if (DYNAMIC_GAMES_CATALOG[c] && DYNAMIC_GAMES_CATALOG[c].banner) {
+    return DYNAMIC_GAMES_CATALOG[c].banner;
+  }
   if (c === 'minecraft' || c === 'mc') {
     return 'https://image.gametracker.com/images/maps/160x120/minecraft/default.jpg';
   }
@@ -996,6 +1062,9 @@ function getGameBannerFallbackUrl(gameCode) {
   if (!gameCode) return null;
   const c = String(gameCode).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (!c) return null;
+  if (DYNAMIC_GAMES_CATALOG[c] && DYNAMIC_GAMES_CATALOG[c].fallback_banner) {
+    return DYNAMIC_GAMES_CATALOG[c].fallback_banner;
+  }
   const appId = STEAM_APP_MAP[c];
   if (appId) {
     return `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${appId}/header.jpg`;
@@ -1669,6 +1738,7 @@ detectBrandingCustomizations();
 initLanguage();
 const hasPreloaded = initPreloadedData();
 initCustomBranding();
+loadGameCatalog();
 startTimer();
 if (!hasPreloaded) {
   fetchServers();

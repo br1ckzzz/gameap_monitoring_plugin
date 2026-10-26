@@ -15,8 +15,7 @@ pub mod types;
 
 use abi::{read_proto, write_proto};
 use proto::*;
-use servers_client::{convert_proto_server_to_dto, invalidate_public_cache};
-use settings::{get_settings, save_settings};
+use servers_client::invalidate_public_cache;
 use std::collections::HashMap;
 
 /// Returns the supported plugin API version (GameAP Plugin API v1).
@@ -89,67 +88,15 @@ pub extern "C" fn plugin_service_get_subscribed_events(_ptr: u32, _size: u32) ->
     write_proto(&resp)
 }
 
-/// Handles incoming lifecycle events from GameAP daemon, updating cached servers in real-time.
+/// Handles incoming lifecycle events from GameAP daemon, invalidating micro-cache.
 #[no_mangle]
 pub extern "C" fn plugin_service_handle_event(ptr: u32, size: u32) -> u64 {
+    // Invalidate public micro-cache so subsequent requests query live server state from host
     invalidate_public_cache();
 
-    if let Ok(event) = read_proto::<Event>(ptr, size) {
-        if let Some(payload) = event.server_event {
-            if let Some(s) = payload.server {
-                let mut current = get_settings();
-                let mut changed = false;
-
-                match event.r#type {
-                    EVENT_TYPE_SERVER_CREATED => {
-                        if let Some(pos) = current.cached_servers.iter().position(|e| e.id == s.id) {
-                            current.cached_servers[pos] = convert_proto_server_to_dto(&s, "", &current);
-                        } else {
-                            current.cached_servers.push(convert_proto_server_to_dto(&s, "", &current));
-                        }
-                        changed = true;
-                    }
-                    EVENT_TYPE_SERVER_UPDATED => {
-                        if let Some(pos) = current.cached_servers.iter().position(|e| e.id == s.id) {
-                            let g_name = current.cached_servers[pos].game_name.clone();
-                            current.cached_servers[pos] = convert_proto_server_to_dto(&s, &g_name, &current);
-                            changed = true;
-                        }
-                    }
-                    EVENT_TYPE_SERVER_DELETED => {
-                        let prev_len = current.cached_servers.len();
-                        current.cached_servers.retain(|existing| existing.id != s.id);
-                        if current.cached_servers.len() != prev_len {
-                            changed = true;
-                        }
-                    }
-                    EVENT_TYPE_SERVER_POST_START | EVENT_TYPE_SERVER_POST_RESTART => {
-                        for existing in &mut current.cached_servers {
-                            if existing.id == s.id {
-                                existing.status = "online".to_string();
-                                changed = true;
-                                break;
-                            }
-                        }
-                    }
-                    EVENT_TYPE_SERVER_POST_STOP => {
-                        for existing in &mut current.cached_servers {
-                            if existing.id == s.id {
-                                existing.status = "offline".to_string();
-                                changed = true;
-                                break;
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-
-                if changed {
-                    save_settings(current);
-                }
-            }
-        }
-    }
+    // Consume and log event if needed, but DO NOT persist to GameAP storage on every event.
+    // Server status events are dynamic runtime state, not user configuration.
+    let _ = read_proto::<Event>(ptr, size);
 
     let res = EventResult {
         handled: true,

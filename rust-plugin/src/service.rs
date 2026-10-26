@@ -2,7 +2,7 @@
 
 use crate::assets::{get_frontend_assets, ADMIN_BUNDLE_JS};
 
-pub const PLUGIN_VERSION: &str = "1.0.10";
+pub const PLUGIN_VERSION: &str = "1.0.11";
 pub const PLUGIN_REPO_URL: &str = "https://github.com/br1ckzzz/gameap_monitoring_plugin";
 
 /// Plugin metadata descriptor for GameAP.
@@ -23,7 +23,13 @@ pub const PLUGIN_INFO: PluginInfoDescriptor = PluginInfoDescriptor {
     description: "Публичная страница для отображения работающих серверов",
     author: "GameAP Community",
     api_version: "1",
-    required_permissions: &["listen_events"],
+    required_permissions: &[
+        "storage:read",
+        "storage:write",
+        "servers:read",
+        "games:read",
+        "listen_events",
+    ],
 };
 
 /// Route definition exposed to GameAP HTTP routing subsystem.
@@ -100,6 +106,6 @@ pub fn get_admin_bundle() -> &'static [u8] {
 }
 
 /// Returns static frontend assets.
-pub fn get_assets_list() -> [crate::assets::AssetFile; 4] {
+pub fn get_assets_list() -> [crate::assets::AssetFile; 5] {
     get_frontend_assets()
 }

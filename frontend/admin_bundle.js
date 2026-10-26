@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.9',
+    version: '1.0.11',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.9',
+                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.11',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
@@ -132,7 +132,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.9',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.11',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
@@ -312,7 +312,6 @@ export const webMonitoringPlugin = {
                         try {
                             localStorage.setItem('web_monitoring_admin_open_sections', JSON.stringify(openSections.value));
                         } catch (_) {}
-                        autoSyncServers(serversList.value);
                     };
 
                     const renderSpoilerCard = (key, iconClass, titleText, badgeText, badgeActive, bodyVNodes) => {
@@ -1443,57 +1442,96 @@ export const webMonitoringPlugin = {
                         } catch (e) {}
 
                         try {
+                            const ts = Date.now();
                             const sEndpoints = [
-                                '/api/plugins/monitoring/settings?action=settings',
-                                '/api/plugins/monitoring/settings',
-                                '/api/plugins/monitoring?action=settings',
-                                '/api/plugins/monitorine/settings?action=settings',
-                                '/api/plugins/monitorine/settings',
-                                '/api/plugins/monitorine?action=settings'
+                                `/api/plugins/monitoring?action=settings&_t=${ts}`,
+                                `/api/plugins/monitoring/settings?action=settings&_t=${ts}`,
+                                `/api/plugins/monitorine?action=settings&_t=${ts}`,
+                                `/api/plugins/monitorine/settings?action=settings&_t=${ts}`
                             ];
                             for (const sUrl of sEndpoints) {
                                 try {
-                                    const sRes = await fetch(sUrl);
-                                    if (sRes.ok) {
-                                        const data = await sRes.json();
-                                        if (data.title) title.value = data.title;
-                                        if (data.subtitle) subtitle.value = data.subtitle;
-                                        if (data.theme) theme.value = data.theme;
-                                        if (data.refresh_interval) refreshInterval.value = data.refresh_interval;
-                                        if (data.custom_css !== undefined) customCss.value = data.custom_css;
-                                        if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
-                                        if (data.address_key !== undefined) addressKey.value = data.address_key;
-                                        if (data.logo_url !== undefined) logoUrl.value = data.logo_url;
-                                        if (data.favicon_url !== undefined) faviconUrl.value = data.favicon_url;
-                                        if (data.bot_api_enabled !== undefined) botApiEnabled.value = data.bot_api_enabled;
-                                        if (data.bot_api_token !== undefined) botApiToken.value = data.bot_api_token;
-                                        if (data.announcement_enabled !== undefined) announcementEnabled.value = data.announcement_enabled;
-                                        if (data.announcement_text !== undefined) announcementText.value = data.announcement_text;
-                                        if (data.announcement_link !== undefined) announcementLink.value = data.announcement_link;
-                                        if (data.announcement_type !== undefined) announcementType.value = data.announcement_type;
-                                        if (data.announcement_deadline !== undefined) announcementDeadline.value = data.announcement_deadline;
-                                        if (data.server_categories && typeof data.server_categories === 'object') serverCategories.value = data.server_categories;
-                                        if (data.auto_hide_offline !== undefined) autoHideOffline.value = data.auto_hide_offline;
-                                        if (data.auto_hide_offline_minutes !== undefined) autoHideOfflineMinutes.value = data.auto_hide_offline_minutes;
-                                        if (Array.isArray(data.server_order)) serverOrder.value = data.server_order;
-                                        if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
-                                        if (data.click_stats && typeof data.click_stats === 'object') {
-                                            clickStats.value = data.click_stats;
-                                        } else if (data.clicks && typeof data.clicks === 'object') {
-                                            clickStats.value = data.clicks;
-                                        }
-                                        if (data.open_sections && typeof data.open_sections === 'object') {
-                                            const saved = getSavedOpenSections();
-                                            openSections.value = { ...defaultOpenSections, ...data.open_sections, ...saved };
-                                        }
-
-                                        // If we don't have servers loaded yet, use incoming servers from settings
-                                        const incomingServers = data.all_servers || data.servers || data.cached_servers;
-                                        if (Array.isArray(incomingServers) && incomingServers.length > 0 && serversList.value.length === 0) {
-                                            serversList.value = applyServerSort(incomingServers, serverOrder.value);
-                                        }
-                                        break;
+                                    let data = null;
+                                    if (window.axios && typeof window.axios.get === 'function') {
+                                        try {
+                                            const axRes = await window.axios.get(sUrl);
+                                            if (axRes && axRes.data && typeof axRes.data === 'object') {
+                                                data = axRes.data;
+                                            }
+                                        } catch (_) {}
                                     }
+                                    if (!data) {
+                                        const sRes = await fetch(sUrl, {
+                                            cache: 'no-store',
+                                            headers: { 'Accept': 'application/json' }
+                                        });
+                                        if (sRes.ok) {
+                                            data = await sRes.json().catch(() => null);
+                                        }
+                                    }
+                                    if (!data || typeof data !== 'object') continue;
+                                    if (data.title) title.value = data.title;
+                                    if (data.subtitle) subtitle.value = data.subtitle;
+                                    if (data.theme) theme.value = data.theme;
+                                    if (data.refresh_interval) refreshInterval.value = data.refresh_interval;
+                                    if (data.custom_css !== undefined) customCss.value = data.custom_css;
+                                    if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
+                                    if (data.address_key !== undefined) addressKey.value = data.address_key;
+                                    if (data.logo_url !== undefined) logoUrl.value = data.logo_url;
+                                    if (data.favicon_url !== undefined) faviconUrl.value = data.favicon_url;
+                                    
+                                    if (data.bot_api_token) {
+                                        botApiToken.value = String(data.bot_api_token);
+                                        botApiEnabled.value = Boolean(data.bot_api_enabled);
+                                    } else {
+                                        // If remote returned empty token, preserve non-empty token from localStorage
+                                        try {
+                                            const localSaved = localStorage.getItem('web_monitoring_settings');
+                                            if (localSaved) {
+                                                const localData = JSON.parse(localSaved);
+                                                if (localData && localData.bot_api_token) {
+                                                    botApiToken.value = localData.bot_api_token;
+                                                    if (localData.bot_api_enabled !== undefined) {
+                                                        botApiEnabled.value = Boolean(localData.bot_api_enabled);
+                                                    }
+                                                }
+                                            }
+                                        } catch (_) {}
+                                    }
+                                    
+                                    if (data.announcement_enabled !== undefined) announcementEnabled.value = Boolean(data.announcement_enabled);
+                                    if (data.announcement_text !== undefined) announcementText.value = data.announcement_text;
+                                    if (data.announcement_link !== undefined) announcementLink.value = data.announcement_link;
+                                    if (data.announcement_type !== undefined) announcementType.value = data.announcement_type;
+                                    if (data.announcement_deadline !== undefined) announcementDeadline.value = data.announcement_deadline;
+                                    if (data.server_categories && typeof data.server_categories === 'object') serverCategories.value = data.server_categories;
+                                    if (data.auto_hide_offline !== undefined) autoHideOffline.value = Boolean(data.auto_hide_offline);
+                                    if (data.auto_hide_offline_minutes !== undefined) autoHideOfflineMinutes.value = data.auto_hide_offline_minutes;
+                                    if (Array.isArray(data.server_order)) serverOrder.value = data.server_order;
+                                    if (Array.isArray(data.hidden_servers)) hiddenServers.value = data.hidden_servers;
+                                    if (data.click_stats && typeof data.click_stats === 'object') {
+                                        clickStats.value = data.click_stats;
+                                    } else if (data.clicks && typeof data.clicks === 'object') {
+                                        clickStats.value = data.clicks;
+                                    }
+                                    if (data.open_sections && typeof data.open_sections === 'object') {
+                                        const saved = getSavedOpenSections();
+                                        openSections.value = { ...defaultOpenSections, ...data.open_sections, ...saved };
+                                    }
+
+                                    // Keep localStorage cache up-to-date with confirmed remote settings
+                                    try {
+                                        if (data.bot_api_token || !botApiToken.value) {
+                                            localStorage.setItem('web_monitoring_settings', JSON.stringify(data));
+                                        }
+                                    } catch (_) {}
+
+                                    // If we don't have servers loaded yet, use incoming servers from settings
+                                    const incomingServers = data.all_servers || data.servers || data.cached_servers;
+                                    if (Array.isArray(incomingServers) && incomingServers.length > 0 && serversList.value.length === 0) {
+                                        serversList.value = applyServerSort(incomingServers, serverOrder.value);
+                                    }
+                                    break;
                                 } catch (_) {}
                             }
                         } catch (err) {
@@ -1504,69 +1542,16 @@ export const webMonitoringPlugin = {
                         await syncLiveServers();
                     };
 
-                    const updateServerListCache = async (servers) => {
+                    const updateServerListCache = (servers) => {
                         if (!servers || servers.length === 0) return;
                         try {
-                            const payload = {
-                                title: title.value,
-                                subtitle: subtitle.value,
-                                theme: theme.value,
-                                refresh_interval: parseInt(refreshInterval.value, 10) || 15,
-                                custom_css: customCss.value,
-                                custom_header_html: customHeaderHtml.value,
-                                address_key: addressKey.value.trim(),
-                                logo_url: logoUrl.value.trim(),
-                                favicon_url: faviconUrl.value.trim(),
-                                bot_api_enabled: botApiEnabled.value,
-                                bot_api_token: botApiToken.value.trim(),
-                                announcement_enabled: announcementEnabled.value,
-                                announcement_text: announcementText.value.trim(),
-                                announcement_link: announcementLink.value.trim(),
-                                announcement_type: announcementType.value,
-                                announcement_deadline: announcementDeadline.value.trim(),
-                                server_categories: serverCategories.value,
-                                auto_hide_offline: autoHideOffline.value,
-                                auto_hide_offline_minutes: parseInt(autoHideOfflineMinutes.value, 10) || 0,
-                                server_order: serversList.value.map(s => s.id),
-                                hidden_servers: hiddenServers.value,
-                                cached_servers: servers,
-                                open_sections: openSections.value,
-                                click_stats: clickStats.value
-                            };
-                            localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
                             localStorage.setItem('web_monitoring_cached_servers', JSON.stringify(servers));
-                            if (announcementEnabled.value && announcementText.value.trim()) {
-                                localStorage.setItem('web_monitoring_announcement', JSON.stringify({
-                                    text: announcementText.value.trim(),
-                                    link: announcementLink.value.trim() || null,
-                                    banner_type: announcementType.value || 'info',
-                                    deadline: announcementDeadline.value.trim() || null
-                                }));
-                            } else {
-                                localStorage.removeItem('web_monitoring_announcement');
-                            }
-                            const sEndpoints = [
-                                '/api/plugins/monitoring/settings?action=settings',
-                                '/api/plugins/monitoring/settings',
-                                '/api/plugins/monitoring?action=settings',
-                                '/api/plugins/monitorine/settings?action=settings',
-                                '/api/plugins/monitorine/settings',
-                                '/api/plugins/monitorine?action=settings'
-                            ];
-                            for (const sUrl of sEndpoints) {
-                                try {
-                                    const r = await fetch(sUrl, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify(payload)
-                                    });
-                                    if (r.ok) break;
-                                } catch (_) {}
-                            }
                         } catch (_) {}
                     };
 
-                    const autoSyncServers = updateServerListCache;
+                    const autoSyncServers = (servers) => {
+                        updateServerListCache(servers);
+                    };
 
                     const saveSettings = async () => {
                         saving.value = true;
@@ -1583,7 +1568,7 @@ export const webMonitoringPlugin = {
                             address_key: addressKey.value.trim(),
                             logo_url: logoUrl.value.trim(),
                             favicon_url: faviconUrl.value.trim(),
-                            bot_api_enabled: botApiEnabled.value,
+                            bot_api_enabled: Boolean(botApiEnabled.value),
                             bot_api_token: botApiToken.value.trim(),
                             announcement_enabled: announcementEnabled.value,
                             announcement_text: announcementText.value.trim(),
@@ -1620,16 +1605,29 @@ export const webMonitoringPlugin = {
 
                         try {
                             const sEndpoints = [
-                                '/api/plugins/monitoring/settings?action=settings',
-                                '/api/plugins/monitoring/settings',
                                 '/api/plugins/monitoring?action=settings',
-                                '/api/plugins/monitorine/settings?action=settings',
-                                '/api/plugins/monitorine/settings',
-                                '/api/plugins/monitorine?action=settings'
+                                '/api/plugins/monitoring/settings?action=settings',
+                                '/api/plugins/monitorine?action=settings',
+                                '/api/plugins/monitorine/settings?action=settings'
                             ];
                             let res = null;
                             for (const sUrl of sEndpoints) {
                                 try {
+                                    if (window.axios && typeof window.axios.post === 'function') {
+                                        try {
+                                            const axRes = await window.axios.post(sUrl, payload);
+                                            if (axRes && axRes.data) {
+                                                if (axRes.data.success && axRes.data.db_saved !== false) {
+                                                    res = { ok: true, status: 200, json: async () => axRes.data };
+                                                    break;
+                                                } else if (axRes.data.db_saved === false) {
+                                                    throw new Error(axRes.data.error || 'Хранилище GameAP отклонило запись в базу данных');
+                                                }
+                                            }
+                                        } catch (axErr) {
+                                            if (axErr.message && axErr.message.includes('GameAP')) throw axErr;
+                                        }
+                                    }
                                     const r = await fetch(sUrl, {
                                         method: 'POST',
                                         headers: {
@@ -1638,21 +1636,34 @@ export const webMonitoringPlugin = {
                                         body: JSON.stringify(payload)
                                     });
                                     if (r.ok) {
-                                        res = r;
-                                        break;
+                                        const resJson = await r.json().catch(() => null);
+                                        if (resJson) {
+                                            if (resJson.success && resJson.db_saved !== false) {
+                                                res = r;
+                                                break;
+                                            } else if (resJson.db_saved === false) {
+                                                throw new Error(resJson.error || 'Хранилище GameAP отклонило запись в базу данных');
+                                            }
+                                        }
                                     }
                                 } catch (_) {}
                             }
                             if (res && res.ok) {
                                 saveSuccess.value = true;
+                                saveError.value = '';
+                                try {
+                                    localStorage.setItem('web_monitoring_settings', JSON.stringify(payload));
+                                } catch (_) {}
                                 setTimeout(() => { saveSuccess.value = false; }, 4000);
                             } else {
                                 const errData = res ? await res.json().catch(() => ({})) : {};
-                                saveError.value = errData.message || `${t('saveError')} (HTTP ${res ? res.status : 'ERR'})`;
+                                saveError.value = errData.error || errData.message || `${t('saveError')} (HTTP ${res ? res.status : 'ERR'})`;
+                                saveSuccess.value = false;
                             }
                         } catch (err) {
-                            saveSuccess.value = true;
-                            setTimeout(() => { saveSuccess.value = false; }, 3000);
+                            console.error('saveSettings error:', err);
+                            saveError.value = `${t('saveError')}: ${err.message || err}`;
+                            saveSuccess.value = false;
                         } finally {
                             saving.value = false;
                         }
@@ -2162,9 +2173,15 @@ export const webMonitoringPlugin = {
                                     }, [
                                         h('input', {
                                             type: 'checkbox',
-                                            checked: botApiEnabled.value,
+                                            checked: Boolean(botApiEnabled.value),
                                             onChange: (e) => {
-                                                botApiEnabled.value = e.target.checked;
+                                                botApiEnabled.value = Boolean(e.target.checked);
+                                                if (botApiEnabled.value && !botApiToken.value) {
+                                                    generateBotToken();
+                                                }
+                                            },
+                                            onInput: (e) => {
+                                                botApiEnabled.value = Boolean(e.target.checked);
                                                 if (botApiEnabled.value && !botApiToken.value) {
                                                     generateBotToken();
                                                 }
@@ -2219,6 +2236,20 @@ export const webMonitoringPlugin = {
                                         }, [
                                             h('i', { class: 'fas fa-tools', style: 'color: var(--wm-primary);' }),
                                             h('span', t('botDevNotice'))
+                                        ]),
+                                        h('div', { style: 'display: flex; align-items: center; gap: 12px; margin-top: 10px;' }, [
+                                            h('button', {
+                                                type: 'button',
+                                                onClick: saveSettings,
+                                                disabled: saving.value,
+                                                class: 'wm-btn-save',
+                                                style: 'padding: 8px 18px; font-size: 13px; margin: 0;'
+                                            }, [
+                                                h('i', { class: 'fas fa-save', style: 'margin-right: 6px;' }),
+                                                saving.value ? t('savingBtn') : t('saveBtn')
+                                            ]),
+                                            saveSuccess.value && h('span', { style: 'color: var(--wm-primary-soft-text); font-size: 13px; font-weight: 600;' }, t('saveSuccess')),
+                                            saveError.value && h('span', { style: 'color: var(--wm-danger); font-size: 13px; font-weight: 500;' }, saveError.value)
                                         ])
                                     ])
                                 ])

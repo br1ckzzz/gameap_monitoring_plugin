@@ -278,8 +278,37 @@ body {
 .game-filters {
   display: flex;
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+.game-filters::-webkit-scrollbar {
+  height: 5px;
+}
+
+.game-filters::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.game-filters::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.game-filters::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+@media (max-width: 640px) {
+  .game-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
 }
 
 .filter-chip {
@@ -313,7 +342,7 @@ body {
 
 .servers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: 16px;
 }
 
@@ -1535,3 +1564,68 @@ body {
 .detail-val.text-offline {
   color: #f87171;
 }
+
+/* ==========================================================
+   Accessibility, Responsive & Tactile Interaction Polish
+   ========================================================== */
+
+/* Accessible Keyboard Focus Rings */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Tactile Active States for Buttons */
+.btn:active,
+.btn-copy:active,
+.btn-connect:active,
+.favorite-star-btn:active,
+.btn-theme-toggle:active,
+.filter-chip:active {
+  transform: scale(0.96);
+}
+
+/* Mobile & Small Screen Refinements */
+@media (max-width: 640px) {
+  .app-container {
+    padding: 16px 12px 32px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .header-stats {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .brand-title {
+    font-size: 1.35rem;
+  }
+
+  .servers-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Reduced Motion Support for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

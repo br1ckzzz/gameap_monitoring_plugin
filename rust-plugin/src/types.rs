@@ -3,18 +3,113 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+fn default_true() -> bool {
+    true
+}
+
+fn default_offline_status() -> String {
+    "offline".to_string()
+}
+
+pub fn deserialize_bool_lenient<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Visitor;
+    struct BoolVisitor;
+    impl<'de> Visitor<'de> for BoolVisitor {
+        type Value = bool;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a boolean or integer 0/1")
+        }
+        fn visit_bool<E>(self, v: bool) -> Result<bool, E> {
+            Ok(v)
+        }
+        fn visit_i64<E>(self, v: i64) -> Result<bool, E> {
+            Ok(v != 0)
+        }
+        fn visit_u64<E>(self, v: u64) -> Result<bool, E> {
+            Ok(v != 0)
+        }
+        fn visit_str<E>(self, v: &str) -> Result<bool, E> {
+            Ok(v == "1" || v.eq_ignore_ascii_case("true"))
+        }
+        fn visit_none<E>(self) -> Result<bool, E> {
+            Ok(false)
+        }
+        fn visit_unit<E>(self) -> Result<bool, E> {
+            Ok(false)
+        }
+    }
+    deserializer.deserialize_any(BoolVisitor)
+}
+
+pub fn deserialize_installed_lenient<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Visitor;
+    struct InstalledVisitor;
+    impl<'de> Visitor<'de> for InstalledVisitor {
+        type Value = bool;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a boolean or integer 0/1 for installed")
+        }
+        fn visit_bool<E>(self, v: bool) -> Result<bool, E> {
+            Ok(v)
+        }
+        fn visit_i64<E>(self, v: i64) -> Result<bool, E> {
+            Ok(v != 0)
+        }
+        fn visit_u64<E>(self, v: u64) -> Result<bool, E> {
+            Ok(v != 0)
+        }
+        fn visit_str<E>(self, v: &str) -> Result<bool, E> {
+            Ok(v == "1" || v.eq_ignore_ascii_case("true"))
+        }
+        fn visit_none<E>(self) -> Result<bool, E> {
+            Ok(true)
+        }
+        fn visit_unit<E>(self) -> Result<bool, E> {
+            Ok(true)
+        }
+    }
+    deserializer.deserialize_any(InstalledVisitor)
+}
+
+/// Telemetry detailing GameAP host storage database persistence state.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StorageDiagnostics {
+    pub db_saved: bool,
+    pub last_error: Option<String>,
+    pub source: String, // "storage", "storage_recovered", "memory", "default"
+    pub found: bool,
+    pub payload_bytes: usize,
+    pub key: String,
+}
+
 /// Safe, public server representation exposed to web visitors and Discord bots.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PublicServerDTO {
+    #[serde(default)]
     pub id: u64,
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub game_code: String,
+    #[serde(default)]
     pub game_name: String,
+    #[serde(default)]
     pub address: String,
+    #[serde(default)]
     pub port: i32,
+    #[serde(default = "default_offline_status")]
     pub status: String, // "online" or "offline"
+    #[serde(default = "default_true", deserialize_with = "deserialize_installed_lenient")]
     pub installed: bool,
+    #[serde(default, deserialize_with = "deserialize_bool_lenient")]
     pub blocked: bool,
+    #[serde(default)]
     pub connect_url: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub map: Option<String>,

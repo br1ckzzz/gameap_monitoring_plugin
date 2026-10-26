@@ -1,0 +1,3282 @@
+{
+  "schema_version": "1.0.0",
+  "updated_at": "2026-10-16T23:50:00Z",
+  "description": "GameAP WebMonitoring & DiscordGSM Public Games Catalog Manifest (297 Games)",
+  "node_info": {
+    "name": "GameAP WebMonitoring DiscordGSM Public Node",
+    "version": "1.0.11",
+    "total_games": 297,
+    "endpoint": "/api/v1/games"
+  },
+  "games": [
+    {
+      "id": "7d2d",
+      "name": "7 Days to Die",
+      "aliases": [
+        "sdtd",
+        "7daystodie",
+        "sevendaystodie"
+      ],
+      "protocol": "a2s",
+      "default_port": 26900,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/251570/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 251570
+    },
+    {
+      "id": "abioticf",
+      "name": "Abiotic Factor",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/427410/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 427410
+    },
+    {
+      "id": "ageofchivalry",
+      "name": "Age of Chivalry",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/17510/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 17510
+    },
+    {
+      "id": "aoe2",
+      "name": "Age of Empires 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/813780/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 813780
+    },
+    {
+      "id": "alienarena",
+      "name": "Alien Arena",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "alienswarm",
+      "name": "Alien Swarm",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/630/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 630
+    },
+    {
+      "id": "avp2",
+      "name": "Aliens versus Predator 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "avp2010",
+      "name": "Aliens vs. Predator",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/10680/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 10680
+    },
+    {
+      "id": "americasarmy",
+      "name": "America's Army",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/203290/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 203290
+    },
+    {
+      "id": "americasarmy2",
+      "name": "America's Army 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/203290/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 203290
+    },
+    {
+      "id": "americasarmy3",
+      "name": "America's Army 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/203290/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 203290
+    },
+    {
+      "id": "americasarmypg",
+      "name": "America's Army: Proving Grounds",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/203290/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 203290
+    },
+    {
+      "id": "asa",
+      "name": "Ark: Survival Ascended",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2399830/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2399830
+    },
+    {
+      "id": "arkse",
+      "name": "Ark: Survival Evolved",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/346110/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 346110
+    },
+    {
+      "id": "arma2",
+      "name": "ARMA 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/33900/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 33900
+    },
+    {
+      "id": "arma2oa",
+      "name": "ARMA 2: Operation Arrowhead",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/33930/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 33930
+    },
+    {
+      "id": "arma3",
+      "name": "ARMA 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 2302,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/107410/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 107410
+    },
+    {
+      "id": "armareforger",
+      "name": "Arma Reforger",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1874880/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1874880
+    },
+    {
+      "id": "arma",
+      "name": "ARMA: Armed Assault",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/277430/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 277430
+    },
+    {
+      "id": "armacwa",
+      "name": "ARMA: Cold War Assault",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/65780/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 65780
+    },
+    {
+      "id": "armar",
+      "name": "ARMA: Resistance",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/65780/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 65780
+    },
+    {
+      "id": "assettocorsa",
+      "name": "Assetto Corsa",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/244210/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 244210
+    },
+    {
+      "id": "astrocolony",
+      "name": "Astro Colony",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1614550/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1614550
+    },
+    {
+      "id": "atlas",
+      "name": "Atlas",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/834910/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 834910
+    },
+    {
+      "id": "avorion",
+      "name": "Avorion",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/445220/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 445220
+    },
+    {
+      "id": "baldursgate",
+      "name": "Baldur's Gate",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/228280/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 228280
+    },
+    {
+      "id": "barotrauma",
+      "name": "Barotrauma",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/602960/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 602960
+    },
+    {
+      "id": "bat1944",
+      "name": "Battalion 1944",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/489940/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 489940
+    },
+    {
+      "id": "bf1942",
+      "name": "Battlefield 1942",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "bf2",
+      "name": "Battlefield 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "bf2142",
+      "name": "Battlefield 2142",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "bf3",
+      "name": "Battlefield 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1238820
+    },
+    {
+      "id": "bf4",
+      "name": "Battlefield 4",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1238860/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1238860
+    },
+    {
+      "id": "bfh",
+      "name": "Battlefield Hardline",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1238880/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1238880
+    },
+    {
+      "id": "bfv",
+      "name": "Battlefield Vietnam",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "bfbc2",
+      "name": "Battlefield: Bad Company 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/24960/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 24960
+    },
+    {
+      "id": "beammp",
+      "name": "BeamMP",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/284160/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 284160
+    },
+    {
+      "id": "beyondthewire",
+      "name": "Beyond the Wire",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1058650/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1058650
+    },
+    {
+      "id": "bm",
+      "name": "Black Mesa",
+      "aliases": [
+        "blackmesa",
+        "bms"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/362890/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 362890
+    },
+    {
+      "id": "breach",
+      "name": "Breach",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "breed",
+      "name": "Breed",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "brink",
+      "name": "Brink",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/22350/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 22350
+    },
+    {
+      "id": "cod",
+      "name": "Call of Duty",
+      "aliases": [
+        "callofduty"
+      ],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2620/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2620
+    },
+    {
+      "id": "cod2",
+      "name": "Call of Duty 2",
+      "aliases": [
+        "callofduty2",
+        "cod-2"
+      ],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2630/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2630
+    },
+    {
+      "id": "cod3",
+      "name": "Call of Duty 3",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "cod4",
+      "name": "Call of Duty 4: Modern Warfare",
+      "aliases": [
+        "callofduty4",
+        "cod-4"
+      ],
+      "protocol": "quake",
+      "default_port": 28960,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/7940/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 7940
+    },
+    {
+      "id": "codmw2",
+      "name": "Call of Duty: Modern Warfare 2",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/10180/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 10180
+    },
+    {
+      "id": "codmw3",
+      "name": "Call of Duty: Modern Warfare 3",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/42680/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 42680
+    },
+    {
+      "id": "coduo",
+      "name": "Call of Duty: United Offensive",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2640/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2640
+    },
+    {
+      "id": "codwaw",
+      "name": "Call of Duty: World at War",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/10090/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 10090
+    },
+    {
+      "id": "callofjuarez",
+      "name": "Call of Juarez",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/3020/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 3020
+    },
+    {
+      "id": "chaser",
+      "name": "Chaser",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/39670/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 39670
+    },
+    {
+      "id": "chrome",
+      "name": "Chrome",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/46420/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 46420
+    },
+    {
+      "id": "codenameeagle",
+      "name": "Codename Eagle",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "cacrenegade",
+      "name": "Command and Conquer: Renegade",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "commandos3",
+      "name": "Commandos 3: Destination Berlin",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/6840/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 6840
+    },
+    {
+      "id": "conanexiles",
+      "name": "Conan Exiles",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/440900/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 440900
+    },
+    {
+      "id": "contagion",
+      "name": "Contagion",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/238430/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 238430
+    },
+    {
+      "id": "contactjack",
+      "name": "Contract J.A.C.K.",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "cs15",
+      "name": "Counter-Strike 1.5",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/10/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 10
+    },
+    {
+      "id": "cs16",
+      "name": "Counter-Strike 1.6",
+      "aliases": [
+        "cstrike",
+        "cs",
+        "counterstrike",
+        "cs-16"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/10/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 10
+    },
+    {
+      "id": "cs2",
+      "name": "Counter-Strike 2",
+      "aliases": [
+        "csgo",
+        "counterstrike2",
+        "cs-2"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 730
+    },
+    {
+      "id": "cscz",
+      "name": "Counter-Strike: Condition Zero",
+      "aliases": [
+        "czero",
+        "conditionzero"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/80/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 80
+    },
+    {
+      "id": "csgo",
+      "name": "Counter-Strike: Global Offensive",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 730
+    },
+    {
+      "id": "css",
+      "name": "Counter-Strike: Source",
+      "aliases": [
+        "cssource",
+        "counterstrikesource"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/240/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 240
+    },
+    {
+      "id": "crossracing",
+      "name": "Cross Racing Championship Extreme 2005",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "crysis",
+      "name": "Crysis",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/17300/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 17300
+    },
+    {
+      "id": "crysis2",
+      "name": "Crysis 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/108800/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 108800
+    },
+    {
+      "id": "crysiswars",
+      "name": "Crysis Wars",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/17340/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 17340
+    },
+    {
+      "id": "daikatana",
+      "name": "Daikatana",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/242980/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 242980
+    },
+    {
+      "id": "dnl",
+      "name": "Dark and Light",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/529180/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 529180
+    },
+    {
+      "id": "dmomam",
+      "name": "Dark Messiah of Might and Magic",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2100/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2100
+    },
+    {
+      "id": "darkesthour",
+      "name": "Darkest Hour: Europe '44-'45",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1280/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1280
+    },
+    {
+      "id": "dod",
+      "name": "Day of Defeat",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/30/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 30
+    },
+    {
+      "id": "dods",
+      "name": "Day of Defeat: Source",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/300/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 300
+    },
+    {
+      "id": "dayofdragons",
+      "name": "Day of Dragons",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1088090/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1088090
+    },
+    {
+      "id": "doi",
+      "name": "Day of Infamy",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/447820/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 447820
+    },
+    {
+      "id": "daysofwar",
+      "name": "Days of War",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/454350/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 454350
+    },
+    {
+      "id": "dayz",
+      "name": "DayZ",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 2302,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/221100/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 221100
+    },
+    {
+      "id": "dayzmod",
+      "name": "DayZ Mod",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/224580/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 224580
+    },
+    {
+      "id": "deadlydozenpt",
+      "name": "Deadly Dozen: Pacific Theater",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/514080/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 514080
+    },
+    {
+      "id": "dh2005",
+      "name": "Deer Hunter 2005",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "descent3",
+      "name": "Descent 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/273590/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 273590
+    },
+    {
+      "id": "deusex",
+      "name": "Deus Ex",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/6910/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 6910
+    },
+    {
+      "id": "devastation",
+      "name": "Devastation",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "dinodday",
+      "name": "Dino D-Day",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/70000/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 70000
+    },
+    {
+      "id": "dirttrackracing2",
+      "name": "Dirt Track Racing 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "doom3",
+      "name": "Doom 3",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/9050/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 9050
+    },
+    {
+      "id": "dota2",
+      "name": "Dota 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 570
+    },
+    {
+      "id": "drakan",
+      "name": "Drakan: Order of the Flame",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "eco",
+      "name": "ECO",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/382310/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 382310
+    },
+    {
+      "id": "empyrion",
+      "name": "Empyrion - Galactic Survival",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/383120/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 383120
+    },
+    {
+      "id": "etqw",
+      "name": "Enemy Territory: Quake Wars",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "enshrouded",
+      "name": "Enshrouded",
+      "aliases": [
+        "enshroud"
+      ],
+      "protocol": "a2s",
+      "default_port": 15636,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1203620/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1203620
+    },
+    {
+      "id": "ets2",
+      "name": "Euro Truck Simulator 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/227300/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 227300
+    },
+    {
+      "id": "exfil",
+      "name": "EXFIL",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "fear",
+      "name": "F.E.A.R.",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/21090/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 21090
+    },
+    {
+      "id": "f1c9902",
+      "name": "F1 Challenge '99-'02",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "factorio",
+      "name": "Factorio",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 34197,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/427520/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 427520
+    },
+    {
+      "id": "farcry",
+      "name": "Far Cry",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/13520/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 13520
+    },
+    {
+      "id": "farcry2",
+      "name": "Far Cry 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/19900/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 19900
+    },
+    {
+      "id": "fs22",
+      "name": "Farming Simulator 22",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1248130/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1248130
+    },
+    {
+      "id": "f12002",
+      "name": "Formula One 2002",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "fortressforever",
+      "name": "Fortress Forever",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/253530/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 253530
+    },
+    {
+      "id": "garrysmod",
+      "name": "Garry's Mod",
+      "aliases": [
+        "gmod"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/4000/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 4000
+    },
+    {
+      "id": "giantscitizenkabuto",
+      "name": "Giants: Citizen Kabuto",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "globaloperations",
+      "name": "Global Operations",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "ges",
+      "name": "GoldenEye: Source",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "gore",
+      "name": "Gore: Ultimate Soldier",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "gportal",
+      "name": "GPORTAL",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "fivem",
+      "name": "Grand Theft Auto V - FiveM",
+      "aliases": [
+        "gtav",
+        "gta5"
+      ],
+      "protocol": "fivem",
+      "default_port": 30120,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 271590
+    },
+    {
+      "id": "mtasa",
+      "name": "Grand Theft Auto: San Andreas - Multi Theft Auto",
+      "aliases": [],
+      "protocol": "samp",
+      "default_port": 22003,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/12120/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 12120
+    },
+    {
+      "id": "mtavc",
+      "name": "Grand Theft Auto: Vice City - Multi Theft Auto",
+      "aliases": [],
+      "protocol": "samp",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/12110/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 12110
+    },
+    {
+      "id": "groundbranch",
+      "name": "Ground Branch",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/16900/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 16900
+    },
+    {
+      "id": "gunmanchronicles",
+      "name": "Gunman Chronicles",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "esf",
+      "name": "Half Life: Earths Special Forces",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/70/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 70
+    },
+    {
+      "id": "hl2dm",
+      "name": "Half-Life 2: Deathmatch",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/320/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 320
+    },
+    {
+      "id": "hldm",
+      "name": "Half-Life Deathmatch",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/70/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 70
+    },
+    {
+      "id": "hldms",
+      "name": "Half-Life Deathmatch: Source",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/360/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 360
+    },
+    {
+      "id": "halo",
+      "name": "Halo",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/976730/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 976730
+    },
+    {
+      "id": "halo2",
+      "name": "Halo 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1064270/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1064270
+    },
+    {
+      "id": "hll",
+      "name": "Hell Let Loose",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/686810/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 686810
+    },
+    {
+      "id": "heretic2",
+      "name": "Heretic II",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "hexen2",
+      "name": "Hexen II",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/9060/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 9060
+    },
+    {
+      "id": "had2",
+      "name": "Hidden &amp; Dangerous 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/703320/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 703320
+    },
+    {
+      "id": "hfnaw",
+      "name": "Holdfast: Nations at War",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/589290/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 589290
+    },
+    {
+      "id": "homefront",
+      "name": "Homefront",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/55100/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 55100
+    },
+    {
+      "id": "homeworld2",
+      "name": "Homeworld 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/244160/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 244160
+    },
+    {
+      "id": "humanitz",
+      "name": "HumanitZ",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1766060/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1766060
+    },
+    {
+      "id": "hurtworld",
+      "name": "Hurtworld",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/393420/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 393420
+    },
+    {
+      "id": "igi2",
+      "name": "I.G.I.-2: Covert Strike",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "icarus",
+      "name": "ICARUS",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1149460/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1149460
+    },
+    {
+      "id": "il2",
+      "name": "IL-2 Sturmovik",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/15320/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 15320
+    },
+    {
+      "id": "insurgency",
+      "name": "Insurgency",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/222880/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 222880
+    },
+    {
+      "id": "insurgencysandstorm",
+      "name": "Insurgency: Sandstorm",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/581320/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 581320
+    },
+    {
+      "id": "iosoccer",
+      "name": "IOSoccer",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/673560/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 673560
+    },
+    {
+      "id": "ironstorm",
+      "name": "Iron Storm",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/296180/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 296180
+    },
+    {
+      "id": "jbep3",
+      "name": "Jabroni Brawl: Episode 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/869480/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 869480
+    },
+    {
+      "id": "jamesbondnightfire",
+      "name": "James Bond 007: Nightfire",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "jc3mp",
+      "name": "Just Cause 3 - Multiplayer",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/619910/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 619910
+    },
+    {
+      "id": "killingfloor",
+      "name": "Killing Floor",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 7707,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1250/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1250
+    },
+    {
+      "id": "killingfloor2",
+      "name": "Killing Floor 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/232090/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 232090
+    },
+    {
+      "id": "kingpin",
+      "name": "Kingpin: Life of Crime",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/38430/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 38430
+    },
+    {
+      "id": "kisspc",
+      "name": "Kiss: Psycho Circus: The Nightmare Child",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "kzmod",
+      "name": "Kreedz Climbing",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/626680/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 626680
+    },
+    {
+      "id": "leadandgold",
+      "name": "Lead and Gold: Gangs of the Wild West",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/42120/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 42120
+    },
+    {
+      "id": "left4dead",
+      "name": "Left 4 Dead",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/500/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 500
+    },
+    {
+      "id": "left4dead2",
+      "name": "Left 4 Dead 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/550/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 550
+    },
+    {
+      "id": "moh2010",
+      "name": "Medal of Honor",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/47790/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 47790
+    },
+    {
+      "id": "mohab",
+      "name": "Medal of Honor: Airborne",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/24840/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 24840
+    },
+    {
+      "id": "mohaa",
+      "name": "Medal of Honor: Allied Assault",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "mohbt",
+      "name": "Medal of Honor: Allied Assault Breakthrough",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "mohsh",
+      "name": "Medal of Honor: Allied Assault Spearhead",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "mohpa",
+      "name": "Medal of Honor: Pacific Assault",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "mohwf",
+      "name": "Medal of Honor: Warfighter",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "medievalengineers",
+      "name": "Medieval Engineers",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/333950/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 333950
+    },
+    {
+      "id": "minecraft",
+      "name": "Minecraft",
+      "aliases": [
+        "mc",
+        "paper",
+        "spigot",
+        "forge",
+        "fabric",
+        "vanilla"
+      ],
+      "protocol": "minecraft_java",
+      "default_port": 25565,
+      "port_offset": 0,
+      "banner": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/minecraft.png",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "minecraftpe",
+      "name": "Minecraft: Bedrock Edition",
+      "aliases": [
+        "bedrock",
+        "mcpe",
+        "be"
+      ],
+      "protocol": "minecraft_bedrock",
+      "default_port": 19132,
+      "port_offset": 0,
+      "banner": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/minecraft.png",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "mnc",
+      "name": "Monday Night Combat",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/63200/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 63200
+    },
+    {
+      "id": "mordhau",
+      "name": "Mordhau",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/629760/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 629760
+    },
+    {
+      "id": "moe",
+      "name": "Myth of Empires",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1371580/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1371580
+    },
+    {
+      "id": "nascarthunder2004",
+      "name": "NASCAR Thunder 2004",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "ns",
+      "name": "Natural Selection",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/70/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 70
+    },
+    {
+      "id": "ns2",
+      "name": "Natural Selection 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/4920/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 4920
+    },
+    {
+      "id": "nfshp2",
+      "name": "Need for Speed: Hot Pursuit 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "nab",
+      "name": "Nerf Arena Blast",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "netpanzer",
+      "name": "netPanzer",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "nwn",
+      "name": "Neverwinter Nights",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/704450/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 704450
+    },
+    {
+      "id": "nwn2",
+      "name": "Neverwinter Nights 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "nexuiz",
+      "name": "Nexuiz",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/96800/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 96800
+    },
+    {
+      "id": "notd",
+      "name": "Night of the Dead",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1377380/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1377380
+    },
+    {
+      "id": "nitrofamily",
+      "name": "Nitro Family",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "nmrih",
+      "name": "No More Room in Hell",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/224260/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 224260
+    },
+    {
+      "id": "nolf2",
+      "name": "No One Lives Forever 2: A Spy in H.A.R.M.'s Way",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "nos",
+      "name": "No One Survived",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1963370/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1963370
+    },
+    {
+      "id": "nucleardawn",
+      "name": "Nuclear Dawn",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/17710/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 17710
+    },
+    {
+      "id": "openarena",
+      "name": "OpenArena",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "flashpoint",
+      "name": "Operation Flashpoint: Cold War Crisis",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/65780/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 65780
+    },
+    {
+      "id": "flashpointresistance",
+      "name": "Operation Flashpoint: Resistance",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/65780/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 65780
+    },
+    {
+      "id": "operationharsh",
+      "name": "Operation: Harsh Doorstop",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/736590/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 736590
+    },
+    {
+      "id": "painkiller",
+      "name": "Painkiller",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/39530/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 39530
+    },
+    {
+      "id": "palworld",
+      "name": "Palworld",
+      "aliases": [
+        "palwrld"
+      ],
+      "protocol": "a2s",
+      "default_port": 8211,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1623730/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1623730
+    },
+    {
+      "id": "pixark",
+      "name": "PixARK",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/593600/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 593600
+    },
+    {
+      "id": "ps",
+      "name": "Post Scriptum",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/736220/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 736220
+    },
+    {
+      "id": "postal2",
+      "name": "Postal 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/223470/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 223470
+    },
+    {
+      "id": "prey",
+      "name": "Prey",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/480490/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 480490
+    },
+    {
+      "id": "primalcarnage",
+      "name": "Primal Carnage: Extinction",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/321360/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 321360
+    },
+    {
+      "id": "prbf2",
+      "name": "Project Reality: Battlefield 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "przomboid",
+      "name": "Project Zomboid",
+      "aliases": [
+        "zomboid",
+        "projectzomboid",
+        "pz"
+      ],
+      "protocol": "a2s",
+      "default_port": 16261,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/108600/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 108600
+    },
+    {
+      "id": "quake1",
+      "name": "Quake 1: QuakeWorld",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 27500,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2310/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2310
+    },
+    {
+      "id": "quake2",
+      "name": "Quake 2",
+      "aliases": [
+        "q2"
+      ],
+      "protocol": "quake",
+      "default_port": 27910,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2320/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2320
+    },
+    {
+      "id": "quake3",
+      "name": "Quake 3: Arena",
+      "aliases": [
+        "q3",
+        "q3a",
+        "quake3arena"
+      ],
+      "protocol": "quake",
+      "default_port": 27960,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2200
+    },
+    {
+      "id": "quake4",
+      "name": "Quake 4",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2210/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2210
+    },
+    {
+      "id": "quakelive",
+      "name": "Quake Live",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/282440/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 282440
+    },
+    {
+      "id": "ragdollkungfu",
+      "name": "Rag Doll Kung Fu",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1002/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1002
+    },
+    {
+      "id": "r6",
+      "name": "Rainbow Six",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "r6roguespear",
+      "name": "Rainbow Six 2: Rogue Spear",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "r6ravenshield",
+      "name": "Rainbow Six 3: Raven Shield",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/19830/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 19830
+    },
+    {
+      "id": "rallisportchallenge",
+      "name": "RalliSport Challenge",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "rallymasters",
+      "name": "Rally Masters",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "redm",
+      "name": "Red Dead Redemption 2 - RedM",
+      "aliases": [
+        "rdr2"
+      ],
+      "protocol": "fivem",
+      "default_port": 30120,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1174180
+    },
+    {
+      "id": "redorchestra",
+      "name": "Red Orchestra",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1200/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1200
+    },
+    {
+      "id": "redorchestra2",
+      "name": "Red Orchestra 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/35450/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 35450
+    },
+    {
+      "id": "redorchestraost",
+      "name": "Red Orchestra: Ostfront 41-45",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1200/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1200
+    },
+    {
+      "id": "redline",
+      "name": "Redline",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "renegadex_lan",
+      "name": "RenegadeX (LAN Mode)",
+      "aliases": [
+        "renegadexlan"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "rtcw",
+      "name": "Return to Castle Wolfenstein",
+      "aliases": [
+        "returntocastlewolfenstein"
+      ],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/9010/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 9010
+    },
+    {
+      "id": "ricochet",
+      "name": "Ricochet",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/60/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 60
+    },
+    {
+      "id": "riseofnations",
+      "name": "Rise of Nations",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/287450/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 287450
+    },
+    {
+      "id": "rs2",
+      "name": "Rising Storm 2: Vietnam",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/418460/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 418460
+    },
+    {
+      "id": "rune",
+      "name": "Rune",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "rust",
+      "name": "Rust",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 28015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 252490
+    },
+    {
+      "id": "stalker",
+      "name": "S.T.A.L.K.E.R.",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/4500/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 4500
+    },
+    {
+      "id": "samp",
+      "name": "San Andreas Multiplayer",
+      "aliases": [
+        "gtasa",
+        "sanandreas",
+        "gta_sa"
+      ],
+      "protocol": "samp",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/12120/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 12120
+    },
+    {
+      "id": "satisfactory",
+      "name": "Satisfactory",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/526870/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 526870
+    },
+    {
+      "id": "scpsl",
+      "name": "SCP: Secret Laboratory",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/700330/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 700330
+    },
+    {
+      "id": "scum",
+      "name": "SCUM",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/513710/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 513710
+    },
+    {
+      "id": "ss",
+      "name": "Serious Sam",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/41050/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 41050
+    },
+    {
+      "id": "ss2",
+      "name": "Serious Sam 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/204340/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 204340
+    },
+    {
+      "id": "shatteredhorizon",
+      "name": "Shattered Horizon",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/18110/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 18110
+    },
+    {
+      "id": "shogo",
+      "name": "Shogo",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/610860/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 610860
+    },
+    {
+      "id": "silica",
+      "name": "Silica",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1494420/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1494420
+    },
+    {
+      "id": "sin",
+      "name": "SiN",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1313/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1313
+    },
+    {
+      "id": "sinep",
+      "name": "SiN Episodes",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1300/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1300
+    },
+    {
+      "id": "sniperelite4",
+      "name": "Sniper Elite 4",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/312660/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 312660
+    },
+    {
+      "id": "soldat",
+      "name": "Soldat",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/638690/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 638690
+    },
+    {
+      "id": "sof",
+      "name": "Soldier of Fortune",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "sof2",
+      "name": "Soldier of Fortune 2",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "sonsforest",
+      "name": "Sons Of The Forest",
+      "aliases": [
+        "sotf",
+        "sonsoftheforest",
+        "sons-of-the-forest"
+      ],
+      "protocol": "a2s",
+      "default_port": 8766,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1326470/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1326470
+    },
+    {
+      "id": "soulmask",
+      "name": "SoulMask",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2646460/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2646460
+    },
+    {
+      "id": "spaceengineers",
+      "name": "Space Engineers",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/244850/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 244850
+    },
+    {
+      "id": "squad",
+      "name": "Squad",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 7787,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/393380/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 393380
+    },
+    {
+      "id": "stbc",
+      "name": "Star Trek: Bridge Commander",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "stvef",
+      "name": "Star Trek: Voyager - Elite Force",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "stvef2",
+      "name": "Star Trek: Voyager - Elite Force 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "swjk2",
+      "name": "Star Wars Jedi Knight II: Jedi Outcast",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/6030/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 6030
+    },
+    {
+      "id": "swjk",
+      "name": "Star Wars Jedi Knight: Jedi Academy",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/6020/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 6020
+    },
+    {
+      "id": "swbf",
+      "name": "Star Wars: Battlefront",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1058020/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1058020
+    },
+    {
+      "id": "swbf2",
+      "name": "Star Wars: Battlefront 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/6060/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 6060
+    },
+    {
+      "id": "swrc",
+      "name": "Star Wars: Republic Commando",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/6000/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 6000
+    },
+    {
+      "id": "starbound",
+      "name": "Starbound",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/211820/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 211820
+    },
+    {
+      "id": "suicidesurvival",
+      "name": "Suicide Survival",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "svencoop",
+      "name": "Sven Coop",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/225840/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 225840
+    },
+    {
+      "id": "swat4",
+      "name": "SWAT 4",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "synergy",
+      "name": "Synergy",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/17520/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 17520
+    },
+    {
+      "id": "tacticalops",
+      "name": "Tactical Ops",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "takeonhelicopters",
+      "name": "Take On Helicopters",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/65730/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 65730
+    },
+    {
+      "id": "teamfactor",
+      "name": "Team Factor",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "tf2",
+      "name": "Team Fortress 2",
+      "aliases": [
+        "teamfortress2",
+        "tf"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 440
+    },
+    {
+      "id": "tfc",
+      "name": "Team Fortress Classic",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/20/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 20
+    },
+    {
+      "id": "teamspeak3",
+      "name": "Teamspeak 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "terminus",
+      "name": "Terminus",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "terraria",
+      "name": "Terraria - TShock",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 105600
+    },
+    {
+      "id": "forest",
+      "name": "The Forest",
+      "aliases": [
+        "theforest",
+        "the-forest"
+      ],
+      "protocol": "a2s",
+      "default_port": 27016,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/242760/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 242760
+    },
+    {
+      "id": "front",
+      "name": "The Front",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2285150/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2285150
+    },
+    {
+      "id": "hidden",
+      "name": "The Hidden",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "theisle",
+      "name": "The Isle",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/376210/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 376210
+    },
+    {
+      "id": "theisleevrima",
+      "name": "The Isle - EVRIMA",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/376210/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 376210
+    },
+    {
+      "id": "nolf",
+      "name": "The Operative: No One Lives Forever",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "ship",
+      "name": "The Ship",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2400/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 2400
+    },
+    {
+      "id": "thespecialists",
+      "name": "The Specialists",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "graw",
+      "name": "Tom Clancy's Ghost Recon Advanced Warfighter",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "graw2",
+      "name": "Tom Clancy's Ghost Recon Advanced Warfighter 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "thps3",
+      "name": "Tony Hawk's Pro Skater 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "thps4",
+      "name": "Tony Hawk's Pro Skater 4",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "thu2",
+      "name": "Tony Hawk's Underground 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "towerunite",
+      "name": "Tower Unite",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/394690/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 394690
+    },
+    {
+      "id": "toxikk_lan",
+      "name": "Toxikk (LAN_Mode)",
+      "aliases": [
+        "toxikklan"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/324810/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 324810
+    },
+    {
+      "id": "tmnf",
+      "name": "Trackmania Nations Forever",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/11020/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 11020
+    },
+    {
+      "id": "tremulous",
+      "name": "Tremulous",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "tribesvengeance",
+      "name": "Tribes: Vengeance",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "tron20",
+      "name": "Tron 2.0",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/327740/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 327740
+    },
+    {
+      "id": "turok2",
+      "name": "Turok 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/405830/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 405830
+    },
+    {
+      "id": "universalcombat",
+      "name": "Universal Combat",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/3450/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 3450
+    },
+    {
+      "id": "unreal",
+      "name": "Unreal",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "ut",
+      "name": "Unreal Tournament",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/13240/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 13240
+    },
+    {
+      "id": "ut2003",
+      "name": "Unreal Tournament 2003",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "ut2004",
+      "name": "Unreal Tournament 2004",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/13230/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 13230
+    },
+    {
+      "id": "ut3",
+      "name": "Unreal Tournament 3",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/13210/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 13210
+    },
+    {
+      "id": "ut3_lan",
+      "name": "Unreal Tournament 3 (LAN Mode)",
+      "aliases": [
+        "ut3lan"
+      ],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/13210/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 13210
+    },
+    {
+      "id": "unturned",
+      "name": "Unturned",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/304930/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 304930
+    },
+    {
+      "id": "urbanterror",
+      "name": "Urban Terror",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "vrising",
+      "name": "V Rising",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 9876,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1604030/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1604030
+    },
+    {
+      "id": "v8supercar",
+      "name": "V8 Supercar Challenge",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "valheim",
+      "name": "Valheim",
+      "aliases": [
+        "valheim_server"
+      ],
+      "protocol": "a2s",
+      "default_port": 2456,
+      "port_offset": 1,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/892970/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 892970
+    },
+    {
+      "id": "vcmp",
+      "name": "Vice City Multiplayer",
+      "aliases": [],
+      "protocol": "samp",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/12110/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 12110
+    },
+    {
+      "id": "vietcong",
+      "name": "Vietcong",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "vietcong2",
+      "name": "Vietcong 2",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "warsow",
+      "name": "Warsow",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "wheeloftime",
+      "name": "Wheel of Time",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "wolfenstein2009",
+      "name": "Wolfenstein 2009",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "wolfensteinet",
+      "name": "Wolfenstein: Enemy Territory",
+      "aliases": [
+        "wolfet",
+        "enemyterritory"
+      ],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/1873030/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 1873030
+    },
+    {
+      "id": "xonotic",
+      "name": "Xonotic",
+      "aliases": [],
+      "protocol": "quake",
+      "default_port": 7777,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/2200/header.jpg",
+      "direct_connect": "{address}:{port}"
+    },
+    {
+      "id": "xpandrally",
+      "name": "Xpand Rally",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/3010/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 3010
+    },
+    {
+      "id": "zombiemaster",
+      "name": "Zombie Master",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://raw.githubusercontent.com/br1ckzzz/gameap_monitoring_plugin/main/icon.png?v=1.0.0",
+      "direct_connect": "steam://connect/{address}:{port}"
+    },
+    {
+      "id": "zps",
+      "name": "Zombie Panic: Source",
+      "aliases": [],
+      "protocol": "a2s",
+      "default_port": 27015,
+      "port_offset": 0,
+      "banner": "https://cdn.cloudflare.steamstatic.com/steam/apps/17500/header.jpg",
+      "direct_connect": "steam://connect/{address}:{port}",
+      "steam_appid": 17500
+    }
+  ]
+}

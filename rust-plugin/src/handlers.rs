@@ -59,6 +59,7 @@ struct AdminSettingsResponse {
     pub auto_hide_offline_minutes: u32,
     pub click_stats: HashMap<u64, u64>,
     pub open_sections: HashMap<String, bool>,
+    pub storage_status: crate::types::StorageDiagnostics,
     pub servers: Vec<PublicServerDTO>,
     pub all_servers: Vec<PublicServerDTO>,
 }
@@ -74,7 +75,9 @@ fn get_header_ignore_case<'a>(headers: &'a HashMap<String, String>, key: &str) -
 }
 
 fn extract_auth_token(req: &HttpRequest) -> Option<String> {
-    if let Some(token) = get_header_ignore_case(&req.headers, "X-WebMon-Token") {
+    if let Some(token) = get_header_ignore_case(&req.headers, "X-WebMon-Token")
+        .or_else(|| get_header_ignore_case(&req.headers, "X-Api-Token"))
+    {
         let trimmed = token.trim();
         if !trimmed.is_empty() {
             return Some(trimmed.to_string());
@@ -131,6 +134,7 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     if path == "/servers/query-update"
         || path.ends_with("/servers/query-update")
         || path.ends_with("/query-update")
+        || path.contains("query-update")
     {
         return handle_query_update(req);
     }
@@ -165,13 +169,28 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     // Handle root path routing
     if path.is_empty() || path == "/" {
         if req.method.eq_ignore_ascii_case("POST") {
+            // Check if body is telemetry query update:
+            if let Ok(json) = serde_json::from_slice::<serde_json::Value>(&req.body) {
+                if json.get("servers").map(|v| v.is_object()).unwrap_or(false)
+                    && json.get("theme").is_none()
+                    && json.get("refresh_interval").is_none()
+                {
+                    return handle_query_update(req);
+                }
+            }
             return handle_settings(req);
         }
 
-        if let Some(accept) = req.headers.get("Accept") {
-            if accept.contains("application/json") && !accept.contains("text/html") {
-                return handle_servers(req);
-            }
+        let is_json = get_header_ignore_case(&req.headers, "Accept")
+            .map(|a| a.contains("application/json") && !a.contains("text/html"))
+            .unwrap_or(false);
+        let has_token = extract_auth_token(req).is_some();
+        let is_bot_ua = get_header_ignore_case(&req.headers, "User-Agent")
+            .map(|ua| ua.contains("Bot") || ua.contains("bot") || ua.contains("WebMon"))
+            .unwrap_or(false);
+
+        if is_json || has_token || is_bot_ua {
+            return handle_servers(req);
         }
 
         return handle_view();
@@ -238,9 +257,12 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
     let is_explicit_bot_endpoint = path.ends_with("/api/servers") || path.ends_with("/bot/servers");
     let provided_token = extract_auth_token(req);
 
-    // Validate bot API authentication if requested on bot endpoints or with token
-    if is_explicit_bot_endpoint || provided_token.is_some() {
-        if !settings.bot_api_enabled {
+    // Validate bot API authentication if requested on explicit bot endpoints or with token
+    let token_matches = !settings.bot_api_token.is_empty()
+        && provided_token.as_ref() == Some(&settings.bot_api_token);
+
+    if is_explicit_bot_endpoint {
+        if !settings.bot_api_enabled && !token_matches {
             return HTTPResponseData {
                 status_code: 403,
                 content_type: "application/json; charset=utf-8",
@@ -250,23 +272,29 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             };
         }
 
-        if !settings.bot_api_token.is_empty() {
-            match provided_token {
-                Some(ref token) if token == &settings.bot_api_token => {},
-                _ => {
-                    return HTTPResponseData {
-                        status_code: 401,
-                        content_type: "application/json; charset=utf-8",
-                        body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
-                        etag: None,
-                        cache_control: None,
-                    };
-                }
-            }
+        if !settings.bot_api_token.is_empty() && !token_matches {
+            return HTTPResponseData {
+                status_code: 401,
+                content_type: "application/json; charset=utf-8",
+                body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+                etag: None,
+                cache_control: None,
+            };
+        }
+    } else if let Some(ref token) = provided_token {
+        // On generic /servers or root endpoints, reject only if a token was configured and provided token doesn't match
+        if !settings.bot_api_token.is_empty() && token != &settings.bot_api_token {
+            return HTTPResponseData {
+                status_code: 401,
+                content_type: "application/json; charset=utf-8",
+                body: br#"{"success":false,"error":"Unauthorized: invalid Bot API token"}"#.to_vec(),
+                etag: None,
+                cache_control: None,
+            };
         }
     }
 
-    let mut show_all = is_explicit_bot_endpoint || provided_token.is_some();
+    let mut show_all = is_explicit_bot_endpoint || token_matches;
     if let Some(vals) = req.query_params.get("all") {
         if let Some(first) = vals.values.first() {
             if first == "1" || first == "true" {
@@ -466,7 +494,12 @@ fn handle_view() -> HTTPResponseData {
         page_content = page_content.replace("</head>", &preloaded);
     }
 
-    page_content = page_content.replace("v1.0.0", &format!("v{}", PLUGIN_VERSION));
+    let v_tag = format!("v{}", PLUGIN_VERSION);
+    page_content = page_content
+        .replace("v1.0.0", &v_tag)
+        .replace("v1.0.9", &v_tag)
+        .replace("v1.0.10", &v_tag)
+        .replace("v1.0.11", &v_tag);
     page_content = page_content.replace(">15с<", &format!(">{}с<", settings.refresh_interval));
     page_content = page_content.replace(">15s<", &format!(">{}s<", settings.refresh_interval));
 
@@ -482,25 +515,68 @@ fn handle_view() -> HTTPResponseData {
 /// Administrative settings handler (GET and POST).
 fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
     if req.method.eq_ignore_ascii_case("POST") {
-        if let Ok(new_settings) = serde_json::from_slice::<PluginSettings>(&req.body) {
-            save_settings(new_settings);
-            invalidate_public_cache();
-            return HTTPResponseData {
-                status_code: 200,
-                content_type: "application/json",
-                body: br#"{"success":true}"#.to_vec(),
-                etag: None,
-                cache_control: None,
-            };
-        } else {
-            return HTTPResponseData {
-                status_code: 400,
-                content_type: "application/json",
-                body: br#"{"success":false,"error":"Invalid settings JSON"}"#.to_vec(),
-                etag: None,
-                cache_control: None,
-            };
+        if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&req.body) {
+            // Safety guard: if this payload is telemetry, route to handle_query_update
+            if val.get("servers").map(|v| v.is_object()).unwrap_or(false)
+                && val.get("theme").is_none()
+                && val.get("refresh_interval").is_none()
+            {
+                return handle_query_update(req);
+            }
+
+            // Ensure this payload actually contains settings keys to prevent wiping settings
+            let has_settings_keys = val.get("title").is_some()
+                || val.get("theme").is_some()
+                || val.get("refresh_interval").is_some()
+                || val.get("bot_api_token").is_some()
+                || val.get("bot_api_enabled").is_some()
+                || val.get("announcement_text").is_some();
+
+            if !has_settings_keys {
+                return HTTPResponseData {
+                    status_code: 400,
+                    content_type: "application/json",
+                    body: br#"{"success":false,"error":"Invalid settings JSON: missing settings keys"}"#.to_vec(),
+                    etag: None,
+                    cache_control: None,
+                };
+            }
+
+            if let Ok(mut new_settings) = serde_json::from_value::<PluginSettings>(val) {
+                // If incoming settings has empty token, preserve active token from database
+                if new_settings.bot_api_token.trim().is_empty() {
+                    let current = get_settings();
+                    if !current.bot_api_token.is_empty() {
+                        new_settings.bot_api_token = current.bot_api_token;
+                        new_settings.bot_api_enabled = current.bot_api_enabled;
+                    }
+                }
+
+                let (db_saved, err_msg) = save_settings(new_settings);
+                invalidate_public_cache();
+                let resp_json = serde_json::json!({
+                    "success": db_saved,
+                    "db_saved": db_saved,
+                    "error": err_msg
+                });
+                let body = serde_json::to_vec(&resp_json).unwrap_or_else(|_| br#"{"success":true}"#.to_vec());
+                return HTTPResponseData {
+                    status_code: 200,
+                    content_type: "application/json",
+                    body,
+                    etag: None,
+                    cache_control: None,
+                };
+            }
         }
+
+        return HTTPResponseData {
+            status_code: 400,
+            content_type: "application/json",
+            body: br#"{"success":false,"error":"Invalid settings JSON"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        };
     }
 
     // GET /settings: return complete admin payload expected by admin_bundle.js Vue component
@@ -511,6 +587,7 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
     } else {
         settings.cached_servers.clone()
     };
+    let storage_status = crate::settings::get_storage_diagnostics();
 
     let resp = AdminSettingsResponse {
         title: settings.title,
@@ -538,6 +615,7 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
         auto_hide_offline_minutes: settings.auto_hide_offline_minutes,
         click_stats: settings.click_stats,
         open_sections: settings.open_sections,
+        storage_status,
         servers: all_servers.clone(),
         all_servers,
     };
@@ -564,6 +642,7 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
 
     let all_servers = fetch_all_servers();
     let settings = get_settings();
+    let storage_diag = crate::settings::get_storage_diagnostics();
 
     let raw_diagnostic = crate::servers_client::get_raw_servers_diagnostic();
 
@@ -574,6 +653,7 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
         "engine": "rust-wasm",
         "client_ip": client_ip,
         "servers_count": all_servers.len(),
+        "storage": storage_diag,
         "raw_servers": raw_diagnostic,
         "settings": settings,
     });
@@ -624,7 +704,7 @@ fn handle_click(req: &HttpRequest) -> HTTPResponseData {
     if let Some(id) = server_id {
         let mut settings = get_settings();
         *settings.click_stats.entry(id).or_insert(0) += 1;
-        save_settings(settings);
+        let _ = save_settings(settings);
     }
 
     HTTPResponseData {

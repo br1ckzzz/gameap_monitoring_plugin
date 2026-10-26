@@ -400,7 +400,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
             diag = {
                 "plugin_id": "monitoring",
-                "version": "1.0.10",
+                "version": "1.0.11",
                 "client_ip": client_ip,
                 "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
                 "servers_count": len(MOCK_SERVERS),
@@ -412,6 +412,36 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(diag, ensure_ascii=False, indent=2).encode("utf-8"))
             return
+
+        # Serve Idea 14 games.json manifest
+        is_games_json_route = (
+            clean_path in (
+                "/games.json",
+                "/plugins/web-monitoring/games.json",
+                "/api/plugins/monitoring/games.json"
+            )
+            or clean_path.endswith("/games.json")
+        )
+        if is_games_json_route:
+            games_file = os.path.join(FRONTEND_DIR, "games.json")
+            if os.path.exists(games_file):
+                with open(games_file, "rb") as f:
+                    content_bytes = f.read()
+                etag = f'"{hashlib.md5(content_bytes).hexdigest()}"'
+                if self.headers.get("If-None-Match") == etag:
+                    self.send_response(304)
+                    self.send_header("ETag", etag)
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("ETag", etag)
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content_bytes)
+                return
 
         # Emulate GameAP Plugin API route for servers and external Bot API
         is_bot_endpoint = (
@@ -630,7 +660,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
             initial_data = {
                 "servers": MOCK_SERVERS,
-                "version": "1.0.10",
+                "version": "1.0.11",
                 "refresh_interval": refresh_interval,
                 "title": title,
                 "subtitle": subtitle,

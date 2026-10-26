@@ -7,6 +7,7 @@ pub const STYLES_CSS: &[u8] = include_bytes!("../assets/styles.css");
 pub const APP_JS: &[u8] = include_bytes!("../assets/app.js");
 pub const ADMIN_BUNDLE_JS: &[u8] = include_bytes!("../assets/admin_bundle.js");
 pub const ICON_PNG: &[u8] = include_bytes!("../assets/icon.png");
+pub const GAMES_JSON: &[u8] = include_bytes!("../assets/games.json");
 
 /// Represents an asset file contributed to GameAP static routes.
 pub struct AssetFile {
@@ -15,7 +16,7 @@ pub struct AssetFile {
 }
 
 /// Returns the collection of static assets exposed to web visitors.
-pub fn get_frontend_assets() -> [AssetFile; 4] {
+pub fn get_frontend_assets() -> [AssetFile; 5] {
     [
         AssetFile {
             path: "plugins/web-monitoring/index.html",
@@ -32,6 +33,10 @@ pub fn get_frontend_assets() -> [AssetFile; 4] {
         AssetFile {
             path: "plugins/web-monitoring/icon.png",
             content: ICON_PNG,
+        },
+        AssetFile {
+            path: "plugins/web-monitoring/games.json",
+            content: GAMES_JSON,
         },
     ]
 }
