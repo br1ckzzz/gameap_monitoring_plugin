@@ -262,21 +262,21 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         && provided_token.as_ref() == Some(&settings.bot_api_token);
 
     if is_explicit_bot_endpoint {
-        if !settings.bot_api_enabled && !token_matches {
+        if !settings.bot_api_token.is_empty() {
+            if !token_matches {
+                return HTTPResponseData {
+                    status_code: 401,
+                    content_type: "application/json; charset=utf-8",
+                    body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+                    etag: None,
+                    cache_control: None,
+                };
+            }
+        } else if !settings.bot_api_enabled && !token_matches {
             return HTTPResponseData {
                 status_code: 403,
                 content_type: "application/json; charset=utf-8",
                 body: br#"{"success":false,"error":"Bot API is disabled in plugin settings"}"#.to_vec(),
-                etag: None,
-                cache_control: None,
-            };
-        }
-
-        if !settings.bot_api_token.is_empty() && !token_matches {
-            return HTTPResponseData {
-                status_code: 401,
-                content_type: "application/json; charset=utf-8",
-                body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
                 etag: None,
                 cache_control: None,
             };
@@ -339,6 +339,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             total_servers: all_servers.len(),
             online_count,
             servers: all_servers,
+            nodes: Vec::new(),
             timestamp: now as i64,
             refresh_interval: settings.refresh_interval,
             announcement,

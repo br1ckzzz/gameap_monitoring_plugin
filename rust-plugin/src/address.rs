@@ -140,19 +140,24 @@ pub fn extract_metadata_string(any_val: &AnyProto) -> String {
     // Fallback: protobuf StringValue wire unpack: field 1 (0x0a), length varint, string bytes
     if val[0] == 0x0a && val.len() > 1 {
         let mut idx = 1;
-        let mut len: usize = 0;
-        let mut shift = 0;
-        while idx < val.len() {
+        let mut len: u64 = 0;
+        let mut shift: u32 = 0;
+        let mut valid_varint = false;
+
+        while idx < val.len() && shift < 32 {
             let b = val[idx];
             idx += 1;
-            len |= ((b & 0x7F) as usize) << shift;
+            len |= ((b & 0x7F) as u64) << shift;
             if b & 0x80 == 0 {
+                valid_varint = true;
                 break;
             }
             shift += 7;
         }
-        if idx + len <= val.len() {
-            if let Ok(s) = std::str::from_utf8(&val[idx..idx + len]) {
+
+        if valid_varint && len <= (val.len() - idx) as u64 {
+            let end = idx + len as usize;
+            if let Ok(s) = std::str::from_utf8(&val[idx..end]) {
                 return s.trim().to_string();
             }
         }
@@ -266,4 +271,39 @@ pub fn sort_servers_by_order(mut list: Vec<PublicServerDTO>, order: &[u64]) -> V
     let order_map: HashMap<u64, usize> = order.iter().enumerate().map(|(i, &id)| (id, i)).collect();
     list.sort_by_key(|s| order_map.get(&s.id).copied().unwrap_or(usize::MAX));
     list
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_metadata_string_normal() {
+        let any_val = AnyProto {
+            type_url: "type.googleapis.com/google.protobuf.StringValue".into(),
+            value: vec![0x0a, 0x05, b'h', b'e', b'l', b'l', b'o'],
+        };
+        assert_eq!(extract_metadata_string(&any_val), "hello");
+    }
+
+    #[test]
+    fn test_extract_metadata_string_raw() {
+        let any_val = AnyProto {
+            type_url: "".into(),
+            value: b"plain_string".to_vec(),
+        };
+        assert_eq!(extract_metadata_string(&any_val), "plain_string");
+    }
+
+    #[test]
+    fn test_extract_metadata_string_corrupt_varint_overflow() {
+        // Many bytes starting with 0x0a where all subsequent bytes have high bit set.
+        // In unpatched code, shift >= 35 caused panic: attempt to shift left with overflow on 32-bit wasm.
+        let any_val = AnyProto {
+            type_url: "".into(),
+            value: vec![0x0a, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80],
+        };
+        // Should not panic, returns fallback (empty string because not valid utf-8)
+        assert_eq!(extract_metadata_string(&any_val), "");
+    }
 }

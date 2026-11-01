@@ -166,6 +166,33 @@ pub struct QueryTelemetryPayload {
     pub servers: HashMap<u64, ServerTelemetryDTO>,
 }
 
+/// Safe, public node representation exposed to web visitors and Discord bots.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NodeDTO {
+    #[serde(default)]
+    pub id: u64,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub location: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpu_model: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpu_percent: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub protection: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gdaemon_host: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gdaemon_port: Option<i32>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ips: Vec<String>,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
 /// JSON payload returned by `/servers` endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringResponse {
@@ -173,6 +200,8 @@ pub struct MonitoringResponse {
     pub total_servers: usize,
     pub online_count: usize,
     pub servers: Vec<PublicServerDTO>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub nodes: Vec<NodeDTO>,
     pub timestamp: i64,
     #[serde(default = "default_refresh_interval")]
     pub refresh_interval: u32,
@@ -290,5 +319,75 @@ impl Default for PluginSettings {
             click_stats: HashMap::new(),
             open_sections: HashMap::new(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_node_dto_serde_defaults() {
+        let json = r#"{"id": 1, "name": "Node-Moscow"}"#;
+        let node: NodeDTO = serde_json::from_str(json).expect("should deserialize NodeDTO");
+        assert_eq!(node.id, 1);
+        assert_eq!(node.name, "Node-Moscow");
+        assert!(node.enabled); // default_true
+        assert!(node.ips.is_empty());
+        assert_eq!(node.location, None);
+    }
+
+    #[test]
+    fn test_monitoring_response_nodes_omitted_when_empty() {
+        let resp = MonitoringResponse {
+            success: true,
+            total_servers: 0,
+            online_count: 0,
+            servers: Vec::new(),
+            nodes: Vec::new(),
+            timestamp: 123456789,
+            refresh_interval: 15,
+            announcement: None,
+        };
+        let serialized = serde_json::to_string(&resp).expect("serialize");
+        assert!(!serialized.contains("\"nodes\""));
+
+        let deserialized: MonitoringResponse = serde_json::from_str(&serialized).expect("deserialize");
+        assert!(deserialized.nodes.is_empty());
+    }
+
+    #[test]
+    fn test_monitoring_response_nodes_serialized_when_present() {
+        let node = NodeDTO {
+            id: 2,
+            name: "[RU] Moscow Core".to_string(),
+            location: Some("Moscow, Russia".to_string()),
+            provider: Some("Selectel".to_string()),
+            cpu_model: Some("AMD Ryzen 9 7950X3D".to_string()),
+            cpu_percent: Some(25),
+            protection: Some("DDoS-Guard".to_string()),
+            gdaemon_host: Some("185.123.45.67".to_string()),
+            gdaemon_port: Some(31717),
+            ips: vec!["185.123.45.67".to_string()],
+            enabled: true,
+        };
+        let resp = MonitoringResponse {
+            success: true,
+            total_servers: 0,
+            online_count: 0,
+            servers: Vec::new(),
+            nodes: vec![node],
+            timestamp: 123456789,
+            refresh_interval: 15,
+            announcement: None,
+        };
+        let serialized = serde_json::to_string(&resp).expect("serialize");
+        assert!(serialized.contains("\"nodes\""));
+        assert!(serialized.contains("Moscow Core"));
+
+        let deserialized: MonitoringResponse = serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(deserialized.nodes.len(), 1);
+        assert_eq!(deserialized.nodes[0].name, "[RU] Moscow Core");
+        assert_eq!(deserialized.nodes[0].cpu_percent, Some(25));
     }
 }

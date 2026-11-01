@@ -9,6 +9,7 @@ use std::sync::Mutex;
 static CURRENT_SETTINGS: Mutex<Option<PluginSettings>> = Mutex::new(None);
 static STORAGE_DIAGNOSTICS: Mutex<Option<StorageDiagnostics>> = Mutex::new(None);
 
+#[cfg(target_arch = "wasm32")]
 #[link(wasm_import_module = "gameap-storage")]
 extern "C" {
     #[link_name = "get"]
@@ -17,6 +18,17 @@ extern "C" {
     #[link_name = "set"]
     fn host_storage_set(ptr: u32, size: u32) -> u64;
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+unsafe extern "C" fn host_storage_get(_ptr: u32, _size: u32) -> u64 {
+    0
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+unsafe extern "C" fn host_storage_set(_ptr: u32, _size: u32) -> u64 {
+    0
+}
+
 
 fn call_storage_get(req: &StorageGetRequest) -> Option<StorageGetResponse> {
     let mut buf = Vec::with_capacity(req.encoded_len());

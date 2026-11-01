@@ -48,17 +48,30 @@ pub fn get_live_telemetry_for(server_id: u64) -> Option<ServerTelemetryDTO> {
     None
 }
 
+#[cfg(target_arch = "wasm32")]
 #[link(wasm_import_module = "gameap-servers")]
 extern "C" {
     #[link_name = "find_servers"]
     fn host_find_servers(ptr: u32, size: u32) -> u64;
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+unsafe extern "C" fn host_find_servers(_ptr: u32, _size: u32) -> u64 {
+    0
+}
+
+#[cfg(target_arch = "wasm32")]
 #[link(wasm_import_module = "gameap-games")]
 extern "C" {
     #[link_name = "find_games"]
     fn host_find_games(ptr: u32, size: u32) -> u64;
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+unsafe extern "C" fn host_find_games(_ptr: u32, _size: u32) -> u64 {
+    0
+}
+
 
 /// Helper function to perform a host call with protobuf request and response.
 fn call_host<Req: Message, Resp: Message + Default>(
@@ -379,6 +392,7 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         total_servers: list.len(),
         online_count,
         servers: list,
+        nodes: Vec::new(),
         timestamp: now as i64,
         refresh_interval: settings.refresh_interval,
         announcement,
