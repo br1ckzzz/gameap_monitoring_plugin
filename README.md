@@ -59,7 +59,7 @@ The plugin compiles into a single WebAssembly module (`web_monitoring.wasm`, tar
 Level up your gaming community with the official companion bot: **[GameAP_WebMonBot](https://github.com/br1ckzzz/GameAP_WebMonBot)**.
 
 - 📊 **Interactive Discord Embeds & Real-Time Buttons:** Instant 1-click connect (`steam://connect`), IP copy, and real-time player counts.
-- 🖥️ **Host Nodes & Dedicated Infrastructure Monitoring (`/mon nodes`):** Live dashboard for physical machines with CPU/RAM metrics, OS, country flags, Anti-DDoS status, and real ping.
+- 🖥️ **Host Nodes & Dedicated Infrastructure Monitoring (`/mon nodes`):** Live dashboard for physical host machines: online availability status, OS, country flags, active servers count, and real ping.
 - 📡 **Live Query Telemetry Ingestion (`POST /servers/query-update`):** Bot queries game protocols directly (A2S, SLP, SAMP, Quake, FiveM) and streams verified live telemetry into this web plugin.
 - 🛡️ **Fault-Tolerant Dead Node Detection:** Accurately marks crashed servers offline, preventing the stuck `ONLINE` status bug.
 - 🔗 **GitHub Repository:** [https://github.com/br1ckzzz/GameAP_WebMonBot](https://github.com/br1ckzzz/GameAP_WebMonBot)
