@@ -36,14 +36,14 @@ The plugin compiles into a single WebAssembly module (`web_monitoring.wasm`, tar
 ## ✨ Features
 
 - 🛡️ **Zero-Dependency WebAssembly Sandbox:** Compiles to a single `.wasm` binary that runs securely within GameAP Wazero runtime.
+- ⚡ **Modern Esports 2026 UI Theme:** High-tech cyber aesthetic (`#08090d`, `#10121a`, neon cyan `#00f0ff`, Space Grotesk / JetBrains Mono typography, 32px cyber buttons, 5px player progress bars) and an anti-glare high-contrast tournament light mode. Selectable in admin panel (`Modern`, `Dark`, `Light`) with Modern Esports enabled as default.
+- 🖥️ **Compact 4-in-a-Row Desktop Grid:** Optimized layout for PC screens (`min-width: 1200px`), displaying strictly 4 server cards per row within an expanded 1560px container, compact 110px hero cover, and seamless responsive collapse (3 col on 900–1199px, 2 col on 600–899px, 1 col on mobile).
+- 🌍 **Full RU / EN Bilingual Support:** Live language toggle (`#lang-toggle-btn`) in header, automatic browser language detection (`navigator.language`), persistent `localStorage` saving, and 100% localization across all components, badges, modals, and the GameAP Admin Panel (`admin_bundle.js`).
+- 📍 **Dedicated Node & Location Badges:** Visual physical node location tags (`.node-badge`) on server cards and in detailed server specs (e.g., `Helsinki, FIN`, `Frankfurt, DE`, `Moscow, RU`).
+- 📡 **Protocol Telemetry & Companion Bot Integration:** Deep integration with `GameAP_WebMonBot` (Discord/Telegram), supporting protocol-level queries (A2S for CS2/Source, SLP for Minecraft, SAMP, Quake, FiveM), real player lists, and real network ping monitoring.
+- 🎮 **Centralized Game Catalog (`games.json`):** Unified metadata registry with 30+ game definitions, Steam AppIDs, query protocols, and high-res banners with graceful offline fallbacks.
+- 🖼️ **Admin Logo Guidance:** Explicit recommended dimensions in admin panel: up to 256×256 px (transparent PNG, SVG, or WebP).
 - 🌐 **Instant Public Access:** Both the web view and JSON API are accessible to visitors out of the box with zero exposure of sensitive data (RCON passwords, tokens, and internal paths remain protected).
-- 🎨 **Modern Responsive UI:**
-  - Dark and Light themes with instant toggle and persistent user preference.
-  - Multi-language support (**English** and **Russian**) for both visitor page and admin control panel.
-  - Live server status badges (Online / Offline).
-  - Game filters (Counter-Strike 2, CS 1.6, Minecraft, Rust, Team Fortress 2, and others).
-  - Real-time search by server name, game, or IP address.
-  - 1-click IP address copying and `steam://connect` direct launch links.
 - ⏱️ **Live Countdown & Auto-Refresh:** Periodic status refresh with countdown timer and manual reload button.
 - 📢 **Announcement Banner & Event Countdown:** Interactive banner for announcements (tournaments, wipes, maintenance) with live real-time countdown timer, call-to-action button, and custom styling presets.
 - 📊 **Click & Connect Analytics:** Track player engagement with persistent click counters and visual statistics in the admin panel.
@@ -63,16 +63,17 @@ gameap_monitoring_plugin/
 │   └── workflows/release.yml
 ├── frontend/               # UI source files
 │   ├── index.html          # Public monitoring page layout
-│   ├── styles.css          # Modern responsive styling
-│   ├── app.js              # Client-side state, filtering, and auto-refresh
-│   └── admin_bundle.js     # GameAP Admin Panel Vue 3 component bundle
+│   ├── styles.css          # Modern responsive styling & Modern Esports 2026 theme
+│   ├── app.js              # Client-side state, RU/EN I18N, filtering, and auto-refresh
+│   ├── games.json          # Game metadata and banner catalog
+│   └── admin_bundle.js     # GameAP Admin Panel Vue 3 component bundle (RU/EN)
 ├── rust-plugin/            # Rust WebAssembly plugin crate (wasm32-wasip1)
 │   ├── src/                # Handlers, memory ABI, protobuf, host clients
 │   └── assets/             # Embedded frontend assets
 ├── scripts/                # Build scripts
 │   ├── build.sh            # Linux / macOS build script
 │   └── build.ps1           # Windows PowerShell build script
-├── Dockerfile              # Containerized multi-stage build
+├── Dockerfile              # Containerized multi-stage build (Rust alpine)
 └── mock_server.py          # Standalone local dev preview server
 ```
 
@@ -82,7 +83,7 @@ gameap_monitoring_plugin/
 
 ### 1. Download or Build the Plugin Binary
 
-Download `web_monitoring.wasm` (v1.0.9) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
+Download `web_monitoring.wasm` (v1.1.0) from the latest **[GitHub Releases](https://github.com/br1ckzzz/gameap_monitoring_plugin/releases)** (or build it from source as described below).
 Copy `web_monitoring.wasm` into your GameAP plugins directory (default: `/var/lib/gameap/plugins/` or your configured `PLUGINS_DIR`).
 
 ### 2. Activate in GameAP
@@ -176,9 +177,16 @@ RewriteRule "^monitoring$" "/api/plugins/monitoring" [PT]
 
 ## 🛠️ Building from Source
 
-Requirements: **Go 1.22+** or **Docker**.
+Requirements: **Rust 1.78+** (with `wasm32-wasip1` target) or **Docker**.
+
+To install the target via `rustup`:
+```bash
+rustup target add wasm32-wasip1
+```
 
 ### Using Build Scripts
+
+The build scripts automatically synchronize frontend assets into `rust-plugin/assets/`, compile the crate with `cargo build --target wasm32-wasip1 --release`, and optimize the resulting `.wasm` with `wasm-opt -Oz` (if installed).
 
 #### Linux / macOS
 
@@ -193,7 +201,7 @@ chmod +x scripts/build.sh
 powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
 ```
 
-### Using Docker (No Go installation needed)
+### Using Docker (No local Rust toolchain needed)
 
 ```bash
 docker build -t gameap-web-monitoring -f Dockerfile .

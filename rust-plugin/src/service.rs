@@ -2,7 +2,7 @@
 
 use crate::assets::{get_frontend_assets, ADMIN_BUNDLE_JS};
 
-pub const PLUGIN_VERSION: &str = "1.0.11";
+pub const PLUGIN_VERSION: &str = "1.1.0";
 pub const PLUGIN_REPO_URL: &str = "https://github.com/br1ckzzz/gameap_monitoring_plugin";
 
 /// Plugin metadata descriptor for GameAP.
@@ -51,28 +51,28 @@ pub const HTTP_ROUTES: &[HTTPRouteDescriptor] = &[
     },
     HTTPRouteDescriptor {
         path: "/servers",
-        methods: &["GET"],
+        methods: &["GET", "POST"],
         requires_auth: false,
         admin_only: false,
-        description: "Get public list of active servers",
+        description: "Get public list of active servers or ingest telemetry via POST",
     },
     HTTPRouteDescriptor {
         path: "/servers/query-update",
-        methods: &["POST"],
+        methods: &["GET", "POST"],
         requires_auth: false,
         admin_only: false,
         description: "Ingest live query telemetry from companion bot/worker",
     },
     HTTPRouteDescriptor {
         path: "/api/servers",
-        methods: &["GET"],
+        methods: &["GET", "POST"],
         requires_auth: false,
         admin_only: false,
         description: "Bot API endpoint for external Discord and monitoring bots",
     },
     HTTPRouteDescriptor {
         path: "/bot/servers",
-        methods: &["GET"],
+        methods: &["GET", "POST"],
         requires_auth: false,
         admin_only: false,
         description: "Bot API endpoint alias for external monitoring bots",

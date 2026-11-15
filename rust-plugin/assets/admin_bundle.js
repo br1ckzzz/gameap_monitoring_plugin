@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.0.11',
+    version: '1.1.0',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.0.11',
+                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.1.0',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
@@ -55,8 +55,9 @@ export const webMonitoringPlugin = {
                             titleLabel: 'Заголовок страницы (Title)',
                             subtitleLabel: 'Подзаголовок',
                             themeLabel: 'Тема по умолчанию',
-                            darkTheme: '🌙 Тёмная тема (Dark)',
-                            lightTheme: '☀️ Светлая тема (Light)',
+                            modernTheme: '⚡ Киберспортивная 2026 (Modern Esports)',
+                            darkTheme: '🌙 Тёмная классическая (Dark)',
+                            lightTheme: '☀️ Светлая классическая (Light)',
                             refreshIntervalLabel: 'Интервал обновления (сек.)',
                             serversVisibility: '🎮 Видимость и порядок серверов',
                             serversVisibilityHelp: 'Отметьте серверы, которые должны отображаться в публичном мониторинге.',
@@ -71,7 +72,7 @@ export const webMonitoringPlugin = {
                             addressKeyPlaceholder: 'Например: public_ip, domain; hostname',
                             brandingSection: '🖼️ Логотип и фавикон',
                             logoUrlLabel: 'Прямая ссылка на логотип (URL)',
-                            logoUrlHelp: 'Отображается в левом верхнем углу публичной страницы вместо эмодзи 🎮. Поддерживаются PNG, SVG, JPG, WebP.',
+                            logoUrlHelp: 'Отображается в шапке страницы. Рекомендуемый размер: до 256×256 px (PNG, SVG, WebP с прозрачным фоном).',
                             logoUrlPlaceholder: 'https://example.com/logo.png',
                             faviconUrlLabel: 'Прямая ссылка на фавикон (Favicon URL)',
                             faviconUrlHelp: 'Иконка во вкладке браузера (.ico, .png, .svg).',
@@ -128,11 +129,13 @@ export const webMonitoringPlugin = {
                             statsRankCol: '#',
                             statsShareCol: 'Доля',
                             statsTotalClicks: 'Всего кликов',
-                            noStats: 'Пока нет данных о кликах'
+                            noStats: 'Пока нет данных о кликах',
+                            statusOnline: 'Онлайн',
+                            statusOffline: 'Офлайн'
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.0.11',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.1.0',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
@@ -157,8 +160,9 @@ export const webMonitoringPlugin = {
                             titleLabel: 'Page Title',
                             subtitleLabel: 'Subtitle',
                             themeLabel: 'Default Theme',
-                            darkTheme: '🌙 Dark Theme',
-                            lightTheme: '☀️ Light Theme',
+                            modernTheme: '⚡ Modern Esports 2026',
+                            darkTheme: '🌙 Classic Dark',
+                            lightTheme: '☀️ Classic Light',
                             refreshIntervalLabel: 'Auto-refresh Interval (sec)',
                             serversVisibility: '🎮 Server Visibility & Ordering',
                             serversVisibilityHelp: 'Select servers to display on the public monitoring page.',
@@ -173,7 +177,7 @@ export const webMonitoringPlugin = {
                             addressKeyPlaceholder: 'e.g. public_ip, domain; hostname',
                             brandingSection: '🖼️ Logo & Favicon',
                             logoUrlLabel: 'Logo Image URL',
-                            logoUrlHelp: 'Displayed in top-left header instead of 🎮 emoji. Supports PNG, SVG, JPG, WebP.',
+                            logoUrlHelp: 'Displayed in page header. Recommended size: up to 256×256 px (transparent PNG, SVG, or WebP).',
                             logoUrlPlaceholder: 'https://example.com/logo.png',
                             faviconUrlLabel: 'Favicon URL',
                             faviconUrlHelp: 'Browser tab icon (.ico, .png, .svg).',
@@ -230,7 +234,9 @@ export const webMonitoringPlugin = {
                             statsRankCol: '#',
                             statsShareCol: 'Share',
                             statsTotalClicks: 'Total Clicks',
-                            noStats: 'No click data recorded yet'
+                            noStats: 'No click data recorded yet',
+                            statusOnline: 'Online',
+                            statusOffline: 'Offline'
                         }
                     };
 
@@ -251,7 +257,7 @@ export const webMonitoringPlugin = {
 
                     const title = ref('GameAP Servers');
                     const subtitle = ref('Онлайн мониторинг игровых серверов');
-                    const theme = ref('dark');
+                    const theme = ref('modern');
                     const refreshInterval = ref(15);
                     const customCss = ref('');
                     const customHeaderHtml = ref('');
@@ -1961,7 +1967,7 @@ export const webMonitoringPlugin = {
                                                 style: isOnline
                                                     ? 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--wm-primary-soft); color: var(--wm-primary-soft-text); border: 1px solid var(--wm-primary);'
                                                     : 'padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--wm-bg-inset); color: var(--wm-text-muted); border: 1px solid var(--wm-border-strong);'
-                                            }, isOnline ? 'Online' : 'Offline')
+                                            }, isOnline ? t('statusOnline') : t('statusOffline'))
                                         ]);
                                     }))
                         ]),
@@ -1971,7 +1977,7 @@ export const webMonitoringPlugin = {
                             'general',
                             'fas fa-cog',
                             t('generalSettings'),
-                            `${refreshInterval.value}s • ${theme.value === 'dark' ? 'Dark' : 'Light'}`,
+                            `${refreshInterval.value}s • ${theme.value === 'modern' ? 'Modern 2026' : (theme.value === 'dark' ? 'Dark' : 'Light')}`,
                             false,
                             [
                                 h('div', { style: 'display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;' }, [
@@ -2000,6 +2006,7 @@ export const webMonitoringPlugin = {
                                             onChange: (e) => { theme.value = e.target.value; },
                                             class: 'wm-select'
                                         }, [
+                                            h('option', { value: 'modern' }, t('modernTheme')),
                                             h('option', { value: 'dark' }, t('darkTheme')),
                                             h('option', { value: 'light' }, t('lightTheme'))
                                         ])

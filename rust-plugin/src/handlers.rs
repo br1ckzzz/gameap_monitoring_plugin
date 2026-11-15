@@ -2,7 +2,7 @@
 
 use crate::assets::INDEX_HTML;
 use crate::proto::HttpRequest;
-use crate::servers_client::{fetch_all_servers, fetch_public_servers_with_opt, invalidate_public_cache};
+use crate::servers_client::{fetch_all_nodes, fetch_all_servers, fetch_public_servers_with_opt, invalidate_public_cache};
 use crate::service::PLUGIN_VERSION;
 use crate::settings::{get_settings, save_settings};
 use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO};
@@ -148,6 +148,9 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
         return handle_settings(req);
     }
     if path == "/servers" || path.ends_with("/servers") || path.ends_with("/api/servers") || path.ends_with("/bot/servers") {
+        if req.method.eq_ignore_ascii_case("POST") {
+            return handle_query_update(req);
+        }
         return handle_servers(req);
     }
     if path == "/view" || path.ends_with("/view") {
@@ -205,6 +208,66 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     }
 }
 
+/// Helper to flexibly parse incoming telemetry payload (supports map, array, top-level objects).
+fn parse_telemetry_payload(body: &[u8]) -> Result<crate::types::QueryTelemetryPayload, String> {
+    let root: serde_json::Value = serde_json::from_slice(body).map_err(|e| e.to_string())?;
+    let mut servers_map = std::collections::HashMap::new();
+
+    let parse_server_entry = |val: &serde_json::Value| -> Option<crate::types::ServerTelemetryDTO> {
+        serde_json::from_value::<crate::types::ServerTelemetryDTO>(val.clone()).ok()
+    };
+
+    if let Some(servers_val) = root.get("servers") {
+        if let Some(obj) = servers_val.as_object() {
+            for (k, v) in obj {
+                if let Ok(id) = k.parse::<u64>() {
+                    if let Some(dto) = parse_server_entry(v) {
+                        servers_map.insert(id, dto);
+                    }
+                }
+            }
+        } else if let Some(arr) = servers_val.as_array() {
+            for item in arr {
+                let id_opt = item.get("id")
+                    .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok())));
+                if let Some(id) = id_opt {
+                    if let Some(dto) = parse_server_entry(item) {
+                        servers_map.insert(id, dto);
+                    }
+                }
+            }
+        }
+    } else if let Some(arr) = root.as_array() {
+        for item in arr {
+            let id_opt = item.get("id")
+                .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok())));
+            if let Some(id) = id_opt {
+                if let Some(dto) = parse_server_entry(item) {
+                    servers_map.insert(id, dto);
+                }
+            }
+        }
+    } else if let Some(obj) = root.as_object() {
+        for (k, v) in obj {
+            if let Ok(id) = k.parse::<u64>() {
+                if let Some(dto) = parse_server_entry(v) {
+                    servers_map.insert(id, dto);
+                }
+            }
+        }
+    }
+
+    if servers_map.is_empty() && !root.is_null() {
+        if let Ok(p) = serde_json::from_slice::<crate::types::QueryTelemetryPayload>(body) {
+            return Ok(p);
+        }
+    }
+
+    Ok(crate::types::QueryTelemetryPayload {
+        servers: servers_map,
+    })
+}
+
 /// Ingests live telemetry from companion bot or external query daemon.
 fn handle_query_update(req: &HttpRequest) -> HTTPResponseData {
     let settings = get_settings();
@@ -225,7 +288,7 @@ fn handle_query_update(req: &HttpRequest) -> HTTPResponseData {
         }
     }
 
-    match serde_json::from_slice::<crate::types::QueryTelemetryPayload>(&req.body) {
+    match parse_telemetry_payload(&req.body) {
         Ok(payload) => {
             let count = crate::servers_client::update_live_telemetry(payload);
             let resp_json = format!("{{\"success\":true,\"updated_servers\":{}}}", count);
@@ -294,7 +357,12 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         }
     }
 
-    let mut show_all = is_explicit_bot_endpoint || token_matches;
+    let is_bot_client = get_header_ignore_case(&req.headers, "User-Agent")
+        .map(|ua| ua.contains("GameAP-WebMonBot") || ua.contains("WebMonBot"))
+        .unwrap_or(false)
+        && (settings.bot_api_token.is_empty() || token_matches);
+
+    let mut show_all = is_explicit_bot_endpoint || token_matches || is_bot_client;
     if let Some(vals) = req.query_params.get("all") {
         if let Some(first) = vals.values.first() {
             if first == "1" || first == "true" {
@@ -339,7 +407,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             total_servers: all_servers.len(),
             online_count,
             servers: all_servers,
-            nodes: Vec::new(),
+            nodes: fetch_all_nodes(),
             timestamp: now as i64,
             refresh_interval: settings.refresh_interval,
             announcement,
@@ -438,6 +506,8 @@ fn handle_view() -> HTTPResponseData {
 
     if settings.theme == "light" {
         page_content = page_content.replace("<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">");
+    } else if settings.theme == "modern" {
+        page_content = page_content.replace("<html lang=\"ru\">", "<html lang=\"ru\" data-theme-style=\"modern\">");
     }
 
     if let Some(ref favicon) = settings.favicon_url {
@@ -467,6 +537,7 @@ fn handle_view() -> HTTPResponseData {
         obj.insert("version".to_string(), serde_json::json!(PLUGIN_VERSION));
         obj.insert("repo_url".to_string(), serde_json::json!(crate::service::PLUGIN_REPO_URL));
         obj.insert("refresh_interval".to_string(), serde_json::json!(settings.refresh_interval));
+        obj.insert("theme".to_string(), serde_json::json!(settings.theme));
         if !settings.title.is_empty() {
             obj.insert("title".to_string(), serde_json::json!(settings.title));
         }
@@ -500,7 +571,9 @@ fn handle_view() -> HTTPResponseData {
         .replace("v1.0.0", &v_tag)
         .replace("v1.0.9", &v_tag)
         .replace("v1.0.10", &v_tag)
-        .replace("v1.0.11", &v_tag);
+        .replace("v1.0.11", &v_tag)
+        .replace("v1.0.12", &v_tag)
+        .replace("v1.1.0", &v_tag);
     page_content = page_content.replace(">15с<", &format!(">{}с<", settings.refresh_interval));
     page_content = page_content.replace(">15s<", &format!(">{}s<", settings.refresh_interval));
 

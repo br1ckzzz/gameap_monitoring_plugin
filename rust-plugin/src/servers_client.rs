@@ -2,9 +2,9 @@
 
 use crate::abi::{deallocate, read_proto, unpack_ptr_size, write_bytes};
 use crate::address::{extract_metadata_string, extract_vars_map, resolve_server_address, sort_servers_by_order};
-use crate::proto::{FindGamesRequest, FindGamesResponse, FindServersRequest, FindServersResponse, ServerProto};
+use crate::proto::{FindGamesRequest, FindGamesResponse, FindNodesRequest, FindNodesResponse, FindServersRequest, FindServersResponse, NodeProto, ServerProto};
 use crate::settings::get_settings;
-use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO, QueryTelemetryPayload, ServerTelemetryDTO};
+use crate::types::{MonitoringResponse, NodeDTO, PluginSettings, PublicServerDTO, QueryTelemetryPayload, ServerTelemetryDTO};
 use prost::Message;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -16,7 +16,7 @@ struct TelemetryEntry {
 }
 
 static LIVE_TELEMETRY: Mutex<Option<HashMap<u64, TelemetryEntry>>> = Mutex::new(None);
-const TELEMETRY_TTL_SECS: u64 = 90;
+const TELEMETRY_TTL_SECS: u64 = 300;
 
 pub fn update_live_telemetry(payload: QueryTelemetryPayload) -> usize {
     let now = get_current_timestamp_secs();
@@ -69,6 +69,18 @@ extern "C" {
 
 #[cfg(not(target_arch = "wasm32"))]
 unsafe extern "C" fn host_find_games(_ptr: u32, _size: u32) -> u64 {
+    0
+}
+
+#[cfg(target_arch = "wasm32")]
+#[link(wasm_import_module = "gameap-nodes")]
+extern "C" {
+    #[link_name = "find_nodes"]
+    fn host_find_nodes(ptr: u32, size: u32) -> u64;
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+unsafe extern "C" fn host_find_nodes(_ptr: u32, _size: u32) -> u64 {
     0
 }
 
@@ -200,15 +212,19 @@ pub fn convert_proto_server_to_dto(
             s.metadata.get("max_players")
                 .or_else(|| s.metadata.get("maxplayers"))
                 .or_else(|| s.metadata.get("slots"))
+                .or_else(|| s.metadata.get("max_clients"))
+                .or_else(|| s.metadata.get("server_slots"))
                 .map(extract_metadata_string)
                 .and_then(|v| v.parse::<i32>().ok())
                 .or_else(|| vars_map.get("max_players").and_then(|v| v.parse::<i32>().ok()))
                 .or_else(|| vars_map.get("maxplayers").and_then(|v| v.parse::<i32>().ok()))
                 .or_else(|| vars_map.get("slots").and_then(|v| v.parse::<i32>().ok()))
+                .or_else(|| vars_map.get("max_clients").and_then(|v| v.parse::<i32>().ok()))
+                .or_else(|| vars_map.get("server_slots").and_then(|v| v.parse::<i32>().ok()))
         });
 
     let players = telemetry.as_ref()
-        .and_then(|t| t.players)
+        .map(|t| t.players.unwrap_or(0))
         .or_else(|| {
             s.metadata.get("players")
                 .or_else(|| s.metadata.get("players_num"))
@@ -259,6 +275,7 @@ pub fn convert_proto_server_to_dto(
 
     PublicServerDTO {
         id: s.id,
+        node_id: if s.ds_id > 0 { Some(s.ds_id) } else { None },
         name: s.name.clone(),
         game_code: s.game_id.clone(),
         game_name: g_name,
@@ -320,6 +337,49 @@ pub fn fetch_all_servers() -> Vec<PublicServerDTO> {
         list = sort_servers_by_order(list, &settings.server_order);
     }
 
+    list
+}
+
+/// Fetches all dedicated server nodes from GameAP host.
+pub fn fetch_all_nodes() -> Vec<NodeDTO> {
+    let host_resp = call_host::<FindNodesRequest, FindNodesResponse>(
+        &FindNodesRequest {},
+        host_find_nodes,
+    );
+    let raw_nodes: Vec<NodeProto> = host_resp.map(|r| r.nodes).unwrap_or_default();
+
+    let mut list = Vec::new();
+    for n in raw_nodes {
+        let cpu_model = n
+            .metadata
+            .get("cpu")
+            .or_else(|| n.metadata.get("cpu_model"))
+            .filter(|s| !s.is_empty())
+            .cloned();
+        let protection = n
+            .metadata
+            .get("protection")
+            .or_else(|| n.metadata.get("ddos"))
+            .filter(|s| !s.is_empty())
+            .cloned();
+
+        let node_dto = NodeDTO {
+            id: n.id,
+            name: n.name,
+            location: if n.location.is_empty() { None } else { Some(n.location) },
+            provider: n.provider.filter(|p| !p.is_empty()),
+            cpu_model,
+            cpu_percent: None,
+            ram_percent: None,
+            protection,
+            os: if n.os.is_empty() { None } else { Some(n.os) },
+            gdaemon_host: if n.gdaemon_host.is_empty() { None } else { Some(n.gdaemon_host) },
+            gdaemon_port: if n.gdaemon_port > 0 { Some(n.gdaemon_port) } else { None },
+            ips: n.ips,
+            enabled: n.enabled,
+        };
+        list.push(node_dto);
+    }
     list
 }
 
@@ -392,7 +452,7 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         total_servers: list.len(),
         online_count,
         servers: list,
-        nodes: Vec::new(),
+        nodes: fetch_all_nodes(),
         timestamp: now as i64,
         refresh_interval: settings.refresh_interval,
         announcement,

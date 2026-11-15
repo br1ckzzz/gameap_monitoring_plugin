@@ -215,7 +215,7 @@ pub fn save_settings(mut s: PluginSettings) -> (bool, Option<String>) {
         s.refresh_interval = 15;
     }
     if s.theme.is_empty() {
-        s.theme = "dark".to_string();
+        s.theme = "modern".to_string();
     }
     // If incoming settings has empty bot_api_token, preserve existing token from DB
     if s.bot_api_token.trim().is_empty() {

@@ -37,8 +37,19 @@ const I18N = {
     portLabel: "Порт:",
     pingLabel: "Пинг:",
     categoryLabel: "Категория:",
+    nodeLabel: "Локация:",
+    onlineStatus: "Онлайн",
+    offlineStatus: "Офлайн",
     viewModeTabsTitle: "Вид: Вкладки",
-    viewModeAccordionTitle: "Вид: Аккордеоны"
+    viewModeAccordionTitle: "Вид: Аккордеоны",
+    playersLabel: "Заполненность",
+    parametersAndConsole: "Параметры и консоль",
+    networkStatusLabel: "Статус сети:",
+    activePortOpen: "Активен (порт открыт)",
+    downMaintenance: "Офлайн / Техработы",
+    consoleCommandHint: "Команда для игровой консоли:",
+    connectBtnFull: "ПОДКЛЮЧИТЬСЯ",
+    copyBtnMini: "Копия"
   },
   en: {
     brandSubtitle: "Online Game Server Monitoring",
@@ -74,8 +85,19 @@ const I18N = {
     portLabel: "Port:",
     pingLabel: "Ping:",
     categoryLabel: "Category:",
+    nodeLabel: "Location:",
+    onlineStatus: "Online",
+    offlineStatus: "Offline",
     viewModeTabsTitle: "View: Tabs",
-    viewModeAccordionTitle: "View: Accordions"
+    viewModeAccordionTitle: "View: Accordions",
+    playersLabel: "Capacity",
+    parametersAndConsole: "Parameters & Console",
+    networkStatusLabel: "Network Status:",
+    activePortOpen: "Active (Port Open)",
+    downMaintenance: "Down / Maintenance",
+    consoleCommandHint: "Console command for game:",
+    connectBtnFull: "CONNECT",
+    copyBtnMini: "Copy"
   }
 };
 
@@ -336,7 +358,23 @@ function detectBrandingCustomizations() {
 
 // Theme Management
 function initTheme() {
-  const saved = localStorage.getItem('web_monitoring_theme') || document.documentElement.getAttribute('data-theme') || 'dark';
+  const initialTheme = (window.INITIAL_DATA && window.INITIAL_DATA.theme) || '';
+  if (initialTheme === 'modern') {
+    document.documentElement.setAttribute('data-theme-style', 'modern');
+  } else if (initialTheme === 'dark' || initialTheme === 'light') {
+    document.documentElement.removeAttribute('data-theme-style');
+  } else if (!document.documentElement.hasAttribute('data-theme-style')) {
+    document.documentElement.setAttribute('data-theme-style', 'modern');
+  }
+
+  let saved = localStorage.getItem('web_monitoring_theme');
+  if (!saved) {
+    if (initialTheme === 'light' || document.documentElement.getAttribute('data-theme') === 'light') {
+      saved = 'light';
+    } else {
+      saved = 'dark';
+    }
+  }
   applyTheme(saved);
 }
 
@@ -366,6 +404,7 @@ function initLanguage() {
 function applyLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('web_monitoring_lang', lang);
+  document.documentElement.lang = lang;
   
   if (langToggleBtn) {
     langToggleBtn.textContent = t('nextLang');
@@ -387,6 +426,14 @@ function applyLanguage(lang) {
   if (emptyTitle) emptyTitle.textContent = t('emptyTitle');
   if (emptyMsg) emptyMsg.textContent = t('emptyMsg');
   if (autoRefreshLabel) autoRefreshLabel.textContent = t('autoRefresh');
+  if (viewModeTabsBtn) {
+    viewModeTabsBtn.title = t('viewModeTabsTitle');
+    viewModeTabsBtn.setAttribute('aria-label', t('viewModeTabsTitle'));
+  }
+  if (viewModeAccordionBtn) {
+    viewModeAccordionBtn.title = t('viewModeAccordionTitle');
+    viewModeAccordionBtn.setAttribute('aria-label', t('viewModeAccordionTitle'));
+  }
 
   renderAll();
   updateTimerDisplay();
@@ -1006,7 +1053,7 @@ const DYNAMIC_GAMES_CATALOG = {};
 
 async function loadGameCatalog() {
   try {
-    const endpoint = getApiEndpoint('games.json');
+    const endpoint = getApiEndpoint('/games.json');
     const resp = await fetch(endpoint, { cache: 'no-cache' });
     if (!resp.ok) return;
     const data = await resp.json();
@@ -1117,14 +1164,24 @@ if (offlineAccordionToggle) {
   offlineAccordionToggle.addEventListener('click', toggleOfflineAccordion);
 }
 
+function toggleDetails(id) {
+  const box = document.getElementById(`spoiler-box-${id}`);
+  const arrow = document.getElementById(`spoiler-arrow-${id}`);
+  if (box) {
+    const isHidden = box.style.display === 'none' || box.style.display === '';
+    box.style.display = isHidden ? 'flex' : 'none';
+    if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
+  }
+}
+window.toggleDetails = toggleDetails;
+window.toggleCardSpoiler = toggleDetails;
+
 function createServerCard(server) {
   const card = document.createElement('div');
   const isOnline = server.status === 'online';
   const addressStr = `${server.address || '0.0.0.0'}:${server.port || 0}`;
 
   let initialImgUrl = null;
-  let fallbackImgUrl = null;
-
   const gameBannerUrl = getGameBannerUrl(server.game_code);
   const gameBannerFallback = getGameBannerFallbackUrl(server.game_code);
 
@@ -1132,177 +1189,124 @@ function createServerCard(server) {
     const mapPreviewUrl = server.map ? getMapPreviewUrl(server.game_code, server.map) : null;
     if (mapPreviewUrl) {
       initialImgUrl = mapPreviewUrl;
-      fallbackImgUrl = gameBannerUrl;
     } else if (gameBannerUrl) {
       initialImgUrl = gameBannerUrl;
-      fallbackImgUrl = gameBannerFallback;
+    } else if (gameBannerFallback) {
+      initialImgUrl = gameBannerFallback;
     }
   } else {
     if (gameBannerUrl) {
       initialImgUrl = gameBannerUrl;
-      fallbackImgUrl = gameBannerFallback;
+    } else if (gameBannerFallback) {
+      initialImgUrl = gameBannerFallback;
     }
   }
+  if (!initialImgUrl) {
+    initialImgUrl = 'https://steamcdn-a.akamaihd.net/steam/apps/730/header.jpg';
+  }
 
-  const hasPlayers = server.max_players !== undefined && server.max_players > 0;
-  const currentPlayers = server.players !== undefined ? Math.max(0, server.players) : 0;
-  const maxPlayers = hasPlayers ? server.max_players : 0;
-  const playerPercent = (hasPlayers && maxPlayers > 0) ? Math.min(100, Math.round((currentPlayers / maxPlayers) * 100)) : 0;
+  const rawMax = server.max_players ?? server.maxplayers ?? server.slots ?? server.max_clients;
+  const hasMaxPlayers = rawMax !== undefined && rawMax !== null && Number(rawMax) > 0;
+  const currentPlayers = (server.players !== undefined && server.players !== null) ? Math.max(0, Number(server.players)) : 0;
+  const maxPlayers = hasMaxPlayers ? Number(rawMax) : 0;
+  const playerPercent = (maxPlayers > 0) ? Math.min(100, Math.round((currentPlayers / maxPlayers) * 100)) : 0;
+  const isHighLoad = playerPercent > 80;
+  const counterText = maxPlayers > 0
+    ? `${currentPlayers} / ${maxPlayers} (${playerPercent}%)`
+    : (server.players !== undefined && server.players !== null ? `${currentPlayers}` : '—');
 
-  let pingClass = 'ping-good';
+  let pingClass = 'fast';
   if (server.ping !== undefined) {
-    if (server.ping > 120) pingClass = 'ping-bad';
-    else if (server.ping > 60) pingClass = 'ping-warn';
+    if (server.ping >= 70) pingClass = 'slow';
+    else if (server.ping >= 30) pingClass = 'medium';
   }
 
-  // Build meta items
-  let metaHtml = '';
-  const metaParts = [];
+  const connectScheme = server.connect_url 
+    ? server.connect_url 
+    : ((server.game_code === 'minecraft') 
+        ? `minecraft://${addressStr}` 
+        : `steam://connect/${addressStr}`);
 
-  // 13.6 Uptime Badge
-  if (server.uptime_seconds) {
-    const uStr = formatUptime(server.uptime_seconds);
-    if (uStr) {
-      metaParts.push(`
-        <span class="meta-item meta-uptime" title="Uptime: ${uStr}">
-          ⏱️ ${uStr}
-        </span>
-      `);
-    }
-  }
-
-  if (hasPlayers) {
-    metaParts.push(`
-      <div class="meta-item meta-players" title="Players: ${currentPlayers} / ${maxPlayers}">
-        <span class="meta-label">👥 ${currentPlayers}/${maxPlayers}</span>
-        <div class="player-bar-track">
-          <div class="player-bar-fill" style="width: ${playerPercent}%;"></div>
-        </div>
-      </div>
-    `);
-  } else if (server.players !== undefined && server.players > 0) {
-    metaParts.push(`<span class="meta-item" title="Players">👥 ${server.players}</span>`);
-  }
-
-  if (server.ping !== undefined && server.ping > 0) {
-    metaParts.push(`
-      <span class="meta-item meta-ping ${pingClass}" title="Ping: ${server.ping} ms">
-        <span class="ping-dot"></span>
-        <span>${server.ping} ms</span>
-      </span>
-    `);
-  }
-
-  if (metaParts.length > 0) {
-    metaHtml = `<div class="card-meta">${metaParts.join('')}</div>`;
-  }
-
-  card.className = `server-card ${isOnline ? 'is-online' : 'is-offline'} ${isFavorite(server.id) ? 'is-favorite' : ''}`;
+  card.className = `server-card ${isOnline ? 'online is-online' : 'offline is-offline'} ${isFavorite(server.id) ? 'is-favorite' : ''}`;
+  card.dataset.serverId = server.id;
 
   card.innerHTML = `
-    <div class="card-hero ${!isOnline ? 'is-offline' : ''} ${!initialImgUrl ? 'no-image' : ''}">
-      ${initialImgUrl ? `
-        <img class="card-hero-img is-loaded" 
-             src="${escapeHtml(initialImgUrl)}" 
-             ${fallbackImgUrl ? `data-fallback-src="${escapeHtml(fallbackImgUrl)}"` : ''}
-             alt="" 
-             aria-hidden="true"
-             referrerpolicy="no-referrer"
-             onload="this.classList.add('is-loaded')"
-             onerror="window.handleCardHeroError(this)" />
-      ` : ''}
-      <div class="card-hero-overlay"></div>
-      <div class="card-hero-top">
-        <div class="card-hero-badges">
-          <span class="game-badge">${escapeHtml(server.game_name || server.game_code)}</span>
-          ${server.category ? `<span class="category-badge">${escapeHtml(server.category)}</span>` : ''}
-        </div>
-        <div class="card-hero-actions">
-          <button class="favorite-star-btn ${isFavorite(server.id) ? 'is-fav' : ''}" 
-                  title="${isFavorite(server.id) ? t('unfavoriteTitle') : t('favoriteTitle')}" 
-                  onclick="event.stopPropagation(); window.toggleFavorite(${server.id})">★</button>
-          <span class="status-pill ${isOnline ? 'online' : 'offline'}">
-            <span class="status-dot"></span>
-            ${isOnline ? 'Online' : 'Offline'}
-          </span>
-        </div>
+    <div class="card-hero-banner">
+      <img src="${escapeHtml(initialImgUrl)}" alt="${escapeHtml(server.game_name || server.game_code)}" class="banner-img" loading="lazy" onerror="this.src='https://steamcdn-a.akamaihd.net/steam/apps/730/header.jpg'">
+      <div class="banner-overlay"></div>
+      
+      <div class="banner-top-badges">
+        <span class="badge-status ${isOnline ? 'online' : 'offline'}">
+          <span class="dot"></span>
+          <span>${isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+        </span>
+        ${isOnline && server.ping !== undefined && server.ping > 0 ? `<span class="badge-ping ${pingClass}">⚡ ${server.ping} ms</span>` : ''}
       </div>
-      ${isOnline && server.map ? `
-        <div class="card-hero-bottom">
-          <span class="map-chip" title="Map: ${escapeHtml(server.map)}">
-            <svg class="icon-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-              <line x1="8" y1="2" x2="8" y2="18"></line>
-              <line x1="16" y1="6" x2="16" y2="22"></line>
-            </svg>
-            <span class="map-chip-text">${escapeHtml(server.map)}</span>
-          </span>
-        </div>
-      ` : ''}
+
+      <div class="banner-bottom-meta">
+        <span class="game-name-tag">${escapeHtml(server.game_name || server.game_code)}</span>
+        ${isOnline && server.map ? `<span class="map-name-pill">🗺️ ${escapeHtml(server.map)}</span>` : ''}
+      </div>
     </div>
 
     <div class="card-body">
-      <div class="card-body-top">
-        <h2 class="server-name" title="${escapeHtml(server.name)}">${escapeHtml(server.name)}</h2>
-        ${metaHtml}
-      </div>
+      <h3 class="server-title" title="${escapeHtml(server.name)}">${escapeHtml(server.name)}</h3>
 
-      <div class="card-body-bottom">
-        <div class="card-address">
-          <span class="address-text">${escapeHtml(addressStr)}</span>
-          <button class="btn btn-copy" type="button" data-copy="${escapeHtml(addressStr)}" data-server-id="${server.id}" title="${t('copyBtn')}">
-            ${t('copyBtn')}
-          </button>
-        </div>
-
-        <div class="card-actions">
-          ${isOnline && server.connect_url ? `
-            <a href="${escapeHtml(server.connect_url)}" class="btn btn-connect" onclick="window.trackServerClick(${server.id})">
-              <svg class="icon-connect" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-              ${t('connectBtn')}
-            </a>
-          ` : ''}
-        </div>
-      </div>
-
-      <!-- Card Spoiler / Accordion for Console & Extra Details -->
-      <div class="card-spoiler-wrap">
-        <button type="button" class="btn-spoiler-toggle" onclick="window.toggleCardSpoiler(this, ${server.id})">
-          <span>${t('cardSpoilerToggle')}</span>
-          <span class="spoiler-arrow">▼</span>
+      <div class="address-pill" onclick="window.copyToClipboard('${escapeHtml(addressStr)}')" title="${t('copyBtn')}">
+        <span class="address-text">${escapeHtml(addressStr)}</span>
+        <button class="btn-copy-mini" type="button">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>${t('copyBtnMini')}</span>
         </button>
-        <div class="card-spoiler-content hidden" id="card-spoiler-${server.id}">
+      </div>
+
+      <div class="players-section">
+        <div class="players-header">
+          <span class="players-label">${t('playersLabel')}</span>
+          <span class="players-counter">${counterText}</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill ${isHighLoad ? 'high' : ''}" style="width: ${maxPlayers > 0 ? playerPercent : 0}%;"></div>
+        </div>
+      </div>
+
+      <div class="card-actions-row">
+        <a href="${escapeHtml(connectScheme)}" class="btn-connect-primary" ${!isOnline ? 'style="pointer-events:none; opacity:0.4;"' : ''} onclick="window.trackServerClick ? window.trackServerClick(${server.id}) : null">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${t('connectBtnFull')}</span>
+        </a>
+
+        <button class="btn-fav-star ${isFavorite(server.id) ? 'is-fav' : ''}" type="button" onclick="event.stopPropagation(); window.toggleFavorite(${server.id})" title="${isFavorite(server.id) ? t('unfavoriteTitle') : t('favoriteTitle')}">
+          ${isFavorite(server.id) ? '★' : '☆'}
+        </button>
+      </div>
+
+      <div class="details-spoiler">
+        <button type="button" class="spoiler-toggle" onclick="window.toggleDetails(${server.id})">
+          <span>${t('parametersAndConsole')}</span>
+          <span id="spoiler-arrow-${server.id}">▼</span>
+        </button>
+        <div class="spoiler-content" id="spoiler-box-${server.id}" style="display: none;">
           <div class="spoiler-row">
-            <span class="spoiler-key">${t('consoleCommandLabel')}</span>
-            <div class="spoiler-cmd-box">
-              <code>connect ${escapeHtml(addressStr)}</code>
-              <button type="button" class="btn-copy-sm" data-copy="connect ${escapeHtml(addressStr)}" data-server-id="${server.id}" title="${t('copyCommandBtn')}">📋</button>
-            </div>
+            <span>${t('networkStatusLabel')}</span>
+            <span style="color: ${isOnline ? 'var(--neon-emerald)' : 'var(--neon-rose)'}">${isOnline ? t('activePortOpen') : t('downMaintenance')}</span>
           </div>
-          <div class="spoiler-details-grid">
-            <div class="spoiler-detail-item">
-              <span class="detail-label">${t('statusLabel')}</span>
-              <span class="detail-val ${isOnline ? 'text-online' : 'text-offline'}">${isOnline ? 'Online' : 'Offline'}</span>
+          ${(server.location || server.node_name) ? `
+            <div class="spoiler-row">
+              <span>${t('nodeLabel')}</span>
+              <span>${escapeHtml(server.location || server.node_name)}</span>
             </div>
-            <div class="spoiler-detail-item">
-              <span class="detail-label">${t('portLabel')}</span>
-              <span class="detail-val">${server.port || 0}</span>
+          ` : ''}
+          ${server.category ? `
+            <div class="spoiler-row">
+              <span>${t('categoryLabel')}</span>
+              <span>${escapeHtml(server.category)}</span>
             </div>
-            ${(server.ping !== undefined && server.ping > 0) ? `
-              <div class="spoiler-detail-item">
-                <span class="detail-label">${t('pingLabel')}</span>
-                <span class="detail-val">${server.ping} ms</span>
-              </div>
-            ` : ''}
-            ${server.category ? `
-              <div class="spoiler-detail-item">
-                <span class="detail-label">${t('categoryLabel')}</span>
-                <span class="detail-val">${escapeHtml(server.category)}</span>
-              </div>
-            ` : ''}
+          ` : ''}
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">${t('consoleCommandHint')}</div>
+          <div class="spoiler-command-box" onclick="window.copyToClipboard('connect ${escapeHtml(addressStr)}')" title="${t('copyCommandBtn')}">
+            <code>connect ${escapeHtml(addressStr)}</code>
+            <span>📋</span>
           </div>
         </div>
       </div>
@@ -1352,6 +1356,7 @@ function renderServers() {
   const offlineServers = filtered.filter(s => s.status !== 'online');
 
   grid.innerHTML = '';
+  grid.classList.remove('accordion-view');
 
   if (onlineServers.length === 0 && offlineServers.length === 0) {
     emptyState.style.display = 'block';
@@ -1365,6 +1370,7 @@ function renderServers() {
   // Check if accordion view mode is selected for clusters/categories
   const hasCategories = allServers.some(s => s.category && s.category.trim());
   if (currentViewMode === 'accordion' && hasCategories) {
+    grid.classList.add('accordion-view');
     // Group online servers by category
     const catMap = new Map();
     onlineServers.forEach(s => {
@@ -1399,6 +1405,7 @@ function renderServers() {
       grid.appendChild(clusterDiv);
     });
   } else {
+    grid.classList.remove('accordion-view');
     // Standard flat grid for online servers
     onlineServers.forEach(server => {
       grid.appendChild(createServerCard(server));

@@ -378,3 +378,45 @@ pub struct FindGamesResponse {
     #[prost(int32, tag = "2")]
     pub total: i32,
 }
+
+// gameap-nodes
+#[derive(Clone, PartialEq, prost::Message)]
+pub struct NodeProto {
+    #[prost(uint64, tag = "1")]
+    pub id: u64,
+    #[prost(bool, tag = "2")]
+    pub enabled: bool,
+    #[prost(string, tag = "3")]
+    pub name: String,
+    #[prost(string, tag = "4")]
+    pub os: String,
+    #[prost(string, tag = "5")]
+    pub location: String,
+    #[prost(string, optional, tag = "6")]
+    pub provider: Option<String>,
+    #[prost(string, repeated, tag = "7")]
+    pub ips: Vec<String>,
+    #[prost(string, tag = "8")]
+    pub work_path: String,
+    #[prost(string, tag = "9")]
+    pub gdaemon_host: String,
+    #[prost(int32, tag = "10")]
+    pub gdaemon_port: i32,
+    #[prost(int64, optional, tag = "11")]
+    pub created_at: Option<i64>,
+    #[prost(int64, optional, tag = "12")]
+    pub updated_at: Option<i64>,
+    #[prost(map = "string, string", tag = "13")]
+    pub metadata: HashMap<String, String>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+pub struct FindNodesRequest {}
+
+#[derive(Clone, PartialEq, prost::Message)]
+pub struct FindNodesResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub nodes: Vec<NodeProto>,
+    #[prost(int32, tag = "2")]
+    pub total: i32,
+}

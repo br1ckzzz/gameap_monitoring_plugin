@@ -93,6 +93,8 @@ pub struct StorageDiagnostics {
 pub struct PublicServerDTO {
     #[serde(default)]
     pub id: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub node_id: Option<u64>,
     #[serde(default)]
     pub name: String,
     #[serde(default)]
@@ -146,12 +148,26 @@ pub struct AnnouncementDTO {
 /// Live query telemetry ingested from Companion Bot or external worker.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ServerTelemetryDTO {
+    #[serde(default)]
     pub online: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub map: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        alias = "players_num",
+        alias = "online_players",
+        alias = "clients"
+    )]
     pub players: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        alias = "maxplayers",
+        alias = "slots",
+        alias = "max_clients",
+        alias = "max_slots"
+    )]
     pub max_players: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ping: Option<i32>,
@@ -182,7 +198,11 @@ pub struct NodeDTO {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cpu_percent: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ram_percent: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub protection: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub os: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gdaemon_host: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -222,7 +242,7 @@ fn default_subtitle() -> String {
 }
 
 fn default_theme() -> String {
-    "dark".to_string()
+    "modern".to_string()
 }
 
 /// Customizable plugin settings persisted in GameAP storage.
@@ -233,7 +253,7 @@ pub struct PluginSettings {
     #[serde(default = "default_subtitle")]
     pub subtitle: String,
     #[serde(default = "default_theme")]
-    pub theme: String, // "dark" or "light"
+    pub theme: String, // "modern", "dark", or "light"
     #[serde(default = "default_refresh_interval")]
     pub refresh_interval: u32,
     #[serde(default)]
@@ -295,7 +315,7 @@ impl Default for PluginSettings {
         Self {
             title: "GameAP Servers".to_string(),
             subtitle: "Онлайн мониторинг игровых серверов".to_string(),
-            theme: "dark".to_string(),
+            theme: "modern".to_string(),
             refresh_interval: 15,
             custom_css: String::new(),
             custom_header_html: String::new(),
@@ -365,7 +385,9 @@ mod tests {
             provider: Some("Selectel".to_string()),
             cpu_model: Some("AMD Ryzen 9 7950X3D".to_string()),
             cpu_percent: Some(25),
+            ram_percent: Some(40),
             protection: Some("DDoS-Guard".to_string()),
+            os: Some("Linux".to_string()),
             gdaemon_host: Some("185.123.45.67".to_string()),
             gdaemon_port: Some(31717),
             ips: vec!["185.123.45.67".to_string()],
@@ -389,5 +411,21 @@ mod tests {
         assert_eq!(deserialized.nodes.len(), 1);
         assert_eq!(deserialized.nodes[0].name, "[RU] Moscow Core");
         assert_eq!(deserialized.nodes[0].cpu_percent, Some(25));
+    }
+
+    #[test]
+    fn test_server_telemetry_dto_aliases_and_zero_players() {
+        let json = r#"{"online": true, "players": 0, "max_players": 16, "ping": 15}"#;
+        let dto: ServerTelemetryDTO = serde_json::from_str(json).expect("should parse telemetry");
+        assert!(dto.online);
+        assert_eq!(dto.players, Some(0));
+        assert_eq!(dto.max_players, Some(16));
+        assert_eq!(dto.ping, Some(15));
+
+        // Test with aliases (e.g. slots, players_num)
+        let json_aliases = r#"{"online": true, "players_num": 3, "slots": 32}"#;
+        let dto2: ServerTelemetryDTO = serde_json::from_str(json_aliases).expect("should parse aliases");
+        assert_eq!(dto2.players, Some(3));
+        assert_eq!(dto2.max_players, Some(32));
     }
 }
