@@ -40,7 +40,7 @@ The plugin compiles into a single WebAssembly module (`web_monitoring.wasm`, tar
 - 🖥️ **Compact 4-in-a-Row Desktop Grid:** Optimized layout for PC screens (`min-width: 1200px`), displaying strictly 4 server cards per row within an expanded 1560px container, compact 110px hero cover, and seamless responsive collapse (3 col on 900–1199px, 2 col on 600–899px, 1 col on mobile).
 - 🌍 **Full RU / EN Bilingual Support:** Live language toggle (`#lang-toggle-btn`) in header, automatic browser language detection (`navigator.language`), persistent `localStorage` saving, and 100% localization across all components, badges, modals, and the GameAP Admin Panel (`admin_bundle.js`).
 - 📍 **Dedicated Node & Location Badges:** Visual physical node location tags (`.node-badge`) on server cards and in detailed server specs (e.g., `Helsinki, FIN`, `Frankfurt, DE`, `Moscow, RU`).
-- 📡 **Protocol Telemetry & Companion Bot Integration:** Deep integration with `GameAP_WebMonBot` (Discord/Telegram), supporting protocol-level queries (A2S for CS2/Source, SLP for Minecraft, SAMP, Quake, FiveM), real player lists, and real network ping monitoring.
+- 📡 **Protocol Telemetry & Companion Bot Integration:** Deep integration with [GameAP_WebMonBot](https://github.com/br1ckzzz/GameAP_WebMonBot) (Discord/Telegram), supporting protocol-level queries (A2S for CS2/Source, SLP for Minecraft, SAMP, Quake, FiveM), real player lists, and real network ping monitoring.
 - 🎮 **Centralized Game Catalog (`games.json`):** Unified metadata registry with 30+ game definitions, Steam AppIDs, query protocols, and high-res banners with graceful offline fallbacks.
 - 🖼️ **Admin Logo Guidance:** Explicit recommended dimensions in admin panel: up to 256×256 px (transparent PNG, SVG, or WebP).
 - 🌐 **Instant Public Access:** Both the web view and JSON API are accessible to visitors out of the box with zero exposure of sensitive data (RCON passwords, tokens, and internal paths remain protected).
@@ -51,6 +51,18 @@ The plugin compiles into a single WebAssembly module (`web_monitoring.wasm`, tar
   - Server visibility toggles to hide private or maintenance servers.
   - Customizable title, subtitle, default theme, and refresh intervals.
   - In-browser Custom CSS and Custom Header HTML editors (embed Discord/Telegram widgets, banners, or logos without recompiling).
+
+---
+
+## 🤖 Official Companion Bot: GameAP_WebMonBot
+
+Level up your gaming community with the official companion bot: **[GameAP_WebMonBot](https://github.com/br1ckzzz/GameAP_WebMonBot)**.
+
+- 📊 **Interactive Discord Embeds & Real-Time Buttons:** Instant 1-click connect (`steam://connect`), IP copy, and real-time player counts.
+- 🖥️ **Host Nodes & Dedicated Infrastructure Monitoring (`/mon nodes`):** Live dashboard for physical machines with CPU/RAM metrics, OS, country flags, Anti-DDoS status, and real ping.
+- 📡 **Live Query Telemetry Ingestion (`POST /servers/query-update`):** Bot queries game protocols directly (A2S, SLP, SAMP, Quake, FiveM) and streams verified live telemetry into this web plugin.
+- 🛡️ **Fault-Tolerant Dead Node Detection:** Accurately marks crashed servers offline, preventing the stuck `ONLINE` status bug.
+- 🔗 **GitHub Repository:** [https://github.com/br1ckzzz/GameAP_WebMonBot](https://github.com/br1ckzzz/GameAP_WebMonBot)
 
 ---
 
