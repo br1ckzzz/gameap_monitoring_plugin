@@ -130,6 +130,37 @@ pub fn is_steam_game(code: &str) -> bool {
     )
 }
 
+fn is_sensitive_meta_key(key: &str) -> bool {
+    let lower = key.to_ascii_lowercase();
+    lower.contains("password")
+        || lower.contains("rcon")
+        || lower.contains("secret")
+        || lower.contains("token")
+        || lower.contains("key")
+        || lower.contains("auth")
+}
+
+pub fn sanitize_raw_server_diagnostic(s: &ServerProto) -> serde_json::Value {
+    let meta_keys: Vec<String> = s
+        .metadata
+        .keys()
+        .filter(|k| !is_sensitive_meta_key(k))
+        .cloned()
+        .collect();
+    let has_vars = s.vars.as_ref().map(|v| !v.is_empty()).unwrap_or(false);
+    serde_json::json!({
+        "id": s.id,
+        "name": s.name,
+        "game_id": s.game_id,
+        "server_ip": s.server_ip,
+        "server_port": s.server_port,
+        "query_port": s.query_port,
+        "process_active": s.process_active,
+        "has_vars": has_vars,
+        "metadata_keys": meta_keys,
+    })
+}
+
 pub fn get_raw_servers_diagnostic() -> Vec<serde_json::Value> {
     let host_resp = call_host::<FindServersRequest, FindServersResponse>(
         &FindServersRequest {},
@@ -137,22 +168,8 @@ pub fn get_raw_servers_diagnostic() -> Vec<serde_json::Value> {
     );
     let raw_servers = host_resp.map(|r| r.servers).unwrap_or_default();
     raw_servers
-        .into_iter()
-        .map(|s| {
-            let meta_keys: Vec<String> = s.metadata.keys().cloned().collect();
-            let vars_raw = s.vars.clone().unwrap_or_default();
-            serde_json::json!({
-                "id": s.id,
-                "name": s.name,
-                "game_id": s.game_id,
-                "server_ip": s.server_ip,
-                "server_port": s.server_port,
-                "query_port": s.query_port,
-                "process_active": s.process_active,
-                "vars": vars_raw,
-                "metadata_keys": meta_keys,
-            })
-        })
+        .iter()
+        .map(sanitize_raw_server_diagnostic)
         .collect()
 }
 
@@ -473,4 +490,64 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
 
 pub fn fetch_public_servers() -> Vec<u8> {
     fetch_public_servers_with_opt(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::proto::AnyProto;
+
+    #[test]
+    fn test_sanitize_raw_server_diagnostic_omits_vars_and_sensitive_keys() {
+        let mut metadata = HashMap::new();
+        metadata.insert(
+            "public_ip".to_string(),
+            AnyProto {
+                type_url: String::new(),
+                value: b"1.2.3.4".to_vec(),
+            },
+        );
+        metadata.insert(
+            "rcon_password".to_string(),
+            AnyProto {
+                type_url: String::new(),
+                value: b"secret-rcon".to_vec(),
+            },
+        );
+        metadata.insert(
+            "api_token".to_string(),
+            AnyProto {
+                type_url: String::new(),
+                value: b"secret-tok".to_vec(),
+            },
+        );
+
+        let srv = ServerProto {
+            id: 42,
+            uuid: "u".to_string(),
+            uuid_short: "us".to_string(),
+            enabled: true,
+            installed: 1,
+            blocked: false,
+            name: "Test Server".to_string(),
+            game_id: "cs2".to_string(),
+            ds_id: 1,
+            game_mod_id: 1,
+            server_ip: "127.0.0.1".to_string(),
+            server_port: 27015,
+            query_port: Some(27015),
+            rcon_port: Some(27016),
+            process_active: true,
+            vars: Some("rcon_password=supersecret".to_string()),
+            metadata,
+        };
+
+        let sanitized = sanitize_raw_server_diagnostic(&srv);
+        assert!(sanitized.get("vars").is_none());
+        assert_eq!(sanitized["has_vars"], true);
+        let keys = sanitized["metadata_keys"].as_array().unwrap();
+        assert!(keys.iter().any(|k| k == "public_ip"));
+        assert!(!keys.iter().any(|k| k == "rcon_password"));
+        assert!(!keys.iter().any(|k| k == "api_token"));
+    }
 }

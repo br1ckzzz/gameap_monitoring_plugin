@@ -79,6 +79,13 @@ pub fn get_storage_diagnostics() -> StorageDiagnostics {
     }
 }
 
+#[cfg(test)]
+pub(crate) fn set_test_settings(s: PluginSettings) {
+    if let Ok(mut guard) = CURRENT_SETTINGS.lock() {
+        *guard = Some(s);
+    }
+}
+
 /// Retrieves active settings from memory cache or database storage.
 pub fn get_settings() -> PluginSettings {
     // If in-memory settings are already loaded/saved, return directly

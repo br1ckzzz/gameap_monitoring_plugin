@@ -87,15 +87,15 @@ pub const HTTP_ROUTES: &[HTTPRouteDescriptor] = &[
     HTTPRouteDescriptor {
         path: "/settings",
         methods: &["GET", "POST"],
-        requires_auth: false,
-        admin_only: false,
+        requires_auth: true,
+        admin_only: true,
         description: "Web monitoring settings and customization",
     },
     HTTPRouteDescriptor {
         path: "/diagnostic",
         methods: &["GET"],
-        requires_auth: false,
-        admin_only: false,
+        requires_auth: true,
+        admin_only: true,
         description: "Diagnostic information about host GameAP services",
     },
 ];

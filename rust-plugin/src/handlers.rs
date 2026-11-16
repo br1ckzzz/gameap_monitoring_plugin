@@ -74,6 +74,75 @@ fn get_header_ignore_case<'a>(headers: &'a HashMap<String, String>, key: &str) -
     })
 }
 
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff: u8 = 0;
+    for (&x, &y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
+fn verify_bot_token(settings: &PluginSettings, provided: Option<&str>) -> bool {
+    if !settings.bot_api_enabled || settings.bot_api_token.is_empty() {
+        return false;
+    }
+    match provided {
+        Some(token) => constant_time_eq(token.as_bytes(), settings.bot_api_token.as_bytes()),
+        None => false,
+    }
+}
+
+fn require_admin(req: &HttpRequest) -> Option<HTTPResponseData> {
+    let Some(ref ctx) = req.context else {
+        return Some(HTTPResponseData {
+            status_code: 401,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Unauthorized: admin authentication required"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        });
+    };
+
+    if ctx.user_id.unwrap_or(0) == 0 {
+        return Some(HTTPResponseData {
+            status_code: 401,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Unauthorized: authenticated user required"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        });
+    }
+
+    if !ctx.permissions.is_empty()
+        && !ctx.permissions.iter().any(|p| {
+            p.eq_ignore_ascii_case("admin")
+                || p == "*"
+                || p.eq_ignore_ascii_case("admin_only")
+        })
+    {
+        return Some(HTTPResponseData {
+            status_code: 403,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Forbidden: admin permissions required"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        });
+    }
+
+    None
+}
+
+fn mask_token(token: &str) -> String {
+    if token.is_empty() {
+        String::new()
+    } else {
+        "***".to_string()
+    }
+}
+
 fn extract_auth_token(req: &HttpRequest) -> Option<String> {
     if let Some(token) = get_header_ignore_case(&req.headers, "X-WebMon-Token")
         .or_else(|| get_header_ignore_case(&req.headers, "X-Api-Token"))
@@ -271,21 +340,25 @@ fn parse_telemetry_payload(body: &[u8]) -> Result<crate::types::QueryTelemetryPa
 /// Ingests live telemetry from companion bot or external query daemon.
 fn handle_query_update(req: &HttpRequest) -> HTTPResponseData {
     let settings = get_settings();
-    let provided_token = extract_auth_token(req);
+    if !settings.bot_api_enabled || settings.bot_api_token.is_empty() {
+        return HTTPResponseData {
+            status_code: 403,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Bot API is disabled or not configured"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        };
+    }
 
-    if !settings.bot_api_token.is_empty() {
-        match provided_token {
-            Some(ref token) if token == &settings.bot_api_token => {},
-            _ => {
-                return HTTPResponseData {
-                    status_code: 401,
-                    content_type: "application/json; charset=utf-8",
-                    body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
-                    etag: None,
-                    cache_control: None,
-                };
-            }
-        }
+    let provided_token = extract_auth_token(req);
+    if !verify_bot_token(&settings, provided_token.as_deref()) {
+        return HTTPResponseData {
+            status_code: 401,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        };
     }
 
     match parse_telemetry_payload(&req.body) {
@@ -321,8 +394,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
     let provided_token = extract_auth_token(req);
 
     // Validate bot API authentication if requested on explicit bot endpoints or with token
-    let token_matches = !settings.bot_api_token.is_empty()
-        && provided_token.as_ref() == Some(&settings.bot_api_token);
+    let token_matches = verify_bot_token(&settings, provided_token.as_deref());
 
     if is_explicit_bot_endpoint {
         if !settings.bot_api_token.is_empty() {
@@ -346,7 +418,9 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         }
     } else if let Some(ref token) = provided_token {
         // On generic /servers or root endpoints, reject only if a token was configured and provided token doesn't match
-        if !settings.bot_api_token.is_empty() && token != &settings.bot_api_token {
+        if !settings.bot_api_token.is_empty()
+            && !constant_time_eq(token.as_bytes(), settings.bot_api_token.as_bytes())
+        {
             return HTTPResponseData {
                 status_code: 401,
                 content_type: "application/json; charset=utf-8",
@@ -588,6 +662,10 @@ fn handle_view() -> HTTPResponseData {
 
 /// Administrative settings handler (GET and POST).
 fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
+    if let Some(err_resp) = require_admin(req) {
+        return err_resp;
+    }
+
     if req.method.eq_ignore_ascii_case("POST") {
         if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&req.body) {
             // Safety guard: if this payload is telemetry, route to handle_query_update
@@ -706,16 +784,20 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
 
 /// Diagnostic endpoint.
 fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
-    let client_ip = req
-        .headers
-        .get("X-Gameap-Client-Ip")
-        .or_else(|| req.headers.get("X-Forwarded-For"))
-        .or_else(|| req.headers.get("X-Real-IP"))
+    if let Some(err_resp) = require_admin(req) {
+        return err_resp;
+    }
+
+    let client_ip = get_header_ignore_case(&req.headers, "X-Gameap-Client-Ip")
+        .or_else(|| get_header_ignore_case(&req.headers, "X-Forwarded-For"))
+        .or_else(|| get_header_ignore_case(&req.headers, "X-Real-IP"))
         .cloned()
         .unwrap_or_default();
 
     let all_servers = fetch_all_servers();
-    let settings = get_settings();
+    let mut settings = get_settings();
+    let token_configured = !settings.bot_api_token.is_empty();
+    settings.bot_api_token = mask_token(&settings.bot_api_token);
     let storage_diag = crate::settings::get_storage_diagnostics();
 
     let raw_diagnostic = crate::servers_client::get_raw_servers_diagnostic();
@@ -729,6 +811,7 @@ fn handle_diagnostic(req: &HttpRequest) -> HTTPResponseData {
         "servers_count": all_servers.len(),
         "storage": storage_diag,
         "raw_servers": raw_diagnostic,
+        "bot_api_token_configured": token_configured,
         "settings": settings,
     });
 
@@ -804,5 +887,131 @@ fn handle_stats(_req: &HttpRequest) -> HTTPResponseData {
         body,
         etag: None,
         cache_control: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::proto::PluginContext;
+    use crate::settings::set_test_settings;
+    use std::sync::Mutex;
+
+    static TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    fn make_request(method: &str, path: &str, context: Option<PluginContext>) -> HttpRequest {
+        HttpRequest {
+            context,
+            method: method.to_string(),
+            path: path.to_string(),
+            headers: HashMap::new(),
+            path_params: HashMap::new(),
+            query_params: HashMap::new(),
+            body: Vec::new(),
+        }
+    }
+
+    fn admin_context() -> PluginContext {
+        PluginContext {
+            plugin_id: "monitoring".to_string(),
+            request_id: "req-1".to_string(),
+            user_id: Some(1),
+            permissions: vec!["admin".to_string()],
+        }
+    }
+
+    #[test]
+    fn test_settings_requires_admin_context() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        set_test_settings(PluginSettings::default());
+
+        let get_unauth = handle_settings(&make_request("GET", "/settings", None));
+        assert!(
+            get_unauth.status_code == 401 || get_unauth.status_code == 403,
+            "expected 401/403 for unauthenticated GET /settings, got {}",
+            get_unauth.status_code
+        );
+
+        let mut post_req = make_request("POST", "/settings", None);
+        post_req.body = br#"{"title":"Hacked"}"#.to_vec();
+        let post_unauth = handle_settings(&post_req);
+        assert!(
+            post_unauth.status_code == 401 || post_unauth.status_code == 403,
+            "expected 401/403 for unauthenticated POST /settings, got {}",
+            post_unauth.status_code
+        );
+
+        let non_admin_ctx = PluginContext {
+            plugin_id: "monitoring".to_string(),
+            request_id: "req-2".to_string(),
+            user_id: Some(2),
+            permissions: vec!["user".to_string()],
+        };
+        let get_non_admin = handle_settings(&make_request("GET", "/settings", Some(non_admin_ctx)));
+        assert!(
+            get_non_admin.status_code == 401 || get_non_admin.status_code == 403,
+            "expected 401/403 for non-admin GET /settings, got {}",
+            get_non_admin.status_code
+        );
+    }
+
+    #[test]
+    fn test_diagnostic_requires_admin_context_and_masks_token() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut settings = PluginSettings::default();
+        settings.bot_api_enabled = true;
+        settings.bot_api_token = "super-secret-bot-token".to_string();
+        set_test_settings(settings);
+
+        let unauth = handle_diagnostic(&make_request("GET", "/diagnostic", None));
+        assert!(
+            unauth.status_code == 401 || unauth.status_code == 403,
+            "expected 401/403 for unauthenticated GET /diagnostic, got {}",
+            unauth.status_code
+        );
+
+        let authed = handle_diagnostic(&make_request("GET", "/diagnostic", Some(admin_context())));
+        assert_eq!(authed.status_code, 200);
+        let body_str = String::from_utf8(authed.body).unwrap();
+        assert!(
+            !body_str.contains("super-secret-bot-token"),
+            "diagnostic response must not leak raw bot_api_token: {}",
+            body_str
+        );
+        let json: serde_json::Value = serde_json::from_str(&body_str).unwrap();
+        assert_eq!(json["settings"]["bot_api_token"], "***");
+    }
+
+    #[test]
+    fn test_query_update_rejects_empty_token_or_disabled_bot_api() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+
+        // Case 1: bot_api_enabled = false, token configured, no header
+        let mut s_disabled = PluginSettings::default();
+        s_disabled.bot_api_enabled = false;
+        s_disabled.bot_api_token = "valid-token".to_string();
+        set_test_settings(s_disabled);
+
+        let mut req = make_request("POST", "/servers/query-update", None);
+        req.body = br#"{"1":{"online":true,"players":5}}"#.to_vec();
+        let resp_disabled = handle_query_update(&req);
+        assert!(
+            resp_disabled.status_code == 401 || resp_disabled.status_code == 403,
+            "expected 401/403 when bot_api_enabled is false, got {}",
+            resp_disabled.status_code
+        );
+
+        // Case 2: bot_api_enabled = true, token empty, no header
+        let mut s_empty = PluginSettings::default();
+        s_empty.bot_api_enabled = true;
+        s_empty.bot_api_token = String::new();
+        set_test_settings(s_empty);
+
+        let resp_empty = handle_query_update(&req);
+        assert!(
+            resp_empty.status_code == 401 || resp_empty.status_code == 403,
+            "expected 401/403 when bot_api_token is empty, got {}",
+            resp_empty.status_code
+        );
     }
 }
