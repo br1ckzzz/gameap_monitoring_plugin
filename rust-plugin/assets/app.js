@@ -1221,11 +1221,12 @@ function createServerCard(server) {
     else if (server.ping >= 30) pingClass = 'medium';
   }
 
-  const connectScheme = server.connect_url 
-    ? server.connect_url 
-    : ((server.game_code === 'minecraft') 
-        ? `minecraft://${addressStr}` 
-        : `steam://connect/${addressStr}`);
+  const defaultConnectScheme = (server.game_code === 'minecraft')
+    ? `minecraft://${addressStr}`
+    : `steam://connect/${addressStr}`;
+  const connectScheme = server.connect_url
+    ? sanitizeConnectUrl(server.connect_url, defaultConnectScheme)
+    : defaultConnectScheme;
 
   card.className = `server-card ${isOnline ? 'online is-online' : 'offline is-offline'} ${isFavorite(server.id) ? 'is-favorite' : ''}`;
   card.dataset.serverId = server.id;
@@ -1561,6 +1562,25 @@ function escapeHtml(str) {
   });
 }
 
+function sanitizeAssetUrl(url) {
+  if (typeof url !== 'string') return '';
+  const trimmed = url.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) return trimmed;
+  return '';
+}
+
+function sanitizeConnectUrl(url, fallback = '#') {
+  if (typeof url !== 'string') return fallback;
+  const trimmed = url.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+  if (!trimmed) return fallback;
+  if (/^(steam|fivem|mtasa|samp|minecraft|ts3server|mumble|teamspeak|discord|https?):\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return fallback;
+}
+
 // Countdown & Auto Refresh
 function startTimer() {
   if (refreshInterval) clearInterval(refreshInterval);
@@ -1710,14 +1730,15 @@ function initCustomBranding() {
       }
     } catch (_) {}
   }
-  if (logo) {
+  const safeLogo = sanitizeAssetUrl(logo);
+  if (safeLogo) {
     const brandContainer = document.querySelector('.brand');
     const brandIcon = document.querySelector('.brand-icon');
     if (brandContainer) {
       const existingImg = brandContainer.querySelector('.brand-logo');
       if (!existingImg) {
         const img = document.createElement('img');
-        img.src = logo;
+        img.src = safeLogo;
         img.alt = 'Logo';
         img.className = 'brand-logo';
         if (brandIcon) {
@@ -1728,14 +1749,15 @@ function initCustomBranding() {
       }
     }
   }
-  if (favicon) {
+  const safeFavicon = sanitizeAssetUrl(favicon);
+  if (safeFavicon) {
     let link = document.querySelector("link[rel~='icon']");
     if (!link) {
       link = document.createElement('link');
       link.rel = 'icon';
       document.head.appendChild(link);
     }
-    link.href = favicon;
+    link.href = safeFavicon;
   }
 }
 

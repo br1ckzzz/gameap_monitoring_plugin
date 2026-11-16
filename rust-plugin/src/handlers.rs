@@ -523,58 +523,87 @@ fn html_escape(s: &str) -> String {
         .replace('\'', "&#39;")
 }
 
+fn escape_json_for_script(json: &str) -> String {
+    json.replace('<', r"\u003c").replace('>', r"\u003e")
+}
+
+fn escape_css_for_style(css: &str) -> String {
+    let lower = css.to_ascii_lowercase();
+    let needle = "</style";
+    let mut out = String::with_capacity(css.len());
+    let mut last = 0;
+    while let Some(rel_idx) = lower[last..].find(needle) {
+        let idx = last + rel_idx;
+        out.push_str(&css[last..idx]);
+        out.push_str(r"\3c /style");
+        last = idx + needle.len();
+    }
+    out.push_str(&css[last..]);
+    out
+}
+
 /// Serves public HTML page with instant preload and administrative customizations.
 fn handle_view() -> HTTPResponseData {
     let settings = get_settings();
     let mut page_content = String::from_utf8_lossy(INDEX_HTML).to_string();
 
+    let v_tag = format!("v{}", PLUGIN_VERSION);
+    for old_v in ["v1.0.0", "v1.0.9", "v1.0.10", "v1.0.11", "v1.0.12", "v1.1.0"] {
+        page_content = page_content.replacen(old_v, &v_tag, 1);
+    }
+    page_content = page_content.replacen(">15с<", &format!(">{}с<", settings.refresh_interval), 1);
+    page_content = page_content.replacen(">15s<", &format!(">{}s<", settings.refresh_interval), 1);
+
+    if settings.theme == "light" {
+        page_content = page_content.replacen("<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">", 1);
+    } else if settings.theme == "modern" {
+        page_content = page_content.replacen("<html lang=\"ru\">", "<html lang=\"ru\" data-theme-style=\"modern\">", 1);
+    }
+
     if !settings.title.is_empty() {
         let escaped = html_escape(&settings.title);
-        page_content = page_content.replace(
+        page_content = page_content.replacen(
             "<title>GameAP | Servers Monitoring</title>",
             &format!("<title>{} | GameAP</title>", escaped),
+            1,
         );
-        page_content = page_content.replace(
+        page_content = page_content.replacen(
             "<title>Мониторинг игровых серверов | GameAP</title>",
             &format!("<title>{} | GameAP</title>", escaped),
+            1,
         );
-        page_content = page_content.replace("GameAP Servers", &escaped);
+        page_content = page_content.replacen(">GameAP Servers</h1>", &format!(">{}</h1>", escaped), 1);
     }
 
     if !settings.subtitle.is_empty() {
         let escaped = html_escape(&settings.subtitle);
-        page_content = page_content.replace("Онлайн мониторинг игровых серверов", &escaped);
-    }
-
-    if !settings.custom_header_html.is_empty() {
-        page_content = page_content.replace("<!-- CUSTOM_HEADER -->", &settings.custom_header_html);
+        page_content = page_content.replacen(
+            ">Онлайн мониторинг игровых серверов</p>",
+            &format!(">{}</p>", escaped),
+            1,
+        );
     }
 
     if !settings.custom_css.is_empty() {
+        let safe_css = escape_css_for_style(&settings.custom_css);
         let tag = format!(
             "<style id=\"admin-custom-css\">\n{}\n</style>\n</head>",
-            settings.custom_css
+            safe_css
         );
-        page_content = page_content.replace("</head>", &tag);
-    }
-
-    if settings.theme == "light" {
-        page_content = page_content.replace("<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">");
-    } else if settings.theme == "modern" {
-        page_content = page_content.replace("<html lang=\"ru\">", "<html lang=\"ru\" data-theme-style=\"modern\">");
+        page_content = page_content.replacen("</head>", &tag, 1);
     }
 
     if let Some(ref favicon) = settings.favicon_url {
         if !favicon.is_empty() {
             let tag = format!("<link rel=\"icon\" href=\"{}\">\n</head>", html_escape(favicon));
-            page_content = page_content.replace("</head>", &tag);
+            page_content = page_content.replacen("</head>", &tag, 1);
         }
     }
 
     if let Some(ref logo) = settings.logo_url {
         if !logo.is_empty() {
             let tag = format!("<img src=\"{}\" alt=\"Logo\" class=\"brand-logo\">", html_escape(logo));
-            page_content = page_content.replace("<div class=\"brand-icon\">🎮</div>", &tag);
+            page_content = page_content.replacen("<div class=\"brand-icon\">🎮</div>", &tag, 1);
         }
     }
 
@@ -616,20 +645,14 @@ fn handle_view() -> HTTPResponseData {
         }
     }
     if let Ok(initial_json) = serde_json::to_string(&initial_data) {
-        let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", initial_json);
-        page_content = page_content.replace("</head>", &preloaded);
+        let safe_json = escape_json_for_script(&initial_json);
+        let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", safe_json);
+        page_content = page_content.replacen("</head>", &preloaded, 1);
     }
 
-    let v_tag = format!("v{}", PLUGIN_VERSION);
-    page_content = page_content
-        .replace("v1.0.0", &v_tag)
-        .replace("v1.0.9", &v_tag)
-        .replace("v1.0.10", &v_tag)
-        .replace("v1.0.11", &v_tag)
-        .replace("v1.0.12", &v_tag)
-        .replace("v1.1.0", &v_tag);
-    page_content = page_content.replace(">15с<", &format!(">{}с<", settings.refresh_interval));
-    page_content = page_content.replace(">15s<", &format!(">{}s<", settings.refresh_interval));
+    if !settings.custom_header_html.is_empty() {
+        page_content = page_content.replacen("<!-- CUSTOM_HEADER -->", &settings.custom_header_html, 1);
+    }
 
     HTTPResponseData {
         status_code: 200,
@@ -1155,6 +1178,64 @@ mod tests {
         assert!(body_bot.contains("192.168.1.10"), "authenticated /bot/servers should include node ips");
 
         crate::servers_client::set_test_nodes(None);
+        invalidate_public_cache();
+    }
+
+    #[test]
+    fn test_handle_view_escapes_script_and_style_breakouts() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut settings = PluginSettings::default();
+        settings.title = "My GameAP Servers </head>".to_string();
+        settings.custom_css = "body { color: red; } </style><script>alert(1)</script> </STYLE>".to_string();
+        let mut srv = make_server_dto(1, "Evil</script><script>alert(1)</script>", false);
+        srv.map = Some("de_dust2</script><img src=x onerror=alert(2)>".to_string());
+        settings.cached_servers = vec![srv];
+        set_test_settings(settings);
+        invalidate_public_cache();
+
+        let resp = handle_view();
+        assert_eq!(resp.status_code, 200);
+        let html = String::from_utf8(resp.body).unwrap();
+
+        // 1. INITIAL_DATA must escape < and > as \u003c and \u003e so </script> cannot break out
+        assert!(
+            !html.contains("</script><script>alert(1)"),
+            "handle_view leaked unescaped </script> breakout in INITIAL_DATA"
+        );
+        assert!(
+            !html.contains("de_dust2</script>"),
+            "handle_view leaked unescaped </script> in map name"
+        );
+        assert!(
+            html.contains(r"\u003c/script\u003e\u003cscript\u003ealert(1)\u003c/script\u003e"),
+            "handle_view did not escape < and > as \\u003c and \\u003e in INITIAL_DATA"
+        );
+
+        // 2. custom_css must escape </style (case-insensitive) so it cannot break out of <style>
+        assert!(
+            !html.to_lowercase().contains("</style><script>alert(1)"),
+            "handle_view leaked unescaped </style> breakout in custom_css"
+        );
+        assert!(
+            !html.contains("</STYLE>"),
+            "handle_view leaked unescaped uppercase </STYLE> in custom_css"
+        );
+
+        // 3. settings.title containing "GameAP Servers" or "</head>" must not corrupt template
+        assert!(
+            !html.contains("My My GameAP Servers"),
+            "handle_view corrupted <title> via global replace of 'GameAP Servers'"
+        );
+        assert!(
+            html.contains("<title>My GameAP Servers &lt;/head&gt; | GameAP</title>"),
+            "handle_view did not properly set <title> without corruption"
+        );
+        assert_eq!(
+            html.matches("</head>").count(),
+            1,
+            "handle_view should have exactly one </head> closing tag"
+        );
+
         invalidate_public_cache();
     }
 }
