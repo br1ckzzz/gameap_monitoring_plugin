@@ -397,21 +397,20 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
     let token_matches = verify_bot_token(&settings, provided_token.as_deref());
 
     if is_explicit_bot_endpoint {
-        if !settings.bot_api_token.is_empty() {
-            if !token_matches {
-                return HTTPResponseData {
-                    status_code: 401,
-                    content_type: "application/json; charset=utf-8",
-                    body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
-                    etag: None,
-                    cache_control: None,
-                };
-            }
-        } else if !settings.bot_api_enabled && !token_matches {
+        if !settings.bot_api_enabled || settings.bot_api_token.is_empty() {
             return HTTPResponseData {
                 status_code: 403,
                 content_type: "application/json; charset=utf-8",
-                body: br#"{"success":false,"error":"Bot API is disabled in plugin settings"}"#.to_vec(),
+                body: br#"{"success":false,"error":"Bot API is disabled or not configured"}"#.to_vec(),
+                etag: None,
+                cache_control: None,
+            };
+        }
+        if !token_matches {
+            return HTTPResponseData {
+                status_code: 401,
+                content_type: "application/json; charset=utf-8",
+                body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
                 etag: None,
                 cache_control: None,
             };
@@ -431,26 +430,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         }
     }
 
-    let is_bot_client = get_header_ignore_case(&req.headers, "User-Agent")
-        .map(|ua| ua.contains("GameAP-WebMonBot") || ua.contains("WebMonBot"))
-        .unwrap_or(false)
-        && (settings.bot_api_token.is_empty() || token_matches);
-
-    let mut show_all = is_explicit_bot_endpoint || token_matches || is_bot_client;
-    if let Some(vals) = req.query_params.get("all") {
-        if let Some(first) = vals.values.first() {
-            if first == "1" || first == "true" {
-                show_all = true;
-            }
-        }
-    }
-    if let Some(vals) = req.query_params.get("action") {
-        if let Some(first) = vals.values.first() {
-            if first == "admin_servers" || first == "all_servers" {
-                show_all = true;
-            }
-        }
-    }
+    let show_all = token_matches || require_admin(req).is_none();
 
     let force_refresh = req.query_params.get("refresh").is_some()
         || req.query_params.get("nocache").is_some()
@@ -1013,5 +993,168 @@ mod tests {
             "expected 401/403 when bot_api_token is empty, got {}",
             resp_empty.status_code
         );
+    }
+
+    fn make_server_dto(id: u64, name: &str, blocked: bool) -> PublicServerDTO {
+        PublicServerDTO {
+            id,
+            node_id: Some(1),
+            name: name.to_string(),
+            game_code: "cs2".to_string(),
+            game_name: "Counter-Strike 2".to_string(),
+            address: "1.2.3.4".to_string(),
+            port: 27015,
+            status: "online".to_string(),
+            installed: true,
+            blocked,
+            connect_url: String::new(),
+            map: None,
+            players: None,
+            max_players: None,
+            ping: None,
+            version: None,
+            build_id: None,
+            category: None,
+            uptime_seconds: None,
+            is_hidden_offline: None,
+        }
+    }
+
+    #[test]
+    fn test_public_servers_ignores_all_param_and_user_agent() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut settings = PluginSettings::default();
+        settings.bot_api_enabled = true;
+        settings.bot_api_token = "secret-bot-token".to_string();
+        settings.hidden_servers = vec![2];
+        settings.cached_servers = vec![
+            make_server_dto(1, "Public Server", false),
+            make_server_dto(2, "Hidden Server", false),
+            make_server_dto(3, "Blocked Server", true),
+        ];
+        set_test_settings(settings.clone());
+        invalidate_public_cache();
+
+        // 1. ?all=1 without auth must NOT return hidden/blocked servers
+        let mut req_all = make_request("GET", "/servers", None);
+        req_all.query_params.insert(
+            "all".to_string(),
+            crate::proto::QueryParamValues { values: vec!["1".to_string()] },
+        );
+        let resp_all = handle_servers(&req_all);
+        assert_eq!(resp_all.status_code, 200);
+        let json_all: serde_json::Value = serde_json::from_slice(&resp_all.body).unwrap();
+        let ids_all: Vec<u64> = json_all["servers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids_all, vec![1], "?all=1 leaked hidden/blocked servers: {:?}", ids_all);
+
+        // 2. ?action=admin_servers without auth must NOT return hidden/blocked servers
+        let mut req_admin_action = make_request("GET", "/servers", None);
+        req_admin_action.query_params.insert(
+            "action".to_string(),
+            crate::proto::QueryParamValues { values: vec!["admin_servers".to_string()] },
+        );
+        let resp_admin_action = handle_servers(&req_admin_action);
+        assert_eq!(resp_admin_action.status_code, 200);
+        let json_admin_action: serde_json::Value = serde_json::from_slice(&resp_admin_action.body).unwrap();
+        let ids_admin_action: Vec<u64> = json_admin_action["servers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids_admin_action, vec![1], "?action=admin_servers leaked hidden/blocked servers: {:?}", ids_admin_action);
+
+        // 3. User-Agent: WebMonBot without valid token must NOT return hidden/blocked servers
+        let mut req_ua = make_request("GET", "/servers", None);
+        req_ua.headers.insert("User-Agent".to_string(), "WebMonBot/1.0".to_string());
+        let resp_ua = handle_servers(&req_ua);
+        assert_eq!(resp_ua.status_code, 200);
+        let json_ua: serde_json::Value = serde_json::from_slice(&resp_ua.body).unwrap();
+        let ids_ua: Vec<u64> = json_ua["servers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids_ua, vec![1], "User-Agent: WebMonBot leaked hidden/blocked servers: {:?}", ids_ua);
+
+        // 4. User-Agent: WebMonBot even when bot_api_token is empty must NOT return hidden/blocked servers
+        let mut settings_empty_tok = settings.clone();
+        settings_empty_tok.bot_api_token = String::new();
+        set_test_settings(settings_empty_tok);
+        invalidate_public_cache();
+        let resp_ua_empty = handle_servers(&req_ua);
+        assert_eq!(resp_ua_empty.status_code, 200);
+        let json_ua_empty: serde_json::Value = serde_json::from_slice(&resp_ua_empty.body).unwrap();
+        let ids_ua_empty: Vec<u64> = json_ua_empty["servers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids_ua_empty, vec![1], "User-Agent: WebMonBot with empty token leaked hidden/blocked servers: {:?}", ids_ua_empty);
+
+        // 5. Positive control: valid bot token or admin context DOES receive all servers
+        set_test_settings(settings);
+        invalidate_public_cache();
+        let mut req_bot = make_request("GET", "/servers", None);
+        req_bot.headers.insert("X-WebMon-Token".to_string(), "secret-bot-token".to_string());
+        let resp_bot = handle_servers(&req_bot);
+        assert_eq!(resp_bot.status_code, 200);
+        let json_bot: serde_json::Value = serde_json::from_slice(&resp_bot.body).unwrap();
+        assert_eq!(json_bot["servers"].as_array().unwrap().len(), 3);
+
+        let resp_admin = handle_servers(&make_request("GET", "/servers", Some(admin_context())));
+        assert_eq!(resp_admin.status_code, 200);
+        let json_admin: serde_json::Value = serde_json::from_slice(&resp_admin.body).unwrap();
+        assert_eq!(json_admin["servers"].as_array().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_public_servers_strips_node_internal_ips() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut settings = PluginSettings::default();
+        settings.bot_api_enabled = true;
+        settings.bot_api_token = "secret-bot-token".to_string();
+        set_test_settings(settings);
+        crate::servers_client::set_test_nodes(Some(vec![crate::proto::NodeProto {
+            id: 1,
+            enabled: true,
+            name: "Moscow Node".to_string(),
+            location: "Moscow".to_string(),
+            gdaemon_host: "10.0.0.5".to_string(),
+            gdaemon_port: 31717,
+            ips: vec!["10.0.0.5".to_string(), "192.168.1.10".to_string()],
+            ..Default::default()
+        }]));
+        invalidate_public_cache();
+
+        // Public /servers must NOT expose gdaemon_host, gdaemon_port, or raw ips
+        let resp_pub = handle_servers(&make_request("GET", "/servers", None));
+        assert_eq!(resp_pub.status_code, 200);
+        let body_pub = String::from_utf8(resp_pub.body).unwrap();
+        assert!(!body_pub.contains("gdaemon_host"), "public /servers leaked gdaemon_host: {}", body_pub);
+        assert!(!body_pub.contains("gdaemon_port"), "public /servers leaked gdaemon_port: {}", body_pub);
+        assert!(!body_pub.contains("10.0.0.5"), "public /servers leaked internal IP: {}", body_pub);
+        assert!(!body_pub.contains("192.168.1.10"), "public /servers leaked raw node IP: {}", body_pub);
+        assert!(!body_pub.contains("31717"), "public /servers leaked gdaemon_port value: {}", body_pub);
+
+        // Authenticated /bot/servers MUST still receive full node info
+        let mut req_bot = make_request("GET", "/bot/servers", None);
+        req_bot.headers.insert("X-WebMon-Token".to_string(), "secret-bot-token".to_string());
+        let resp_bot = handle_servers(&req_bot);
+        assert_eq!(resp_bot.status_code, 200);
+        let body_bot = String::from_utf8(resp_bot.body).unwrap();
+        assert!(body_bot.contains("10.0.0.5"), "authenticated /bot/servers should include node gdaemon_host");
+        assert!(body_bot.contains("31717"), "authenticated /bot/servers should include node gdaemon_port");
+        assert!(body_bot.contains("192.168.1.10"), "authenticated /bot/servers should include node ips");
+
+        crate::servers_client::set_test_nodes(None);
+        invalidate_public_cache();
     }
 }

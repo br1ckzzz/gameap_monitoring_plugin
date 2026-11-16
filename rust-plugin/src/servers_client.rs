@@ -357,13 +357,39 @@ pub fn fetch_all_servers() -> Vec<PublicServerDTO> {
     list
 }
 
+#[cfg(test)]
+static TEST_NODES: Mutex<Option<Vec<NodeProto>>> = Mutex::new(None);
+
+#[cfg(test)]
+pub fn set_test_nodes(nodes: Option<Vec<NodeProto>>) {
+    if let Ok(mut g) = TEST_NODES.lock() {
+        *g = nodes;
+    }
+}
+
 /// Fetches all dedicated server nodes from GameAP host.
 pub fn fetch_all_nodes() -> Vec<NodeDTO> {
-    let host_resp = call_host::<FindNodesRequest, FindNodesResponse>(
-        &FindNodesRequest {},
-        host_find_nodes,
-    );
-    let raw_nodes: Vec<NodeProto> = host_resp.map(|r| r.nodes).unwrap_or_default();
+    #[cfg(test)]
+    let raw_nodes: Vec<NodeProto> = {
+        let test_override = TEST_NODES.lock().ok().and_then(|g| g.clone());
+        match test_override {
+            Some(nodes) => nodes,
+            None => call_host::<FindNodesRequest, FindNodesResponse>(
+                &FindNodesRequest {},
+                host_find_nodes,
+            )
+            .map(|r| r.nodes)
+            .unwrap_or_default(),
+        }
+    };
+    #[cfg(not(test))]
+    let raw_nodes: Vec<NodeProto> = {
+        let host_resp = call_host::<FindNodesRequest, FindNodesResponse>(
+            &FindNodesRequest {},
+            host_find_nodes,
+        );
+        host_resp.map(|r| r.nodes).unwrap_or_default()
+    };
 
     let mut list = Vec::new();
     for n in raw_nodes {
@@ -398,6 +424,19 @@ pub fn fetch_all_nodes() -> Vec<NodeDTO> {
         list.push(node_dto);
     }
     list
+}
+
+/// Fetches dedicated server nodes sanitized for public responses (strips internal host/port/IPs).
+pub fn fetch_public_nodes() -> Vec<NodeDTO> {
+    fetch_all_nodes()
+        .into_iter()
+        .map(|mut n| {
+            n.gdaemon_host = None;
+            n.gdaemon_port = None;
+            n.ips.clear();
+            n
+        })
+        .collect()
 }
 
 struct CacheEntry {
@@ -469,7 +508,7 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         total_servers: list.len(),
         online_count,
         servers: list,
-        nodes: fetch_all_nodes(),
+        nodes: fetch_public_nodes(),
         timestamp: now as i64,
         refresh_interval: settings.refresh_interval,
         announcement,
