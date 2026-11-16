@@ -4,6 +4,29 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/), проект придерживается [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-11-16
+
+### Безопасность (Security)
+- **Закрыт неаутентифицированный доступ к настройкам и диагностике:** маршруты `/settings` и `/diagnostic` теперь требуют авторизации администратора (`requires_auth: true, admin_only: true` в `service.rs` и проверка `require_admin` в `handlers.rs`).
+- **Маскирование секретов и диагностических данных:** в `/diagnostic` токен `bot_api_token` маскируется (`"***"`), а в `get_raw_servers_diagnostic` исключены сырые переменные `vars` и чувствительные ключи метаданных (`password`, `rcon`, `secret`, `token`, `key`, `auth`).
+- **Защита приёма телеметрии (`/servers/query-update` и `/bot/servers`):** эндпоинты теперь требуют одновременно включённого `bot_api_enabled = true` и непустого `bot_api_token` с constant-time проверкой токена.
+- **Защита скрытых серверов и внутренних IP нод:** удалены обходы фильтрации через `?all=1`, `?action=admin_servers` и `User-Agent: WebMonBot`; публичный `/servers` очищает внутренние поля нод (`gdaemon_host`, `gdaemon_port`, `ips`).
+- **Защита от XSS и инъекций:**
+  - В `handle_view` (`handlers.rs`) экранируются `<`/`>` (`\u003c`/`\u003e`) в `window.INITIAL_DATA` и `</style` в `custom_css`, а глобальные `.replace()` заменены на точечные `replacen(..., 1)`.
+  - Во фронтенде (`frontend/app.js`, синхронизировано с `rust-plugin/assets/app.js`) добавлена валидация URL-схем (`sanitizeAssetUrl`, `sanitizeConnectUrl`), блокирующая `javascript:`, `data:`, `vbscript:`.
+
+### Исправлено (Fixed)
+- **Маршрут `/games.json`:** добавлена обработка `/games.json` и `?action=games.json` в `handlers.rs` и `service.rs` (ранее в продакшене возвращалось `404 Not Found`).
+- **Переключатель `bot_api_enabled` и очистка токена:** в `settings.rs` исправлена логика `save_settings` — отключение `bot_api_enabled` больше не перезаписывается принудительно обратно в `true` при наличии токена; добавлено явное поле `clear_bot_api_token` для сброса токена.
+- **Оптимизация и валидация `/stats/click`:** `server_id` проверяется по списку известных серверов (возвращается `404` для несуществующих ID), а сохранение счётчика кликов больше не сбрасывает публичный кэш серверов.
+- **Формат ошибок и заголовков:** ошибки парсинга телеметрии в `handle_query_update` сериализуются через `serde_json::json!`, а `X-Gameap-Client-Ip` в `handle_diagnostic` читается регистронезависимо.
+
+### Улучшено и очищено (Changed / Cleanup)
+- **Синхронизация `mock_server.py` и `scripts/test_mock.py`:** добавлены `nodes` в ответ `/servers` (с очисткой внутренних полей для публичных запросов), синхронизирована проверка `bot_api_enabled` + `bot_api_token`, расширены интеграционные тесты (35/35).
+- **Очистка кода:** удалён мёртвый код во фронтенде (`handleCardHeroError`, дубликат `toggleCardSpoiler`, повторный вызов `detectBrandingCustomizations()`) и пустая директория `backend/`.
+
+---
+
 ## [1.1.0] - 2026-11-15
 
 ### Важное (Major Highlights)
