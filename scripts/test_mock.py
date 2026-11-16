@@ -58,15 +58,21 @@ def run_tests():
             data = json.loads(resp.read().decode("utf-8"))
             assert_test("Servers API returns list of servers",
                         resp.status == 200 and len(data.get("servers", [])) > 0)
+            assert_test("Servers API returns nodes list in payload",
+                        "nodes" in data and isinstance(data["nodes"], list) and len(data["nodes"]) > 0)
+            public_node = data["nodes"][0] if data.get("nodes") else {}
+            assert_test("Public /servers omits internal node fields (gdaemon_host, gdaemon_port, ips)",
+                        "gdaemon_host" not in public_node and "gdaemon_port" not in public_node and "ips" not in public_node)
 
-        # 4. Bot endpoint default (no token required)
+        # 4. Bot endpoint requires both bot_api_enabled and non-empty bot_api_token
         SETTINGS_CACHE["bot_api_token"] = ""
         SETTINGS_CACHE["bot_api_enabled"] = True
-        req = urllib.request.Request(f"{base_url}/bot/servers")
-        with urllib.request.urlopen(req) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            assert_test("/bot/servers endpoint 200 OK (no token required)",
-                        resp.status == 200 and len(data.get("servers", [])) > 0)
+        try:
+            req = urllib.request.Request(f"{base_url}/bot/servers")
+            urllib.request.urlopen(req)
+            assert_test("/bot/servers when bot_api_token is empty returned 403 Forbidden", False, "Expected 403")
+        except urllib.error.HTTPError as e:
+            assert_test("/bot/servers when bot_api_token is empty returned 403 Forbidden", e.code == 403)
 
         # 5. Settings update
         payload = json.dumps({"bot_api_token": "secret123", "bot_api_enabled": True}).encode("utf-8")
@@ -89,7 +95,10 @@ def run_tests():
         req = urllib.request.Request(f"{base_url}/bot/servers")
         req.add_header("X-WebMon-Token", "secret123")
         with urllib.request.urlopen(req) as resp:
+            bot_data = json.loads(resp.read().decode("utf-8"))
             assert_test("/bot/servers with X-WebMon-Token returned 200 OK", resp.status == 200)
+            assert_test("Authorized /bot/servers includes internal node fields",
+                        isinstance(bot_data.get("nodes"), list) and len(bot_data["nodes"]) > 0 and "gdaemon_host" in bot_data["nodes"][0])
 
         # 8. Authorized via Bearer token
         req = urllib.request.Request(f"{base_url}/bot/servers")
@@ -111,6 +120,15 @@ def run_tests():
             assert_test("/bot/servers when bot_api_enabled=False returned 403 Forbidden", False, "Expected 403")
         except urllib.error.HTTPError as e:
             assert_test("/bot/servers when bot_api_enabled=False returned 403 Forbidden", e.code == 403)
+
+        try:
+            q_req = urllib.request.Request(f"{base_url}/api/plugins/monitoring/servers/query-update", data=b'{"servers":{}}', method="POST")
+            q_req.add_header("Content-Type", "application/json")
+            q_req.add_header("X-WebMon-Token", "secret123")
+            urllib.request.urlopen(q_req)
+            assert_test("POST /servers/query-update when bot_api_enabled=False returned 403 Forbidden", False, "Expected 403")
+        except urllib.error.HTTPError as e:
+            assert_test("POST /servers/query-update when bot_api_enabled=False returned 403 Forbidden", e.code == 403)
 
         # 11. 13.3 Announcement payload in servers response
         SETTINGS_CACHE["bot_api_enabled"] = True
@@ -184,7 +202,10 @@ def run_tests():
             except urllib.error.HTTPError as e:
                 assert_test("If-None-Match returned 304 Not Modified", e.code == 304)
 
-        # 17. Telemetry Ingestion (POST /servers/query-update) overrides node down server status
+        # 17. Telemetry Ingestion (POST /servers/query-update) requires auth and overrides node down server status
+        SETTINGS_CACHE["bot_api_enabled"] = True
+        SETTINGS_CACHE["bot_api_token"] = "secret123"
+
         telemetry_payload = json.dumps({
             "servers": {
                 "1": {
@@ -193,12 +214,27 @@ def run_tests():
                 }
             }
         }).encode("utf-8")
+
+        # Telemetry without token returns 401
+        try:
+            unauth_req = urllib.request.Request(
+                f"{base_url}/api/plugins/monitoring/servers/query-update",
+                data=telemetry_payload,
+                method="POST"
+            )
+            unauth_req.add_header("Content-Type", "application/json")
+            urllib.request.urlopen(unauth_req)
+            assert_test("POST /servers/query-update without token returned 401", False, "Expected 401")
+        except urllib.error.HTTPError as e:
+            assert_test("POST /servers/query-update without token returned 401", e.code == 401)
+
         telemetry_req = urllib.request.Request(
             f"{base_url}/api/plugins/monitoring/servers/query-update",
             data=telemetry_payload,
             method="POST"
         )
         telemetry_req.add_header("Content-Type", "application/json")
+        telemetry_req.add_header("X-WebMon-Token", "secret123")
         with urllib.request.urlopen(telemetry_req) as resp:
             t_data = json.loads(resp.read().decode("utf-8"))
             assert_test("POST /servers/query-update returns 200 OK and updated_servers count",
@@ -209,7 +245,7 @@ def run_tests():
             updated_servers_data = json.loads(resp.read().decode("utf-8"))
             s1 = next((s for s in updated_servers_data.get("servers", []) if s["id"] == 1), None)
             assert_test("Server 1 status correctly updated to offline via telemetry ingestion",
-                        s1 is not None and s1.get("status") == "offline")
+                s1 is not None and s1.get("status") == "offline")
         # Reset server 1 back to online
         restore_payload = json.dumps({"servers": {"1": {"online": True}}}).encode("utf-8")
         restore_req = urllib.request.Request(
@@ -218,6 +254,7 @@ def run_tests():
             method="POST"
         )
         restore_req.add_header("Content-Type", "application/json")
+        restore_req.add_header("X-WebMon-Token", "secret123")
         urllib.request.urlopen(restore_req)
 
         # Idea 14. Games Catalog Manifest integration test

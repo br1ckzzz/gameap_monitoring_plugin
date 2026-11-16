@@ -1119,28 +1119,6 @@ function getGameBannerFallbackUrl(gameCode) {
   return null;
 }
 
-function handleCardHeroError(img) {
-  const fallbackSrc = img.getAttribute('data-fallback-src');
-  if (fallbackSrc && img.src !== fallbackSrc) {
-    img.removeAttribute('data-fallback-src');
-    img.src = fallbackSrc;
-    return;
-  }
-  const hero = img.closest('.card-hero');
-  if (hero) hero.classList.add('no-image');
-  img.remove();
-}
-window.handleCardHeroError = handleCardHeroError;
-
-function toggleCardSpoiler(btn, serverId) {
-  if (!btn) return;
-  const content = document.getElementById(`card-spoiler-${serverId}`) || (btn.parentElement && btn.parentElement.querySelector('.card-spoiler-content'));
-  if (!content) return;
-  const isOpen = btn.classList.toggle('is-open');
-  content.classList.toggle('hidden', !isOpen);
-}
-window.toggleCardSpoiler = toggleCardSpoiler;
-
 function toggleClusterAccordion(btn, catSafeId) {
   if (!btn) return;
   const body = document.getElementById(`cluster-body-${catSafeId}`);
@@ -1763,7 +1741,6 @@ function initCustomBranding() {
 
 // Init
 initTheme();
-detectBrandingCustomizations();
 initLanguage();
 const hasPreloaded = initPreloadedData();
 initCustomBranding();

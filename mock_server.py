@@ -138,6 +138,24 @@ MOCK_SERVERS = [
     }
 ]
 
+MOCK_NODES = [
+    {
+        "id": 1,
+        "name": "Moscow Dedicated Node",
+        "location": "Moscow, RU",
+        "provider": "Selectel",
+        "cpu_model": "AMD Ryzen 9 7950X",
+        "cpu_percent": 34,
+        "ram_percent": 58,
+        "protection": "DDoS Guard",
+        "os": "Linux",
+        "gdaemon_host": "10.0.0.5",
+        "gdaemon_port": 31717,
+        "ips": ["10.0.0.5", "198.51.100.10"],
+        "enabled": True,
+    }
+]
+
 CLICK_COUNTERS = {}
 
 SETTINGS_CACHE = {
@@ -454,6 +472,9 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             or clean_path.endswith("/bot/servers")
         )
         provided_token = self.extract_auth_token(parsed_query)
+        bot_enabled = bool(SETTINGS_CACHE.get("bot_api_enabled", False))
+        bot_token = str(SETTINGS_CACHE.get("bot_api_token", "") or "").strip()
+        token_matches = bool(bot_enabled and bot_token and provided_token == bot_token)
 
         is_servers_route = (
             action == "servers"
@@ -469,22 +490,38 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
 
         if is_servers_route:
             # Check Bot API authentication if accessing bot endpoint or supplying token
-            if is_bot_endpoint or provided_token is not None:
-                if not SETTINGS_CACHE.get("bot_api_enabled", False):
+            if is_bot_endpoint:
+                if not bot_enabled or not bot_token:
                     self.send_response(403)
                     self.send_header("Content-Type", "application/json; charset=utf-8")
                     self.send_header("Access-Control-Allow-Origin", "*")
                     self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "error": "Bot API is disabled in plugin settings"}).encode("utf-8"))
+                    self.wfile.write(json.dumps({"success": False, "error": "Bot API is disabled or not configured"}).encode("utf-8"))
                     return
-                configured_token = SETTINGS_CACHE.get("bot_api_token", "")
-                if configured_token and provided_token != configured_token:
+                if not token_matches:
                     self.send_response(401)
                     self.send_header("Content-Type", "application/json; charset=utf-8")
                     self.send_header("Access-Control-Allow-Origin", "*")
                     self.end_headers()
                     self.wfile.write(json.dumps({"success": False, "error": "Unauthorized: invalid or missing Bot API token"}).encode("utf-8"))
                     return
+            elif provided_token is not None:
+                if bot_token and provided_token != bot_token:
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "Unauthorized: invalid Bot API token"}).encode("utf-8"))
+                    return
+
+            is_authorized = token_matches
+            if is_authorized:
+                nodes_list = [dict(n) for n in MOCK_NODES]
+            else:
+                nodes_list = [
+                    {k: v for k, v in n.items() if k not in ("gdaemon_host", "gdaemon_port", "ips")}
+                    for n in MOCK_NODES
+                ]
 
             online_count = sum(1 for s in MOCK_SERVERS if s["status"] == "online")
             enriched_servers = []
@@ -505,6 +542,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
                 "online_count": online_count,
                 "servers": enriched_servers,
                 "all_servers": enriched_servers,
+                "nodes": nodes_list,
                 "refresh_interval": SETTINGS_CACHE.get("refresh_interval", 15),
                 "timestamp": int(time.time())
             }
@@ -658,8 +696,13 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             if logo_url:
                 content = content.replace("<div class=\"brand-icon\">🎮</div>", f"<img src=\"{html.escape(logo_url)}\" alt=\"Logo\" class=\"brand-logo\">")
 
+            nodes_public = [
+                {k: v for k, v in n.items() if k not in ("gdaemon_host", "gdaemon_port", "ips")}
+                for n in MOCK_NODES
+            ]
             initial_data = {
                 "servers": MOCK_SERVERS,
+                "nodes": nodes_public,
                 "version": "1.1.0",
                 "refresh_interval": refresh_interval,
                 "title": title,
@@ -711,6 +754,13 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             try:
                 data = json.loads(post_data.decode("utf-8"))
+                if data.get("clear_bot_api_token"):
+                    data["bot_api_token"] = ""
+                    data["clear_bot_api_token"] = False
+                elif "bot_api_token" in data:
+                    t = str(data["bot_api_token"]).strip()
+                    if (t == "" or t == "***") and SETTINGS_CACHE.get("bot_api_token"):
+                        data["bot_api_token"] = SETTINGS_CACHE["bot_api_token"]
                 SETTINGS_CACHE.update(data)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -752,14 +802,23 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             or clean_path.endswith("/servers/query-update")
         )
         if is_query_update:
+            bot_enabled = bool(SETTINGS_CACHE.get("bot_api_enabled", False))
+            bot_token = str(SETTINGS_CACHE.get("bot_api_token", "") or "").strip()
+            if not bot_enabled or not bot_token:
+                self.send_response(403)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": "Bot API is disabled or not configured"}).encode("utf-8"))
+                return
+
             provided_token = self.extract_auth_token(parsed_query)
-            configured_token = SETTINGS_CACHE.get("bot_api_token", "")
-            if configured_token and provided_token != configured_token:
+            if provided_token != bot_token:
                 self.send_response(401)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "error": "Unauthorized"}).encode("utf-8"))
+                self.wfile.write(json.dumps({"success": False, "error": "Unauthorized: invalid or missing Bot API token"}).encode("utf-8"))
                 return
             content_length = int(self.headers.get("Content-Length", 0))
             post_data = self.rfile.read(content_length)
