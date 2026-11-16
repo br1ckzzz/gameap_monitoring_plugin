@@ -460,6 +460,14 @@ pub fn invalidate_public_cache() {
     }
 }
 
+#[cfg(test)]
+pub fn has_public_cache() -> bool {
+    CACHED_PUBLIC_ENTRY
+        .lock()
+        .map(|g| g.is_some())
+        .unwrap_or(false)
+}
+
 /// Fetches public servers filtered by visibility and cached for up to 3 seconds (Anti-DoS).
 /// When `force_refresh` is true, bypasses the micro-cache completely and re-queries live state.
 pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {

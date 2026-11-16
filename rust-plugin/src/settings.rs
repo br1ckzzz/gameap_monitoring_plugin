@@ -1,8 +1,10 @@
 //! Plugin settings persistence via GameAP storage host interface.
 
+#[cfg(target_arch = "wasm32")]
 use crate::abi::{deallocate, read_proto, unpack_ptr_size, write_bytes};
 use crate::proto::{StorageGetRequest, StorageGetResponse, StorageSetRequest, StorageSetResponse};
 use crate::types::{PluginSettings, StorageDiagnostics};
+#[cfg(target_arch = "wasm32")]
 use prost::Message;
 use std::sync::Mutex;
 
@@ -19,17 +21,13 @@ extern "C" {
     fn host_storage_set(ptr: u32, size: u32) -> u64;
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-unsafe extern "C" fn host_storage_get(_ptr: u32, _size: u32) -> u64 {
-    0
-}
 
 #[cfg(not(target_arch = "wasm32"))]
-unsafe extern "C" fn host_storage_set(_ptr: u32, _size: u32) -> u64 {
-    0
+fn call_storage_get(_req: &StorageGetRequest) -> Option<StorageGetResponse> {
+    None
 }
 
-
+#[cfg(target_arch = "wasm32")]
 fn call_storage_get(req: &StorageGetRequest) -> Option<StorageGetResponse> {
     let mut buf = Vec::with_capacity(req.encoded_len());
     req.encode(&mut buf).ok()?;
@@ -46,6 +44,12 @@ fn call_storage_get(req: &StorageGetRequest) -> Option<StorageGetResponse> {
     resp
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn call_storage_set(_req: &StorageSetRequest) -> Option<StorageSetResponse> {
+    None
+}
+
+#[cfg(target_arch = "wasm32")]
 fn call_storage_set(req: &StorageSetRequest) -> Option<StorageSetResponse> {
     let mut buf = Vec::with_capacity(req.encoded_len());
     req.encode(&mut buf).ok()?;
@@ -217,23 +221,33 @@ pub fn get_settings() -> PluginSettings {
 
 /// Updates memory cache and persists settings to GameAP database storage.
 /// Returns a tuple `(db_saved, error_message)`.
-pub fn save_settings(mut s: PluginSettings) -> (bool, Option<String>) {
+pub fn save_settings(s: PluginSettings) -> (bool, Option<String>) {
+    save_settings_inner(s, true)
+}
+
+/// Increments click count for a validated server ID and persists without invalidating public cache.
+pub fn save_click_stats(server_id: u64) -> (bool, Option<String>) {
+    let mut settings = get_settings();
+    *settings.click_stats.entry(server_id).or_insert(0) += 1;
+    save_settings_inner(settings, false)
+}
+
+fn save_settings_inner(mut s: PluginSettings, invalidate_cache: bool) -> (bool, Option<String>) {
     if s.refresh_interval == 0 {
         s.refresh_interval = 15;
     }
     if s.theme.is_empty() {
         s.theme = "modern".to_string();
     }
-    // If incoming settings has empty bot_api_token, preserve existing token from DB
-    if s.bot_api_token.trim().is_empty() {
+    // Allow explicit clearing via clear_bot_api_token; otherwise preserve existing token if omitted/masked
+    if s.clear_bot_api_token {
+        s.bot_api_token.clear();
+        s.clear_bot_api_token = false;
+    } else if s.bot_api_token.trim().is_empty() || s.bot_api_token.trim() == "***" {
         let current = get_settings();
         if !current.bot_api_token.is_empty() {
             s.bot_api_token = current.bot_api_token;
-            s.bot_api_enabled = current.bot_api_enabled;
         }
-    }
-    if !s.bot_api_token.trim().is_empty() {
-        s.bot_api_enabled = true;
     }
 
     let mut db_saved = false;
@@ -288,6 +302,51 @@ pub fn save_settings(mut s: PluginSettings) -> (bool, Option<String>) {
     if let Ok(mut guard) = CURRENT_SETTINGS.lock() {
         *guard = Some(s);
     }
-    crate::servers_client::invalidate_public_cache();
+    if invalidate_cache {
+        crate::servers_client::invalidate_public_cache();
+    }
     (db_saved, err_msg)
+}
+
+#[cfg(test)]
+pub(crate) static TEST_SETTINGS_LOCK: Mutex<()> = Mutex::new(());
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_save_settings_allows_disabling_bot_api() {
+        let _guard = TEST_SETTINGS_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut initial = PluginSettings::default();
+        initial.bot_api_token = "secret-bot-token".to_string();
+        initial.bot_api_enabled = true;
+        set_test_settings(initial);
+
+        // 1. Disabling bot_api_enabled with non-empty token must persist false
+        let mut disabled = get_settings();
+        disabled.bot_api_enabled = false;
+        let _ = save_settings(disabled);
+        let after = get_settings();
+        assert!(!after.bot_api_enabled, "bot_api_enabled should stay false even when bot_api_token is non-empty");
+        assert_eq!(after.bot_api_token, "secret-bot-token");
+
+        // 2. Saving with masked/empty token must preserve existing token AND respect bot_api_enabled = false
+        let mut masked = PluginSettings::default();
+        masked.bot_api_token = "***".to_string();
+        masked.bot_api_enabled = false;
+        let _ = save_settings(masked);
+        let after_masked = get_settings();
+        assert!(!after_masked.bot_api_enabled, "bot_api_enabled should stay false when token is masked");
+        assert_eq!(after_masked.bot_api_token, "secret-bot-token");
+
+        // 3. Explicit clear_bot_api_token clears token without forcing bot_api_enabled
+        let mut cleared = PluginSettings::default();
+        cleared.clear_bot_api_token = true;
+        cleared.bot_api_enabled = false;
+        let _ = save_settings(cleared);
+        let after_cleared = get_settings();
+        assert!(after_cleared.bot_api_token.is_empty(), "clear_bot_api_token should clear token");
+        assert!(!after_cleared.bot_api_enabled);
+    }
 }

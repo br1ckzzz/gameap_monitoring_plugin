@@ -193,6 +193,7 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
                 "diagnostic" => return handle_diagnostic(req),
                 "click" | "stats/click" => return handle_click(req),
                 "stats" => return handle_stats(req),
+                "games.json" => return handle_games_json(),
                 "view" => return handle_view(),
                 _ => {}
             }
@@ -236,6 +237,9 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
             etag: None,
             cache_control: Some("public, max-age=86400"),
         };
+    }
+    if path == "/games.json" || path.ends_with("/games.json") {
+        return handle_games_json();
     }
 
     // Handle root path routing
@@ -374,11 +378,14 @@ fn handle_query_update(req: &HttpRequest) -> HTTPResponseData {
             }
         }
         Err(e) => {
-            let err_json = format!("{{\"success\":false,\"error\":\"Invalid telemetry JSON: {}\"}}", e);
+            let err_json = serde_json::json!({
+                "success": false,
+                "error": format!("Invalid telemetry JSON: {}", e),
+            });
             HTTPResponseData {
                 status_code: 400,
                 content_type: "application/json; charset=utf-8",
-                body: err_json.into_bytes(),
+                body: serde_json::to_vec(&err_json).unwrap_or_default(),
                 etag: None,
                 cache_control: None,
             }
@@ -697,16 +704,7 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
                 };
             }
 
-            if let Ok(mut new_settings) = serde_json::from_value::<PluginSettings>(val) {
-                // If incoming settings has empty token, preserve active token from database
-                if new_settings.bot_api_token.trim().is_empty() {
-                    let current = get_settings();
-                    if !current.bot_api_token.is_empty() {
-                        new_settings.bot_api_token = current.bot_api_token;
-                        new_settings.bot_api_enabled = current.bot_api_enabled;
-                    }
-                }
-
+            if let Ok(new_settings) = serde_json::from_value::<PluginSettings>(val) {
                 let (db_saved, err_msg) = save_settings(new_settings);
                 invalidate_public_cache();
                 let resp_json = serde_json::json!({
@@ -861,11 +859,28 @@ fn handle_click(req: &HttpRequest) -> HTTPResponseData {
         }
     }
 
-    if let Some(id) = server_id {
-        let mut settings = get_settings();
-        *settings.click_stats.entry(id).or_insert(0) += 1;
-        let _ = save_settings(settings);
+    let Some(id) = server_id else {
+        return HTTPResponseData {
+            status_code: 400,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Missing or invalid server_id"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        };
+    };
+
+    let known_servers = fetch_all_servers();
+    if !known_servers.iter().any(|s| s.id == id) {
+        return HTTPResponseData {
+            status_code: 404,
+            content_type: "application/json; charset=utf-8",
+            body: br#"{"success":false,"error":"Unknown server_id"}"#.to_vec(),
+            etag: None,
+            cache_control: None,
+        };
     }
+
+    let _ = crate::settings::save_click_stats(id);
 
     HTTPResponseData {
         status_code: 200,
@@ -873,6 +888,17 @@ fn handle_click(req: &HttpRequest) -> HTTPResponseData {
         body: br#"{"success":true}"#.to_vec(),
         etag: None,
         cache_control: None,
+    }
+}
+
+/// Serves embedded game catalog metadata JSON (`/games.json` or `?action=games.json`).
+fn handle_games_json() -> HTTPResponseData {
+    HTTPResponseData {
+        status_code: 200,
+        content_type: "application/json; charset=utf-8",
+        body: crate::assets::GAMES_JSON.to_vec(),
+        etag: None,
+        cache_control: Some("public, max-age=300"),
     }
 }
 
@@ -897,10 +923,7 @@ fn handle_stats(_req: &HttpRequest) -> HTTPResponseData {
 mod tests {
     use super::*;
     use crate::proto::PluginContext;
-    use crate::settings::set_test_settings;
-    use std::sync::Mutex;
-
-    static TEST_LOCK: Mutex<()> = Mutex::new(());
+    use crate::settings::{set_test_settings, TEST_SETTINGS_LOCK as TEST_LOCK};
 
     fn make_request(method: &str, path: &str, context: Option<PluginContext>) -> HttpRequest {
         HttpRequest {
@@ -1234,6 +1257,88 @@ mod tests {
             html.matches("</head>").count(),
             1,
             "handle_view should have exactly one </head> closing tag"
+        );
+
+        invalidate_public_cache();
+    }
+
+    #[test]
+    fn test_games_json_route_returns_200() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+
+        for req in [
+            make_request("GET", "/games.json", None),
+            make_request("GET", "/api/plugins/monitoring/games.json", None),
+        ] {
+            let resp = handle_http_request(&req);
+            assert_eq!(resp.status_code, 200, "expected 200 for {}", req.path);
+            assert!(
+                resp.content_type.contains("application/json"),
+                "expected application/json for {}, got {}",
+                req.path,
+                resp.content_type
+            );
+            assert_eq!(resp.body, crate::assets::GAMES_JSON);
+        }
+
+        let mut action_req = make_request("GET", "/api/plugins/monitoring", None);
+        action_req.query_params.insert(
+            "action".to_string(),
+            crate::proto::QueryParamValues {
+                values: vec!["games.json".to_string()],
+            },
+        );
+        let action_resp = handle_http_request(&action_req);
+        assert_eq!(action_resp.status_code, 200);
+        assert!(action_resp.content_type.contains("application/json"));
+        assert_eq!(action_resp.body, crate::assets::GAMES_JSON);
+    }
+
+    #[test]
+    fn test_click_rejects_unknown_server_id() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut settings = PluginSettings::default();
+        settings.cached_servers = vec![make_server_dto(1, "Known Server", false)];
+        set_test_settings(settings);
+        invalidate_public_cache();
+
+        // Populate public micro-cache
+        let _ = crate::servers_client::fetch_public_servers_with_opt(false);
+        assert!(crate::servers_client::has_public_cache());
+
+        // Unknown server_id must be rejected (404 or 400) and not stored in click_stats
+        let mut unknown_req = make_request("POST", "/stats/click", None);
+        unknown_req.query_params.insert(
+            "server_id".to_string(),
+            crate::proto::QueryParamValues {
+                values: vec!["999999".to_string()],
+            },
+        );
+        let unknown_resp = handle_click(&unknown_req);
+        assert!(
+            unknown_resp.status_code == 404 || unknown_resp.status_code == 400,
+            "expected 404/400 for unknown server_id, got {}",
+            unknown_resp.status_code
+        );
+        assert!(
+            get_settings().click_stats.get(&999999).is_none(),
+            "unknown server_id must not be recorded in click_stats"
+        );
+
+        // Known server_id must succeed and must NOT invalidate the public micro-cache
+        let mut known_req = make_request("POST", "/stats/click", None);
+        known_req.query_params.insert(
+            "server_id".to_string(),
+            crate::proto::QueryParamValues {
+                values: vec!["1".to_string()],
+            },
+        );
+        let known_resp = handle_click(&known_req);
+        assert_eq!(known_resp.status_code, 200);
+        assert_eq!(get_settings().click_stats.get(&1), Some(&1));
+        assert!(
+            crate::servers_client::has_public_cache(),
+            "handle_click must not invalidate public micro-cache on every click"
         );
 
         invalidate_public_cache();

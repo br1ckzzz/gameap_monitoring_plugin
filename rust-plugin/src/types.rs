@@ -278,6 +278,8 @@ pub struct PluginSettings {
     pub bot_api_enabled: bool,
     #[serde(default)]
     pub bot_api_token: String,
+    #[serde(default, skip_serializing)]
+    pub clear_bot_api_token: bool,
 
     // 13.3 Announcement Bar
     #[serde(default)]
@@ -328,6 +330,7 @@ impl Default for PluginSettings {
             favicon_url: None,
             bot_api_enabled: false,
             bot_api_token: String::new(),
+            clear_bot_api_token: false,
             announcement_enabled: false,
             announcement_text: String::new(),
             announcement_link: String::new(),

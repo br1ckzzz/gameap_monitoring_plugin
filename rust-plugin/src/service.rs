@@ -98,6 +98,13 @@ pub const HTTP_ROUTES: &[HTTPRouteDescriptor] = &[
         admin_only: true,
         description: "Diagnostic information about host GameAP services",
     },
+    HTTPRouteDescriptor {
+        path: "/games.json",
+        methods: &["GET"],
+        requires_auth: false,
+        admin_only: false,
+        description: "Game catalog metadata JSON",
+    },
 ];
 
 /// Returns admin SPA bundle bytes.
