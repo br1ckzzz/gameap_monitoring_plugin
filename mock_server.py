@@ -434,11 +434,15 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
         # Serve Idea 14 games.json manifest
         is_games_json_route = (
             clean_path in (
+                "/games",
                 "/games.json",
                 "/plugins/web-monitoring/games.json",
+                "/api/plugins/monitoring/games",
                 "/api/plugins/monitoring/games.json"
             )
+            or clean_path.endswith("/games")
             or clean_path.endswith("/games.json")
+            or action in ("games", "games.json")
         )
         if is_games_json_route:
             games_file = os.path.join(FRONTEND_DIR, "games.json")

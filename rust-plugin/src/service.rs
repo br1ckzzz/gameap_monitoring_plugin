@@ -99,7 +99,7 @@ pub const HTTP_ROUTES: &[HTTPRouteDescriptor] = &[
         description: "Diagnostic information about host GameAP services",
     },
     HTTPRouteDescriptor {
-        path: "/games.json",
+        path: "/games",
         methods: &["GET"],
         requires_auth: false,
         admin_only: false,

@@ -193,7 +193,7 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
                 "diagnostic" => return handle_diagnostic(req),
                 "click" | "stats/click" => return handle_click(req),
                 "stats" => return handle_stats(req),
-                "games.json" => return handle_games_json(),
+                "games" | "games.json" => return handle_games_json(),
                 "view" => return handle_view(),
                 _ => {}
             }
@@ -238,7 +238,11 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
             cache_control: Some("public, max-age=86400"),
         };
     }
-    if path == "/games.json" || path.ends_with("/games.json") {
+    if path == "/games"
+        || path.ends_with("/games")
+        || path == "/games.json"
+        || path.ends_with("/games.json")
+    {
         return handle_games_json();
     }
 
@@ -1263,10 +1267,23 @@ mod tests {
     }
 
     #[test]
+    fn test_http_routes_have_no_invalid_dot_characters() {
+        for route in crate::service::HTTP_ROUTES {
+            assert!(
+                !route.path.contains('.'),
+                "GameAP rejects dots in HTTP_ROUTES path: {}",
+                route.path
+            );
+        }
+    }
+
+    #[test]
     fn test_games_json_route_returns_200() {
         let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
 
         for req in [
+            make_request("GET", "/games", None),
+            make_request("GET", "/api/plugins/monitoring/games", None),
             make_request("GET", "/games.json", None),
             make_request("GET", "/api/plugins/monitoring/games.json", None),
         ] {
@@ -1281,17 +1298,19 @@ mod tests {
             assert_eq!(resp.body, crate::assets::GAMES_JSON);
         }
 
-        let mut action_req = make_request("GET", "/api/plugins/monitoring", None);
-        action_req.query_params.insert(
-            "action".to_string(),
-            crate::proto::QueryParamValues {
-                values: vec!["games.json".to_string()],
-            },
-        );
-        let action_resp = handle_http_request(&action_req);
-        assert_eq!(action_resp.status_code, 200);
-        assert!(action_resp.content_type.contains("application/json"));
-        assert_eq!(action_resp.body, crate::assets::GAMES_JSON);
+        for action in ["games", "games.json"] {
+            let mut action_req = make_request("GET", "/api/plugins/monitoring", None);
+            action_req.query_params.insert(
+                "action".to_string(),
+                crate::proto::QueryParamValues {
+                    values: vec![action.to_string()],
+                },
+            );
+            let action_resp = handle_http_request(&action_req);
+            assert_eq!(action_resp.status_code, 200, "action={}", action);
+            assert!(action_resp.content_type.contains("application/json"));
+            assert_eq!(action_resp.body, crate::assets::GAMES_JSON);
+        }
     }
 
     #[test]

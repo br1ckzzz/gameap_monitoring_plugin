@@ -1053,7 +1053,7 @@ const DYNAMIC_GAMES_CATALOG = {};
 
 async function loadGameCatalog() {
   try {
-    const endpoint = getApiEndpoint('/games.json');
+    const endpoint = getApiEndpoint('/games');
     const resp = await fetch(endpoint, { cache: 'no-cache' });
     if (!resp.ok) return;
     const data = await resp.json();
@@ -1154,33 +1154,57 @@ function toggleDetails(id) {
 window.toggleDetails = toggleDetails;
 window.toggleCardSpoiler = toggleDetails;
 
+function handleBannerError(img) {
+  const fallback = img.getAttribute('data-fallback-src');
+  if (fallback && img.src !== fallback) {
+    img.removeAttribute('data-fallback-src');
+    img.src = fallback;
+    return;
+  }
+  img.style.display = 'none';
+}
+window.handleBannerError = handleBannerError;
+
 function createServerCard(server) {
   const card = document.createElement('div');
   const isOnline = server.status === 'online';
   const addressStr = `${server.address || '0.0.0.0'}:${server.port || 0}`;
 
   let initialImgUrl = null;
+  let fallbackImgUrl = null;
   const gameBannerUrl = getGameBannerUrl(server.game_code);
   const gameBannerFallback = getGameBannerFallbackUrl(server.game_code);
+  const c = server.game_code ? String(server.game_code).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  const appId = c ? STEAM_APP_MAP[c] : null;
+  const cfSteamUrl = appId ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg` : null;
 
   if (isOnline) {
     const mapPreviewUrl = server.map ? getMapPreviewUrl(server.game_code, server.map) : null;
     if (mapPreviewUrl) {
       initialImgUrl = mapPreviewUrl;
+      fallbackImgUrl = gameBannerUrl || gameBannerFallback || cfSteamUrl;
     } else if (gameBannerUrl) {
       initialImgUrl = gameBannerUrl;
+      fallbackImgUrl = gameBannerFallback || cfSteamUrl;
     } else if (gameBannerFallback) {
       initialImgUrl = gameBannerFallback;
+      fallbackImgUrl = cfSteamUrl;
+    } else if (cfSteamUrl) {
+      initialImgUrl = cfSteamUrl;
     }
   } else {
     if (gameBannerUrl) {
       initialImgUrl = gameBannerUrl;
+      fallbackImgUrl = gameBannerFallback || cfSteamUrl;
     } else if (gameBannerFallback) {
       initialImgUrl = gameBannerFallback;
+      fallbackImgUrl = cfSteamUrl;
+    } else if (cfSteamUrl) {
+      initialImgUrl = cfSteamUrl;
     }
   }
-  if (!initialImgUrl) {
-    initialImgUrl = 'https://steamcdn-a.akamaihd.net/steam/apps/730/header.jpg';
+  if (fallbackImgUrl && fallbackImgUrl === initialImgUrl) {
+    fallbackImgUrl = null;
   }
 
   const rawMax = server.max_players ?? server.maxplayers ?? server.slots ?? server.max_clients;
@@ -1211,7 +1235,7 @@ function createServerCard(server) {
 
   card.innerHTML = `
     <div class="card-hero-banner">
-      <img src="${escapeHtml(initialImgUrl)}" alt="${escapeHtml(server.game_name || server.game_code)}" class="banner-img" loading="lazy" onerror="this.src='https://steamcdn-a.akamaihd.net/steam/apps/730/header.jpg'">
+      ${initialImgUrl ? `<img src="${escapeHtml(initialImgUrl)}" ${fallbackImgUrl ? `data-fallback-src="${escapeHtml(fallbackImgUrl)}"` : ''} alt="${escapeHtml(server.game_name || server.game_code)}" class="banner-img" loading="lazy" referrerpolicy="no-referrer" onerror="window.handleBannerError(this)">` : ''}
       <div class="banner-overlay"></div>
       
       <div class="banner-top-badges">
