@@ -4,7 +4,7 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/), проект придерживается [Semantic Versioning](https://semver.org/).
 
-## [1.1.1] - 2026-11-16
+## [1.1.1] - 2026-11-17
 
 ### Безопасность (Security)
 - **Закрыт неаутентифицированный доступ к настройкам и диагностике:** маршруты `/settings` и `/diagnostic` теперь требуют авторизации администратора (`requires_auth: true, admin_only: true` в `service.rs` и проверка `require_admin` в `handlers.rs`).
@@ -16,7 +16,8 @@
   - Во фронтенде (`frontend/app.js`, синхронизировано с `rust-plugin/assets/app.js`) добавлена валидация URL-схем (`sanitizeAssetUrl`, `sanitizeConnectUrl`), блокирующая `javascript:`, `data:`, `vbscript:`.
 
 ### Исправлено (Fixed)
-- **Маршрут `/games.json`:** добавлена обработка `/games.json` и `?action=games.json` в `handlers.rs` и `service.rs` (ранее в продакшене возвращалось `404 Not Found`).
+- **Маршрут каталога игр (`/games` / `/games.json`):** в `service.rs` зарегистрирован маршрут `/games` без точки в пути (валидатор маршрутов GameAP отклоняет символ `.` в `HTTP_ROUTES`), а в `handlers.rs` и `mock_server.py` поддержаны `/games`, `/games.json`, `?action=games` и `?action=games.json`; фронтенд (`loadGameCatalog` в `app.js`) переведён на `/games`.
+- **Загрузка баннеров и картинок игр:** в `createServerCard` (`frontend/app.js`, синхронизировано с `rust-plugin/assets/app.js`) восстановлены `referrerpolicy="no-referrer"` и каскадный fallback через `data-fallback-src` (`map` → `games.json` → `shared.fastly.steamstatic.com` → `cdn.cloudflare.steamstatic.com`), а при недоступности всех CDN изображение скрывается через `handleBannerError` без подмены на баннер CS2.
 - **Переключатель `bot_api_enabled` и очистка токена:** в `settings.rs` исправлена логика `save_settings` — отключение `bot_api_enabled` больше не перезаписывается принудительно обратно в `true` при наличии токена; добавлено явное поле `clear_bot_api_token` для сброса токена.
 - **Оптимизация и валидация `/stats/click`:** `server_id` проверяется по списку известных серверов (возвращается `404` для несуществующих ID), а сохранение счётчика кликов больше не сбрасывает публичный кэш серверов.
 - **Формат ошибок и заголовков:** ошибки парсинга телеметрии в `handle_query_update` сериализуются через `serde_json::json!`, а `X-Gameap-Client-Ip` в `handle_diagnostic` читается регистронезависимо.
