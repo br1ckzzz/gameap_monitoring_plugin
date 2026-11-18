@@ -2542,29 +2542,70 @@ body {
 }
 
 [data-theme="light"] .promo-block {
+  --promo-ink: color-mix(in srgb, var(--promo-accent) 62%, #0f172a);
   color: #0f172a;
 }
 
 [data-theme="light"] .promo-style-glass {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border-color: #e2e8f0;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
 }
 
 [data-theme="light"] .promo-style-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, color-mix(in srgb, var(--promo-accent) 12%, #f8fafc) 100%);
-  border-color: color-mix(in srgb, var(--promo-accent) 35%, #e2e8f0);
+  background: linear-gradient(135deg, #ffffff 0%, color-mix(in srgb, var(--promo-ink) 7%, #f8fafc) 100%);
+  border-color: color-mix(in srgb, var(--promo-ink) 26%, #e2e8f0);
 }
 
 [data-theme="light"] .promo-style-neon {
   background: #ffffff;
-  border-color: var(--promo-accent);
-  box-shadow: 0 0 20px color-mix(in srgb, var(--promo-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--promo-ink) 45%, #cbd5e1);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--promo-ink) 10%, transparent);
 }
 
 [data-theme="light"] .promo-style-minimal {
   background: #f8fafc;
   border-color: #e2e8f0;
+}
+
+[data-theme="light"] .promo-badge,
+[data-theme="light"] .promo-card-badge {
+  color: var(--promo-ink);
+  background: color-mix(in srgb, var(--promo-ink) 10%, transparent);
+  border-color: color-mix(in srgb, var(--promo-ink) 26%, transparent);
+}
+
+[data-theme="light"] .promo-card-price,
+[data-theme="light"] .promo-check,
+[data-theme="light"] .promo-code-value {
+  color: var(--promo-ink);
+}
+
+[data-theme="light"] .promo-code-pill {
+  border-color: color-mix(in srgb, var(--promo-ink) 40%, transparent);
+  background: color-mix(in srgb, var(--promo-ink) 6%, transparent);
+}
+
+[data-theme="light"] .promo-code-pill:hover {
+  background: color-mix(in srgb, var(--promo-ink) 12%, transparent);
+}
+
+[data-theme="light"] .promo-btn-primary,
+[data-theme="light"] .promo-card.is-highlighted .promo-card-btn,
+[data-theme="light"] .promo-card-btn:hover {
+  background: var(--promo-ink);
+  color: #ffffff;
+}
+
+[data-theme="light"] .promo-card-btn {
+  background: color-mix(in srgb, var(--promo-ink) 8%, transparent);
+  color: var(--promo-ink);
+  border-color: color-mix(in srgb, var(--promo-ink) 32%, transparent);
+}
+
+[data-theme="light"] .promo-card.is-highlighted {
+  border-color: color-mix(in srgb, var(--promo-ink) 55%, #cbd5e1);
+  background: color-mix(in srgb, var(--promo-ink) 5%, #ffffff);
 }
 
 .promo-hero {
