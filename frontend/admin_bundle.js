@@ -2356,7 +2356,7 @@ export const webMonitoringPlugin = {
                                                 h('input', { type: 'text', value: card.cta_url, onInput: (e) => { card.cta_url = e.target.value; }, placeholder: 'https://billing.example.com/cart/1', class: 'wm-input' })
                                             ]),
                                             h('div', { style: 'grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px;' }, [
-                                                h('label', { style: 'display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer;' }, [
+                                                h('label', { style: 'display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--wm-text); cursor: pointer;' }, [
                                                     h('input', { type: 'checkbox', checked: card.highlighted, onChange: (e) => { card.highlighted = e.target.checked; }, style: 'accent-color: var(--wm-primary);' }),
                                                     h('span', t('promoCardHighlighted'))
                                                 ]),
