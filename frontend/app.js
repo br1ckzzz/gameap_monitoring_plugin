@@ -779,11 +779,19 @@ function renderPromoBlock() {
     ? promoData.cards.slice(0, 4).filter((c) => c && ((c.title || '').trim() || (c.price || '').trim() || (c.features || '').trim()))
     : [];
 
-  const hasHero = !!(badge || title || desc || imgUrl || promoCode || (ctaText && ctaUrl) || (secText && secUrl));
+  const hasHero = !!(badge || title || desc || imgUrl || promoCode || ctaText || secText);
   if (!hasHero && cards.length === 0) {
     hideSlot(targetSlot);
     return;
   }
+
+  const renderCta = (text, url, cls) => {
+    if (!text) return '';
+    if (url) {
+      return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="${cls}">${escapeHtml(text)}</a>`;
+    }
+    return `<button type="button" class="${cls} is-nolink" disabled>${escapeHtml(text)}</button>`;
+  };
 
   const copyLabel = currentLang === 'en' ? 'Copy code' : 'Промокод';
   const heroHtml = hasHero ? `
@@ -792,10 +800,10 @@ function renderPromoBlock() {
         ${badge ? `<span class="promo-badge">${escapeHtml(badge)}</span>` : ''}
         ${title ? `<h2 class="promo-title">${escapeHtml(title)}</h2>` : ''}
         ${desc ? `<p class="promo-desc">${escapeHtml(desc)}</p>` : ''}
-        ${(promoCode || (ctaText && ctaUrl) || (secText && secUrl)) ? `
+        ${(promoCode || ctaText || secText) ? `
           <div class="promo-actions">
-            ${(ctaText && ctaUrl) ? `<a href="${escapeHtml(ctaUrl)}" target="_blank" rel="noopener noreferrer" class="promo-btn promo-btn-primary">${escapeHtml(ctaText)}</a>` : ''}
-            ${(secText && secUrl) ? `<a href="${escapeHtml(secUrl)}" target="_blank" rel="noopener noreferrer" class="promo-btn promo-btn-secondary">${escapeHtml(secText)}</a>` : ''}
+            ${renderCta(ctaText, ctaUrl, 'promo-btn promo-btn-primary')}
+            ${renderCta(secText, secUrl, 'promo-btn promo-btn-secondary')}
             ${promoCode ? `
               <button type="button" class="promo-code-pill" onclick="window.copyToClipboard('${escapeHtml(promoCode)}')" title="${escapeHtml(copyLabel)}">
                 <span class="promo-code-label">${escapeHtml(copyLabel)}:</span>
@@ -838,7 +846,7 @@ function renderPromoBlock() {
                 ${cFeatures.map((feat) => `<li><span class="promo-check">✓</span><span>${escapeHtml(feat)}</span></li>`).join('')}
               </ul>
             ` : ''}
-            ${(cCtaText && cCtaUrl) ? `<a href="${escapeHtml(cCtaUrl)}" target="_blank" rel="noopener noreferrer" class="promo-card-btn">${escapeHtml(cCtaText)}</a>` : ''}
+            ${renderCta(cCtaText, cCtaUrl, 'promo-card-btn')}
           </div>
         `;
       }).join('')}

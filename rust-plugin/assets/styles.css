@@ -2689,7 +2689,18 @@ body {
 
 [data-theme="light"] .promo-btn-secondary {
   background: #f1f5f9;
+  color: #0f172a;
   border-color: #cbd5e1;
+}
+
+[data-theme="light"] .promo-btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.promo-btn.is-nolink,
+.promo-card-btn.is-nolink {
+  cursor: default;
+  opacity: 0.85;
 }
 
 .promo-code-pill {
