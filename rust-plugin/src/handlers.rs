@@ -59,6 +59,7 @@ struct AdminSettingsResponse {
     pub auto_hide_offline_minutes: u32,
     pub click_stats: HashMap<u64, u64>,
     pub open_sections: HashMap<String, bool>,
+    pub promo: crate::types::PromoConfig,
     pub storage_status: crate::types::StorageDiagnostics,
     pub servers: Vec<PublicServerDTO>,
     pub all_servers: Vec<PublicServerDTO>,
@@ -467,6 +468,11 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
         } else {
             None
         };
+        let promo = if settings.promo.enabled {
+            Some(settings.promo.clone())
+        } else {
+            None
+        };
         let resp = MonitoringResponse {
             success: true,
             total_servers: all_servers.len(),
@@ -476,6 +482,7 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             timestamp: now as i64,
             refresh_interval: settings.refresh_interval,
             announcement,
+            promo,
         };
         let body = serde_json::to_vec(&resp).unwrap_or_default();
         let etag = compute_etag(&body);
@@ -644,6 +651,13 @@ fn handle_view() -> HTTPResponseData {
         if let Some(ref fav) = settings.favicon_url {
             obj.insert("favicon_url".to_string(), serde_json::json!(fav));
         }
+        if settings.promo.enabled {
+            if let Ok(pv) = serde_json::to_value(&settings.promo) {
+                obj.insert("promo".to_string(), pv);
+            }
+        } else {
+            obj.insert("promo".to_string(), serde_json::Value::Null);
+        }
         if settings.announcement_enabled && !settings.announcement_text.is_empty() {
             obj.insert("announcement".to_string(), serde_json::json!({
                 "text": settings.announcement_text,
@@ -696,7 +710,8 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
                 || val.get("refresh_interval").is_some()
                 || val.get("bot_api_token").is_some()
                 || val.get("bot_api_enabled").is_some()
-                || val.get("announcement_text").is_some();
+                || val.get("announcement_text").is_some()
+                || val.get("promo").is_some();
 
             if !has_settings_keys {
                 return HTTPResponseData {
@@ -772,6 +787,7 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
         auto_hide_offline_minutes: settings.auto_hide_offline_minutes,
         click_stats: settings.click_stats,
         open_sections: settings.open_sections,
+        promo: settings.promo,
         storage_status,
         servers: all_servers.clone(),
         all_servers,
@@ -1361,5 +1377,34 @@ mod tests {
         );
 
         invalidate_public_cache();
+    }
+
+    #[test]
+    fn test_promo_config_sanitization_and_public_exposure() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut settings = PluginSettings::default();
+        settings.promo = crate::types::PromoConfig {
+            enabled: true,
+            position: "invalid_pos".to_string(),
+            style: "invalid_style".to_string(),
+            accent_color: "not_a_hex".to_string(),
+            title: "Host Promo".to_string(),
+            cards: vec![Default::default(); 6],
+            ..Default::default()
+        };
+        let _ = crate::settings::save_settings(settings);
+
+        let saved = crate::settings::get_settings();
+        assert_eq!(saved.promo.position, "top");
+        assert_eq!(saved.promo.style, "glass");
+        assert_eq!(saved.promo.accent_color, "#00f0ff");
+        assert_eq!(saved.promo.cards.len(), 4);
+
+        let view_resp = handle_http_request(&make_request("GET", "/", None));
+        assert_eq!(view_resp.status_code, 200);
+        let html = String::from_utf8_lossy(&view_resp.body);
+        assert!(html.contains("Host Promo"));
+
+        crate::settings::set_test_settings(PluginSettings::default());
     }
 }

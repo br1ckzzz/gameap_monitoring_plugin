@@ -511,6 +511,12 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         None
     };
 
+    let promo = if settings.promo.enabled {
+        Some(settings.promo.clone())
+    } else {
+        None
+    };
+
     let resp = MonitoringResponse {
         success: true,
         total_servers: list.len(),
@@ -520,6 +526,7 @@ pub fn fetch_public_servers_with_opt(force_refresh: bool) -> Vec<u8> {
         timestamp: now as i64,
         refresh_interval: settings.refresh_interval,
         announcement,
+        promo,
     };
 
     let bytes = serde_json::to_vec(&resp).unwrap_or_default();

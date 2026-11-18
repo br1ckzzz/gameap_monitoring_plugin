@@ -145,6 +145,91 @@ pub struct AnnouncementDTO {
     pub deadline: Option<String>,
 }
 
+/// Single tariff / feature card inside the configurable promo block.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct PromoCardConfig {
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub badge: String,
+    #[serde(default)]
+    pub price: String,
+    #[serde(default)]
+    pub features: String,
+    #[serde(default)]
+    pub cta_text: String,
+    #[serde(default)]
+    pub cta_url: String,
+    #[serde(default)]
+    pub highlighted: bool,
+}
+
+fn default_promo_position() -> String {
+    "top".to_string()
+}
+
+fn default_promo_style() -> String {
+    "glass".to_string()
+}
+
+fn default_promo_accent() -> String {
+    "#00f0ff".to_string()
+}
+
+/// Configurable universal promo block for hosting / community pages.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PromoConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_promo_position")]
+    pub position: String, // "top" or "bottom"
+    #[serde(default = "default_promo_style")]
+    pub style: String, // "glass", "gradient", "neon", "minimal"
+    #[serde(default = "default_promo_accent")]
+    pub accent_color: String,
+    #[serde(default)]
+    pub badge: String,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub image_url: String,
+    #[serde(default)]
+    pub promo_code: String,
+    #[serde(default)]
+    pub cta_text: String,
+    #[serde(default)]
+    pub cta_url: String,
+    #[serde(default)]
+    pub secondary_cta_text: String,
+    #[serde(default)]
+    pub secondary_cta_url: String,
+    #[serde(default)]
+    pub cards: Vec<PromoCardConfig>,
+}
+
+impl Default for PromoConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            position: default_promo_position(),
+            style: default_promo_style(),
+            accent_color: default_promo_accent(),
+            badge: String::new(),
+            title: String::new(),
+            description: String::new(),
+            image_url: String::new(),
+            promo_code: String::new(),
+            cta_text: String::new(),
+            cta_url: String::new(),
+            secondary_cta_text: String::new(),
+            secondary_cta_url: String::new(),
+            cards: Vec::new(),
+        }
+    }
+}
+
 /// Live query telemetry ingested from Companion Bot or external worker.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ServerTelemetryDTO {
@@ -227,6 +312,8 @@ pub struct MonitoringResponse {
     pub refresh_interval: u32,
     #[serde(default)]
     pub announcement: Option<AnnouncementDTO>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub promo: Option<PromoConfig>,
 }
 
 fn default_refresh_interval() -> u32 {
@@ -310,6 +397,10 @@ pub struct PluginSettings {
     // Admin UI accordion open/closed state persisted
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub open_sections: HashMap<String, bool>,
+
+    // Configurable Hosting / Community Promo Block
+    #[serde(default)]
+    pub promo: PromoConfig,
 }
 
 impl Default for PluginSettings {
@@ -341,6 +432,7 @@ impl Default for PluginSettings {
             auto_hide_offline_minutes: 0,
             click_stats: HashMap::new(),
             open_sections: HashMap::new(),
+            promo: PromoConfig::default(),
         }
     }
 }
@@ -371,6 +463,7 @@ mod tests {
             timestamp: 123456789,
             refresh_interval: 15,
             announcement: None,
+            promo: None,
         };
         let serialized = serde_json::to_string(&resp).expect("serialize");
         assert!(!serialized.contains("\"nodes\""));
@@ -405,6 +498,7 @@ mod tests {
             timestamp: 123456789,
             refresh_interval: 15,
             announcement: None,
+            promo: None,
         };
         let serialized = serde_json::to_string(&resp).expect("serialize");
         assert!(serialized.contains("\"nodes\""));

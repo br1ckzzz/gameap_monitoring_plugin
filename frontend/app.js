@@ -213,6 +213,7 @@ let selectedGame = 'all';
 let selectedCategory = 'all';
 let announcementData = null;
 let announcementTimerInterval = null;
+let promoData = null;
 let searchQuery = '';
 let refreshInterval = null;
 let countdownSeconds = autoRefreshSeconds;
@@ -452,6 +453,11 @@ function initPreloadedData() {
   if (window.INITIAL_DATA.announcement && window.INITIAL_DATA.announcement.text) {
     announcementData = window.INITIAL_DATA.announcement;
   }
+  if (window.INITIAL_DATA.promo && window.INITIAL_DATA.promo.enabled) {
+    promoData = window.INITIAL_DATA.promo;
+  } else {
+    promoData = null;
+  }
 
   if (window.INITIAL_DATA.refresh_interval) {
     const parsedInterval = parseInt(window.INITIAL_DATA.refresh_interval, 10);
@@ -583,6 +589,11 @@ async function fetchServers(isManual = false) {
                 localStorage.removeItem('web_monitoring_announcement');
               } catch (_) {}
             }
+            if (data.promo && data.promo.enabled) {
+              promoData = data.promo;
+            } else {
+              promoData = null;
+            }
             if (Array.isArray(data.servers)) {
               return { success: true, servers: data.servers };
             }
@@ -713,10 +724,134 @@ async function fetchServers(isManual = false) {
 function renderAll() {
   pruneFavorites(allServers);
   renderAnnouncement();
+  renderPromoBlock();
   renderCategoryTabs();
   renderGameFilters();
   renderServers();
   updateStats();
+}
+
+function sanitizePromoColor(color) {
+  if (typeof color !== 'string') return '#00f0ff';
+  const trimmed = color.trim();
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed)) return trimmed;
+  return '#00f0ff';
+}
+
+function renderPromoBlock() {
+  const topSlot = document.getElementById('promo-slot-top');
+  const bottomSlot = document.getElementById('promo-slot-bottom');
+  if (!topSlot && !bottomSlot) return;
+
+  const hideSlot = (el) => {
+    if (!el) return;
+    el.classList.add('hidden');
+    el.innerHTML = '';
+  };
+
+  if (!promoData || !promoData.enabled) {
+    hideSlot(topSlot);
+    hideSlot(bottomSlot);
+    return;
+  }
+
+  const position = promoData.position === 'bottom' ? 'bottom' : 'top';
+  const targetSlot = position === 'bottom' ? bottomSlot : topSlot;
+  const otherSlot = position === 'bottom' ? topSlot : bottomSlot;
+  hideSlot(otherSlot);
+  if (!targetSlot) return;
+
+  const stylePreset = ['glass', 'gradient', 'neon', 'minimal'].includes(promoData.style)
+    ? promoData.style
+    : 'glass';
+  const accent = sanitizePromoColor(promoData.accent_color);
+  const badge = (promoData.badge || '').trim();
+  const title = (promoData.title || '').trim();
+  const desc = (promoData.description || '').trim();
+  const imgUrl = sanitizeAssetUrl(promoData.image_url || '');
+  const promoCode = (promoData.promo_code || '').trim();
+  const ctaText = (promoData.cta_text || '').trim();
+  const ctaUrl = sanitizeAssetUrl(promoData.cta_url || '');
+  const secText = (promoData.secondary_cta_text || '').trim();
+  const secUrl = sanitizeAssetUrl(promoData.secondary_cta_url || '');
+
+  const cards = Array.isArray(promoData.cards)
+    ? promoData.cards.slice(0, 4).filter((c) => c && ((c.title || '').trim() || (c.price || '').trim() || (c.features || '').trim()))
+    : [];
+
+  const hasHero = !!(badge || title || desc || imgUrl || promoCode || (ctaText && ctaUrl) || (secText && secUrl));
+  if (!hasHero && cards.length === 0) {
+    hideSlot(targetSlot);
+    return;
+  }
+
+  const copyLabel = currentLang === 'en' ? 'Copy code' : 'Промокод';
+  const heroHtml = hasHero ? `
+    <div class="promo-hero">
+      <div class="promo-hero-content">
+        ${badge ? `<span class="promo-badge">${escapeHtml(badge)}</span>` : ''}
+        ${title ? `<h2 class="promo-title">${escapeHtml(title)}</h2>` : ''}
+        ${desc ? `<p class="promo-desc">${escapeHtml(desc)}</p>` : ''}
+        ${(promoCode || (ctaText && ctaUrl) || (secText && secUrl)) ? `
+          <div class="promo-actions">
+            ${(ctaText && ctaUrl) ? `<a href="${escapeHtml(ctaUrl)}" target="_blank" rel="noopener noreferrer" class="promo-btn promo-btn-primary">${escapeHtml(ctaText)}</a>` : ''}
+            ${(secText && secUrl) ? `<a href="${escapeHtml(secUrl)}" target="_blank" rel="noopener noreferrer" class="promo-btn promo-btn-secondary">${escapeHtml(secText)}</a>` : ''}
+            ${promoCode ? `
+              <button type="button" class="promo-code-pill" onclick="window.copyToClipboard('${escapeHtml(promoCode)}')" title="${escapeHtml(copyLabel)}">
+                <span class="promo-code-label">${escapeHtml(copyLabel)}:</span>
+                <code class="promo-code-value">${escapeHtml(promoCode)}</code>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            ` : ''}
+          </div>
+        ` : ''}
+      </div>
+      ${imgUrl ? `
+        <div class="promo-hero-media">
+          <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(title || 'Promo')}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'">
+        </div>
+      ` : ''}
+    </div>
+  ` : '';
+
+  const cardsHtml = cards.length > 0 ? `
+    <div class="promo-cards-grid promo-cards-${cards.length}">
+      ${cards.map((card) => {
+        const cTitle = (card.title || '').trim();
+        const cBadge = (card.badge || '').trim();
+        const cPrice = (card.price || '').trim();
+        const cFeatures = (card.features || '')
+          .split(/\r?\n|,/)
+          .map((f) => f.trim())
+          .filter(Boolean);
+        const cCtaText = (card.cta_text || '').trim();
+        const cCtaUrl = sanitizeAssetUrl(card.cta_url || '');
+        return `
+          <div class="promo-card ${card.highlighted ? 'is-highlighted' : ''}">
+            <div class="promo-card-header">
+              ${cTitle ? `<h3 class="promo-card-title">${escapeHtml(cTitle)}</h3>` : ''}
+              ${cBadge ? `<span class="promo-card-badge">${escapeHtml(cBadge)}</span>` : ''}
+            </div>
+            ${cPrice ? `<div class="promo-card-price">${escapeHtml(cPrice)}</div>` : ''}
+            ${cFeatures.length > 0 ? `
+              <ul class="promo-card-features">
+                ${cFeatures.map((feat) => `<li><span class="promo-check">✓</span><span>${escapeHtml(feat)}</span></li>`).join('')}
+              </ul>
+            ` : ''}
+            ${(cCtaText && cCtaUrl) ? `<a href="${escapeHtml(cCtaUrl)}" target="_blank" rel="noopener noreferrer" class="promo-card-btn">${escapeHtml(cCtaText)}</a>` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  ` : '';
+
+  targetSlot.className = 'promo-slot';
+  targetSlot.innerHTML = `
+    <div class="promo-block promo-style-${escapeHtml(stylePreset)}" style="--promo-accent: ${escapeHtml(accent)};">
+      ${heroHtml}
+      ${cardsHtml}
+    </div>
+  `;
 }
 
 const announcementBar = document.getElementById('announcement-bar');

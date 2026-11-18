@@ -188,6 +188,11 @@ pub fn get_settings() -> PluginSettings {
                                 if let Some(ahom) = val.get("auto_hide_offline_minutes").and_then(|v| v.as_u64()) {
                                     recovered.auto_hide_offline_minutes = ahom as u32;
                                 }
+                                if let Some(promo_val) = val.get("promo") {
+                                    if let Ok(p) = serde_json::from_value::<crate::types::PromoConfig>(promo_val.clone()) {
+                                        recovered.promo = p;
+                                    }
+                                }
                                 diag.db_saved = true;
                                 diag.source = "storage_recovered".to_string();
                                 if let Ok(mut d_guard) = STORAGE_DIAGNOSTICS.lock() {
@@ -239,6 +244,22 @@ fn save_settings_inner(mut s: PluginSettings, invalidate_cache: bool) -> (bool, 
     if s.theme.is_empty() {
         s.theme = "modern".to_string();
     }
+    if s.promo.position != "top" && s.promo.position != "bottom" {
+        s.promo.position = "top".to_string();
+    }
+    if !matches!(s.promo.style.as_str(), "glass" | "gradient" | "neon" | "minimal") {
+        s.promo.style = "glass".to_string();
+    }
+    let accent_trimmed = s.promo.accent_color.trim();
+    let valid_hex = (accent_trimmed.len() == 4 || accent_trimmed.len() == 7)
+        && accent_trimmed.starts_with('#')
+        && accent_trimmed[1..].chars().all(|c| c.is_ascii_hexdigit());
+    s.promo.accent_color = if valid_hex {
+        accent_trimmed.to_string()
+    } else {
+        "#00f0ff".to_string()
+    };
+    s.promo.cards.truncate(4);
     // Allow explicit clearing via clear_bot_api_token; otherwise preserve existing token if omitted/masked
     if s.clear_bot_api_token {
         s.bot_api_token.clear();

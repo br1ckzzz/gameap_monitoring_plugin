@@ -113,6 +113,37 @@ export const webMonitoringPlugin = {
                             announcementDeadlineLabel: 'Дедлайн таймера (ISO / Дата и время)',
                             announcementDeadlinePlaceholder: '2026-10-01T18:00:00Z или 2026-10-01 18:00',
                             announcementDeadlineHelp: 'Если указано, в баннере будет отображаться обратный отсчёт (дни, часы, минуты, секунды)',
+                            promoSection: '🚀 Промо-блок / Тарифы хостинга',
+                            promoEnabledLabel: 'Показывать промо-блок на странице',
+                            promoEnabledHelp: 'Универсальный конструктор баннера и до 4 карточек тарифов/услуг. Пустые поля скрываются автоматически.',
+                            promoPositionLabel: 'Расположение блока',
+                            promoPositionTop: 'Сверху (над списком серверов)',
+                            promoPositionBottom: 'Снизу (под списком серверов)',
+                            promoStyleLabel: 'Стиль оформления',
+                            promoStyleGlass: 'Стекло (Glass)',
+                            promoStyleGradient: 'Градиент (Gradient)',
+                            promoStyleNeon: 'Неон (Neon)',
+                            promoStyleMinimal: 'Минимал (Minimal)',
+                            promoAccentLabel: 'Акцентный цвет',
+                            promoBadgeLabel: 'Бейдж / тег над заголовком',
+                            promoTitleLabel: 'Заголовок промо-блока',
+                            promoDescLabel: 'Описание',
+                            promoImageLabel: 'URL изображения справа (опционально)',
+                            promoCodeLabel: 'Промокод (клик копирует)',
+                            promoCtaTextLabel: 'Основная кнопка — текст',
+                            promoCtaUrlLabel: 'Основная кнопка — ссылка',
+                            promoSecCtaTextLabel: 'Вторая кнопка — текст',
+                            promoSecCtaUrlLabel: 'Вторая кнопка — ссылка',
+                            promoCardsTitle: 'Карточки тарифов / преимуществ (до 4)',
+                            promoAddCard: '+ Добавить карточку',
+                            promoRemoveCard: 'Удалить',
+                            promoCardTitle: 'Название тарифа / блока',
+                            promoCardBadge: 'Бейдж (напр. ХИТ)',
+                            promoCardPrice: 'Цена (напр. 299 ₽/мес)',
+                            promoCardFeatures: 'Пункты (через запятую или с новой строки)',
+                            promoCardCtaText: 'Текст кнопки',
+                            promoCardCtaUrl: 'Ссылка кнопки',
+                            promoCardHighlighted: 'Выделить акцентной рамкой',
                             categoryLabel: 'Категория / Кластер',
                             categoryPlaceholder: 'Категория',
                             categoryHelp: 'Группирует серверы по вкладкам (кластерам) на странице мониторинга',
@@ -218,6 +249,37 @@ export const webMonitoringPlugin = {
                             announcementDeadlineLabel: 'Countdown Deadline (ISO / Date & Time)',
                             announcementDeadlinePlaceholder: '2026-10-01T18:00:00Z or 2026-10-01 18:00',
                             announcementDeadlineHelp: 'If set, displays a live countdown ticker',
+                            promoSection: '🚀 Promo Block / Hosting Plans',
+                            promoEnabledLabel: 'Display promo block on public page',
+                            promoEnabledHelp: 'Universal constructor with hero banner and up to 4 tariff/feature cards. Empty fields are hidden automatically.',
+                            promoPositionLabel: 'Placement',
+                            promoPositionTop: 'Top (above server list)',
+                            promoPositionBottom: 'Bottom (below server list)',
+                            promoStyleLabel: 'Visual Style',
+                            promoStyleGlass: 'Glass',
+                            promoStyleGradient: 'Gradient',
+                            promoStyleNeon: 'Neon',
+                            promoStyleMinimal: 'Minimal',
+                            promoAccentLabel: 'Accent Color',
+                            promoBadgeLabel: 'Top Badge / Tag',
+                            promoTitleLabel: 'Promo Title',
+                            promoDescLabel: 'Description',
+                            promoImageLabel: 'Right-side Image URL (optional)',
+                            promoCodeLabel: 'Promo Code (click to copy)',
+                            promoCtaTextLabel: 'Primary Button — Label',
+                            promoCtaUrlLabel: 'Primary Button — URL',
+                            promoSecCtaTextLabel: 'Secondary Button — Label',
+                            promoSecCtaUrlLabel: 'Secondary Button — URL',
+                            promoCardsTitle: 'Tariff / Feature Cards (up to 4)',
+                            promoAddCard: '+ Add Card',
+                            promoRemoveCard: 'Remove',
+                            promoCardTitle: 'Plan / Card Title',
+                            promoCardBadge: 'Badge (e.g. HOT)',
+                            promoCardPrice: 'Price (e.g. $4.99/mo)',
+                            promoCardFeatures: 'Features (comma or newline separated)',
+                            promoCardCtaText: 'Button Label',
+                            promoCardCtaUrl: 'Button URL',
+                            promoCardHighlighted: 'Highlight card with accent border',
                             categoryLabel: 'Category / Cluster',
                             categoryPlaceholder: 'Category',
                             categoryHelp: 'Groups servers into cluster tabs on the monitoring page',
@@ -272,6 +334,44 @@ export const webMonitoringPlugin = {
                     const announcementLink = ref('');
                     const announcementType = ref('info');
                     const announcementDeadline = ref('');
+                    const defaultPromo = () => ({
+                        enabled: false,
+                        position: 'top',
+                        style: 'glass',
+                        accent_color: '#00f0ff',
+                        badge: '',
+                        title: '',
+                        description: '',
+                        image_url: '',
+                        promo_code: '',
+                        cta_text: '',
+                        cta_url: '',
+                        secondary_cta_text: '',
+                        secondary_cta_url: '',
+                        cards: []
+                    });
+                    const promoConfig = ref(defaultPromo());
+                    const normalizePromo = (raw) => {
+                        const base = defaultPromo();
+                        if (!raw || typeof raw !== 'object') return base;
+                        return {
+                            ...base,
+                            ...raw,
+                            enabled: Boolean(raw.enabled),
+                            position: raw.position === 'bottom' ? 'bottom' : 'top',
+                            style: ['glass', 'gradient', 'neon', 'minimal'].includes(raw.style) ? raw.style : 'glass',
+                            accent_color: (typeof raw.accent_color === 'string' && raw.accent_color.trim()) ? raw.accent_color.trim() : '#00f0ff',
+                            cards: Array.isArray(raw.cards) ? raw.cards.slice(0, 4).map(c => ({
+                                title: (c && c.title) || '',
+                                badge: (c && c.badge) || '',
+                                price: (c && c.price) || '',
+                                features: (c && c.features) || '',
+                                cta_text: (c && c.cta_text) || '',
+                                cta_url: (c && c.cta_url) || '',
+                                highlighted: Boolean(c && c.highlighted)
+                            })) : []
+                        };
+                    };
                     const serverCategories = ref({});
                     const autoHideOffline = ref(false);
                     const autoHideOfflineMinutes = ref(0);
@@ -1429,6 +1529,7 @@ export const webMonitoringPlugin = {
                                 if (localData.announcement_link !== undefined) announcementLink.value = localData.announcement_link;
                                 if (localData.announcement_type !== undefined) announcementType.value = localData.announcement_type;
                                 if (localData.announcement_deadline !== undefined) announcementDeadline.value = localData.announcement_deadline;
+                                if (localData.promo) promoConfig.value = normalizePromo(localData.promo);
                                 if (localData.server_categories && typeof localData.server_categories === 'object') serverCategories.value = localData.server_categories;
                                 if (localData.auto_hide_offline !== undefined) autoHideOffline.value = localData.auto_hide_offline;
                                 if (localData.auto_hide_offline_minutes !== undefined) autoHideOfflineMinutes.value = localData.auto_hide_offline_minutes;
@@ -1510,6 +1611,7 @@ export const webMonitoringPlugin = {
                                     if (data.announcement_link !== undefined) announcementLink.value = data.announcement_link;
                                     if (data.announcement_type !== undefined) announcementType.value = data.announcement_type;
                                     if (data.announcement_deadline !== undefined) announcementDeadline.value = data.announcement_deadline;
+                                    if (data.promo !== undefined) promoConfig.value = normalizePromo(data.promo);
                                     if (data.server_categories && typeof data.server_categories === 'object') serverCategories.value = data.server_categories;
                                     if (data.auto_hide_offline !== undefined) autoHideOffline.value = Boolean(data.auto_hide_offline);
                                     if (data.auto_hide_offline_minutes !== undefined) autoHideOfflineMinutes.value = data.auto_hide_offline_minutes;
@@ -1581,6 +1683,7 @@ export const webMonitoringPlugin = {
                             announcement_link: announcementLink.value.trim(),
                             announcement_type: announcementType.value,
                             announcement_deadline: announcementDeadline.value.trim(),
+                            promo: normalizePromo(promoConfig.value),
                             server_categories: serverCategories.value,
                             auto_hide_offline: autoHideOffline.value,
                             auto_hide_offline_minutes: parseInt(autoHideOfflineMinutes.value, 10) || 0,
@@ -2106,6 +2209,165 @@ export const webMonitoringPlugin = {
                                             }),
                                             h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 4px 0 0 0;' }, t('announcementDeadlineHelp'))
                                         ])
+                                    ])
+                                ])
+                            ]
+                        ),
+
+                        // Configurable Hosting / Community Promo Block
+                        renderSpoilerCard(
+                            'promo',
+                            'fas fa-rocket',
+                            t('promoSection'),
+                            promoConfig.value.enabled ? (currentLang.value === 'ru' ? 'Включен' : 'Enabled') : (currentLang.value === 'ru' ? 'Отключен' : 'Disabled'),
+                            promoConfig.value.enabled,
+                            [
+                                h('div', { style: 'display: flex; flex-direction: column; gap: 16px;' }, [
+                                    h('label', { style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;' }, [
+                                        h('input', {
+                                            type: 'checkbox',
+                                            checked: promoConfig.value.enabled,
+                                            onChange: (e) => { promoConfig.value.enabled = e.target.checked; },
+                                            style: 'width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--wm-primary);'
+                                        }),
+                                        h('div', [
+                                            h('span', { style: 'font-size: 14px; font-weight: 600; color: var(--wm-text); display: block;' }, t('promoEnabledLabel')),
+                                            h('p', { style: 'font-size: 12px; color: var(--wm-text-muted); margin: 3px 0 0 0;' }, t('promoEnabledHelp'))
+                                        ])
+                                    ]),
+                                    h('div', { style: `display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; ${promoConfig.value.enabled ? '' : 'opacity: 0.6;'}` }, [
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoPositionLabel')),
+                                            h('select', {
+                                                value: promoConfig.value.position,
+                                                onChange: (e) => { promoConfig.value.position = e.target.value; },
+                                                class: 'wm-select'
+                                            }, [
+                                                h('option', { value: 'top' }, t('promoPositionTop')),
+                                                h('option', { value: 'bottom' }, t('promoPositionBottom'))
+                                            ])
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoStyleLabel')),
+                                            h('select', {
+                                                value: promoConfig.value.style,
+                                                onChange: (e) => { promoConfig.value.style = e.target.value; },
+                                                class: 'wm-select'
+                                            }, [
+                                                h('option', { value: 'glass' }, t('promoStyleGlass')),
+                                                h('option', { value: 'gradient' }, t('promoStyleGradient')),
+                                                h('option', { value: 'neon' }, t('promoStyleNeon')),
+                                                h('option', { value: 'minimal' }, t('promoStyleMinimal'))
+                                            ])
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoAccentLabel')),
+                                            h('div', { style: 'display: flex; gap: 8px; align-items: center;' }, [
+                                                h('input', {
+                                                    type: 'color',
+                                                    value: promoConfig.value.accent_color || '#00f0ff',
+                                                    onInput: (e) => { promoConfig.value.accent_color = e.target.value; },
+                                                    style: 'width: 42px; height: 38px; padding: 2px; border-radius: 8px; border: 1px solid var(--wm-border); background: transparent; cursor: pointer;'
+                                                }),
+                                                h('input', {
+                                                    type: 'text',
+                                                    value: promoConfig.value.accent_color,
+                                                    onInput: (e) => { promoConfig.value.accent_color = e.target.value; },
+                                                    placeholder: '#00f0ff',
+                                                    class: 'wm-input'
+                                                })
+                                            ])
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoBadgeLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.badge, onInput: (e) => { promoConfig.value.badge = e.target.value; }, placeholder: 'GAME HOSTING • NVMe', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                            h('label', { class: 'wm-label' }, t('promoTitleLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.title, onInput: (e) => { promoConfig.value.title = e.target.value; }, placeholder: 'Аренда мощных игровых серверов с защитой от DDoS', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                            h('label', { class: 'wm-label' }, t('promoDescLabel')),
+                                            h('textarea', { value: promoConfig.value.description, onInput: (e) => { promoConfig.value.description = e.target.value; }, rows: 2, class: 'wm-textarea', placeholder: 'Мгновенная установка, Ryzen 9, низкий пинг в РФ и Европе...' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoImageLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.image_url, onInput: (e) => { promoConfig.value.image_url = e.target.value; }, placeholder: 'https://.../banner.png', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoCodeLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.promo_code, onInput: (e) => { promoConfig.value.promo_code = e.target.value; }, placeholder: 'START20', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoCtaTextLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.cta_text, onInput: (e) => { promoConfig.value.cta_text = e.target.value; }, placeholder: 'Заказать сервер', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoCtaUrlLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.cta_url, onInput: (e) => { promoConfig.value.cta_url = e.target.value; }, placeholder: 'https://billing.example.com', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoSecCtaTextLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.secondary_cta_text, onInput: (e) => { promoConfig.value.secondary_cta_text = e.target.value; }, placeholder: 'Discord / Поддержка', class: 'wm-input' })
+                                        ]),
+                                        h('div', { class: 'wm-form-group' }, [
+                                            h('label', { class: 'wm-label' }, t('promoSecCtaUrlLabel')),
+                                            h('input', { type: 'text', value: promoConfig.value.secondary_cta_url, onInput: (e) => { promoConfig.value.secondary_cta_url = e.target.value; }, placeholder: 'https://discord.gg/...', class: 'wm-input' })
+                                        ])
+                                    ]),
+                                    h('div', { style: 'border-top: 1px solid var(--wm-border); padding-top: 14px; display: flex; flex-direction: column; gap: 12px;' }, [
+                                        h('div', { style: 'display: flex; align-items: center; justify-content: space-between; gap: 10px;' }, [
+                                            h('span', { style: 'font-size: 13.5px; font-weight: 600; color: var(--wm-text);' }, t('promoCardsTitle')),
+                                            promoConfig.value.cards.length < 4 ? h('button', {
+                                                type: 'button',
+                                                class: 'wm-btn wm-btn-secondary',
+                                                style: 'padding: 6px 12px; font-size: 12.5px;',
+                                                onClick: () => {
+                                                    promoConfig.value.cards.push({ title: '', badge: '', price: '', features: '', cta_text: '', cta_url: '', highlighted: false });
+                                                }
+                                            }, t('promoAddCard')) : null
+                                        ]),
+                                        ...promoConfig.value.cards.map((card, idx) => h('div', {
+                                            key: idx,
+                                            style: 'padding: 12px; border-radius: 10px; border: 1px solid var(--wm-border); background: rgba(255,255,255,0.02); display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;'
+                                        }, [
+                                            h('div', { class: 'wm-form-group' }, [
+                                                h('label', { class: 'wm-label' }, t('promoCardTitle')),
+                                                h('input', { type: 'text', value: card.title, onInput: (e) => { card.title = e.target.value; }, placeholder: 'Start', class: 'wm-input' })
+                                            ]),
+                                            h('div', { class: 'wm-form-group' }, [
+                                                h('label', { class: 'wm-label' }, t('promoCardPrice')),
+                                                h('input', { type: 'text', value: card.price, onInput: (e) => { card.price = e.target.value; }, placeholder: '299 ₽/мес', class: 'wm-input' })
+                                            ]),
+                                            h('div', { class: 'wm-form-group' }, [
+                                                h('label', { class: 'wm-label' }, t('promoCardBadge')),
+                                                h('input', { type: 'text', value: card.badge, onInput: (e) => { card.badge = e.target.value; }, placeholder: 'HIT', class: 'wm-input' })
+                                            ]),
+                                            h('div', { class: 'wm-form-group', style: 'grid-column: 1 / -1;' }, [
+                                                h('label', { class: 'wm-label' }, t('promoCardFeatures')),
+                                                h('textarea', { value: card.features, onInput: (e) => { card.features = e.target.value; }, rows: 2, class: 'wm-textarea', placeholder: '2 vCPU Ryzen 9, 4 GB RAM, 30 GB NVMe, Anti-DDoS' })
+                                            ]),
+                                            h('div', { class: 'wm-form-group' }, [
+                                                h('label', { class: 'wm-label' }, t('promoCardCtaText')),
+                                                h('input', { type: 'text', value: card.cta_text, onInput: (e) => { card.cta_text = e.target.value; }, placeholder: 'Выбрать', class: 'wm-input' })
+                                            ]),
+                                            h('div', { class: 'wm-form-group' }, [
+                                                h('label', { class: 'wm-label' }, t('promoCardCtaUrl')),
+                                                h('input', { type: 'text', value: card.cta_url, onInput: (e) => { card.cta_url = e.target.value; }, placeholder: 'https://billing.example.com/cart/1', class: 'wm-input' })
+                                            ]),
+                                            h('div', { style: 'grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px;' }, [
+                                                h('label', { style: 'display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer;' }, [
+                                                    h('input', { type: 'checkbox', checked: card.highlighted, onChange: (e) => { card.highlighted = e.target.checked; }, style: 'accent-color: var(--wm-primary);' }),
+                                                    h('span', t('promoCardHighlighted'))
+                                                ]),
+                                                h('button', {
+                                                    type: 'button',
+                                                    class: 'wm-btn wm-btn-secondary',
+                                                    style: 'padding: 5px 10px; font-size: 12px; color: #ff5577;',
+                                                    onClick: () => { promoConfig.value.cards.splice(idx, 1); }
+                                                }, t('promoRemoveCard'))
+                                            ])
+                                        ]))
                                     ])
                                 ])
                             ]
