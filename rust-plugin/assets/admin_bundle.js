@@ -2320,7 +2320,7 @@ export const webMonitoringPlugin = {
                                             h('span', { style: 'font-size: 13.5px; font-weight: 600; color: var(--wm-text);' }, t('promoCardsTitle')),
                                             promoConfig.value.cards.length < 4 ? h('button', {
                                                 type: 'button',
-                                                class: 'wm-btn wm-btn-secondary',
+                                                class: 'wm-btn-refresh',
                                                 style: 'padding: 6px 12px; font-size: 12.5px;',
                                                 onClick: () => {
                                                     promoConfig.value.cards.push({ title: '', badge: '', price: '', features: '', cta_text: '', cta_url: '', highlighted: false });
@@ -2362,8 +2362,8 @@ export const webMonitoringPlugin = {
                                                 ]),
                                                 h('button', {
                                                     type: 'button',
-                                                    class: 'wm-btn wm-btn-secondary',
-                                                    style: 'padding: 5px 10px; font-size: 12px; color: #ff5577;',
+                                                    class: 'wm-btn-refresh',
+                                                    style: 'padding: 5px 10px; font-size: 12px; color: #ff5577; border-color: rgba(255, 85, 119, 0.35);',
                                                     onClick: () => { promoConfig.value.cards.splice(idx, 1); }
                                                 }, t('promoRemoveCard'))
                                             ])
