@@ -2,7 +2,9 @@
 
 use crate::assets::INDEX_HTML;
 use crate::proto::HttpRequest;
-use crate::servers_client::{fetch_all_nodes, fetch_all_servers, fetch_public_servers_with_opt, invalidate_public_cache};
+use crate::servers_client::{
+    fetch_all_nodes, fetch_all_servers, fetch_public_servers_with_opt, invalidate_public_cache,
+};
 use crate::service::PLUGIN_VERSION;
 use crate::settings::{get_settings, save_settings};
 use crate::types::{MonitoringResponse, PluginSettings, PublicServerDTO};
@@ -27,13 +29,17 @@ fn compute_etag(body: &[u8]) -> String {
 }
 
 fn etag_matches(if_none_match: &str, etag: &str) -> bool {
-    let raw_req = if_none_match.trim().trim_start_matches("W/").trim_matches('"');
+    let raw_req = if_none_match
+        .trim()
+        .trim_start_matches("W/")
+        .trim_matches('"');
     let raw_etag = etag.trim().trim_start_matches("W/").trim_matches('"');
     raw_req == "*" || raw_req == raw_etag
 }
 
 #[derive(Serialize)]
 struct AdminSettingsResponse {
+    pub version: &'static str,
     pub title: String,
     pub subtitle: String,
     pub theme: String,
@@ -65,7 +71,10 @@ struct AdminSettingsResponse {
     pub all_servers: Vec<PublicServerDTO>,
 }
 
-fn get_header_ignore_case<'a>(headers: &'a HashMap<String, String>, key: &str) -> Option<&'a String> {
+fn get_header_ignore_case<'a>(
+    headers: &'a HashMap<String, String>,
+    key: &str,
+) -> Option<&'a String> {
     headers.iter().find_map(|(k, v)| {
         if k.eq_ignore_ascii_case(key) {
             Some(v)
@@ -101,7 +110,8 @@ fn require_admin(req: &HttpRequest) -> Option<HTTPResponseData> {
         return Some(HTTPResponseData {
             status_code: 401,
             content_type: "application/json; charset=utf-8",
-            body: br#"{"success":false,"error":"Unauthorized: admin authentication required"}"#.to_vec(),
+            body: br#"{"success":false,"error":"Unauthorized: admin authentication required"}"#
+                .to_vec(),
             etag: None,
             cache_control: None,
         });
@@ -111,7 +121,8 @@ fn require_admin(req: &HttpRequest) -> Option<HTTPResponseData> {
         return Some(HTTPResponseData {
             status_code: 401,
             content_type: "application/json; charset=utf-8",
-            body: br#"{"success":false,"error":"Unauthorized: authenticated user required"}"#.to_vec(),
+            body: br#"{"success":false,"error":"Unauthorized: authenticated user required"}"#
+                .to_vec(),
             etag: None,
             cache_control: None,
         });
@@ -119,9 +130,7 @@ fn require_admin(req: &HttpRequest) -> Option<HTTPResponseData> {
 
     if !ctx.permissions.is_empty()
         && !ctx.permissions.iter().any(|p| {
-            p.eq_ignore_ascii_case("admin")
-                || p == "*"
-                || p.eq_ignore_ascii_case("admin_only")
+            p.eq_ignore_ascii_case("admin") || p == "*" || p.eq_ignore_ascii_case("admin_only")
         })
     {
         return Some(HTTPResponseData {
@@ -218,7 +227,11 @@ pub fn handle_http_request(req: &HttpRequest) -> HTTPResponseData {
     if path == "/settings" || path.ends_with("/settings") {
         return handle_settings(req);
     }
-    if path == "/servers" || path.ends_with("/servers") || path.ends_with("/api/servers") || path.ends_with("/bot/servers") {
+    if path == "/servers"
+        || path.ends_with("/servers")
+        || path.ends_with("/api/servers")
+        || path.ends_with("/bot/servers")
+    {
         if req.method.eq_ignore_ascii_case("POST") {
             return handle_query_update(req);
         }
@@ -306,8 +319,10 @@ fn parse_telemetry_payload(body: &[u8]) -> Result<crate::types::QueryTelemetryPa
             }
         } else if let Some(arr) = servers_val.as_array() {
             for item in arr {
-                let id_opt = item.get("id")
-                    .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok())));
+                let id_opt = item.get("id").and_then(|v| {
+                    v.as_u64()
+                        .or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok()))
+                });
                 if let Some(id) = id_opt {
                     if let Some(dto) = parse_server_entry(item) {
                         servers_map.insert(id, dto);
@@ -317,8 +332,10 @@ fn parse_telemetry_payload(body: &[u8]) -> Result<crate::types::QueryTelemetryPa
         }
     } else if let Some(arr) = root.as_array() {
         for item in arr {
-            let id_opt = item.get("id")
-                .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok())));
+            let id_opt = item.get("id").and_then(|v| {
+                v.as_u64()
+                    .or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok()))
+            });
             if let Some(id) = id_opt {
                 if let Some(dto) = parse_server_entry(item) {
                     servers_map.insert(id, dto);
@@ -364,7 +381,8 @@ fn handle_query_update(req: &HttpRequest) -> HTTPResponseData {
         return HTTPResponseData {
             status_code: 401,
             content_type: "application/json; charset=utf-8",
-            body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+            body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#
+                .to_vec(),
             etag: None,
             cache_control: None,
         };
@@ -413,7 +431,8 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             return HTTPResponseData {
                 status_code: 403,
                 content_type: "application/json; charset=utf-8",
-                body: br#"{"success":false,"error":"Bot API is disabled or not configured"}"#.to_vec(),
+                body: br#"{"success":false,"error":"Bot API is disabled or not configured"}"#
+                    .to_vec(),
                 etag: None,
                 cache_control: None,
             };
@@ -422,7 +441,9 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             return HTTPResponseData {
                 status_code: 401,
                 content_type: "application/json; charset=utf-8",
-                body: br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#.to_vec(),
+                body:
+                    br#"{"success":false,"error":"Unauthorized: invalid or missing Bot API token"}"#
+                        .to_vec(),
                 etag: None,
                 cache_control: None,
             };
@@ -435,7 +456,8 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             return HTTPResponseData {
                 status_code: 401,
                 content_type: "application/json; charset=utf-8",
-                body: br#"{"success":false,"error":"Unauthorized: invalid Bot API token"}"#.to_vec(),
+                body: br#"{"success":false,"error":"Unauthorized: invalid Bot API token"}"#
+                    .to_vec(),
                 etag: None,
                 cache_control: None,
             };
@@ -458,16 +480,25 @@ fn handle_servers(req: &HttpRequest) -> HTTPResponseData {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs())
             .unwrap_or(0);
-        let announcement = if settings.announcement_enabled && !settings.announcement_text.is_empty() {
-            Some(crate::types::AnnouncementDTO {
-                text: settings.announcement_text.clone(),
-                link: if settings.announcement_link.is_empty() { None } else { Some(settings.announcement_link.clone()) },
-                banner_type: settings.announcement_type.clone(),
-                deadline: if settings.announcement_deadline.is_empty() { None } else { Some(settings.announcement_deadline.clone()) },
-            })
-        } else {
-            None
-        };
+        let announcement =
+            if settings.announcement_enabled && !settings.announcement_text.is_empty() {
+                Some(crate::types::AnnouncementDTO {
+                    text: settings.announcement_text.clone(),
+                    link: if settings.announcement_link.is_empty() {
+                        None
+                    } else {
+                        Some(settings.announcement_link.clone())
+                    },
+                    banner_type: settings.announcement_type.clone(),
+                    deadline: if settings.announcement_deadline.is_empty() {
+                        None
+                    } else {
+                        Some(settings.announcement_deadline.clone())
+                    },
+                })
+            } else {
+                None
+            };
         let promo = if settings.promo.enabled {
             Some(settings.promo.clone())
         } else {
@@ -566,16 +597,28 @@ fn handle_view() -> HTTPResponseData {
     let mut page_content = String::from_utf8_lossy(INDEX_HTML).to_string();
 
     let v_tag = format!("v{}", PLUGIN_VERSION);
-    for old_v in ["v1.0.0", "v1.0.9", "v1.0.10", "v1.0.11", "v1.0.12", "v1.1.0"] {
+    let q_ver = format!("?v={}", PLUGIN_VERSION);
+    page_content = page_content.replace("?v=1.1.0", &q_ver);
+    for old_v in [
+        "v1.0.0", "v1.0.9", "v1.0.10", "v1.0.11", "v1.0.12", "v1.1.0",
+    ] {
         page_content = page_content.replacen(old_v, &v_tag, 1);
     }
     page_content = page_content.replacen(">15с<", &format!(">{}с<", settings.refresh_interval), 1);
     page_content = page_content.replacen(">15s<", &format!(">{}s<", settings.refresh_interval), 1);
 
     if settings.theme == "light" {
-        page_content = page_content.replacen("<html lang=\"ru\">", "<html lang=\"ru\" data-theme=\"light\">", 1);
+        page_content = page_content.replacen(
+            "<html lang=\"ru\">",
+            "<html lang=\"ru\" data-theme=\"light\">",
+            1,
+        );
     } else if settings.theme == "modern" {
-        page_content = page_content.replacen("<html lang=\"ru\">", "<html lang=\"ru\" data-theme-style=\"modern\">", 1);
+        page_content = page_content.replacen(
+            "<html lang=\"ru\">",
+            "<html lang=\"ru\" data-theme-style=\"modern\">",
+            1,
+        );
     }
 
     if !settings.title.is_empty() {
@@ -590,7 +633,8 @@ fn handle_view() -> HTTPResponseData {
             &format!("<title>{} | GameAP</title>", escaped),
             1,
         );
-        page_content = page_content.replacen(">GameAP Servers</h1>", &format!(">{}</h1>", escaped), 1);
+        page_content =
+            page_content.replacen(">GameAP Servers</h1>", &format!(">{}</h1>", escaped), 1);
     }
 
     if !settings.subtitle.is_empty() {
@@ -613,14 +657,20 @@ fn handle_view() -> HTTPResponseData {
 
     if let Some(ref favicon) = settings.favicon_url {
         if !favicon.is_empty() {
-            let tag = format!("<link rel=\"icon\" href=\"{}\">\n</head>", html_escape(favicon));
+            let tag = format!(
+                "<link rel=\"icon\" href=\"{}\">\n</head>",
+                html_escape(favicon)
+            );
             page_content = page_content.replacen("</head>", &tag, 1);
         }
     }
 
     if let Some(ref logo) = settings.logo_url {
         if !logo.is_empty() {
-            let tag = format!("<img src=\"{}\" alt=\"Logo\" class=\"brand-logo\">", html_escape(logo));
+            let tag = format!(
+                "<img src=\"{}\" alt=\"Logo\" class=\"brand-logo\">",
+                html_escape(logo)
+            );
             page_content = page_content.replacen("<div class=\"brand-icon\">🎮</div>", &tag, 1);
         }
     }
@@ -636,8 +686,14 @@ fn handle_view() -> HTTPResponseData {
 
     if let Some(obj) = initial_data.as_object_mut() {
         obj.insert("version".to_string(), serde_json::json!(PLUGIN_VERSION));
-        obj.insert("repo_url".to_string(), serde_json::json!(crate::service::PLUGIN_REPO_URL));
-        obj.insert("refresh_interval".to_string(), serde_json::json!(settings.refresh_interval));
+        obj.insert(
+            "repo_url".to_string(),
+            serde_json::json!(crate::service::PLUGIN_REPO_URL),
+        );
+        obj.insert(
+            "refresh_interval".to_string(),
+            serde_json::json!(settings.refresh_interval),
+        );
         obj.insert("theme".to_string(), serde_json::json!(settings.theme));
         if !settings.title.is_empty() {
             obj.insert("title".to_string(), serde_json::json!(settings.title));
@@ -671,12 +727,16 @@ fn handle_view() -> HTTPResponseData {
     }
     if let Ok(initial_json) = serde_json::to_string(&initial_data) {
         let safe_json = escape_json_for_script(&initial_json);
-        let preloaded = format!("<script>window.INITIAL_DATA = {};</script>\n</head>", safe_json);
+        let preloaded = format!(
+            "<script>window.INITIAL_DATA = {};</script>\n</head>",
+            safe_json
+        );
         page_content = page_content.replacen("</head>", &preloaded, 1);
     }
 
     if !settings.custom_header_html.is_empty() {
-        page_content = page_content.replacen("<!-- CUSTOM_HEADER -->", &settings.custom_header_html, 1);
+        page_content =
+            page_content.replacen("<!-- CUSTOM_HEADER -->", &settings.custom_header_html, 1);
     }
 
     HTTPResponseData {
@@ -731,7 +791,8 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
                     "db_saved": db_saved,
                     "error": err_msg
                 });
-                let body = serde_json::to_vec(&resp_json).unwrap_or_else(|_| br#"{"success":true}"#.to_vec());
+                let body = serde_json::to_vec(&resp_json)
+                    .unwrap_or_else(|_| br#"{"success":true}"#.to_vec());
                 return HTTPResponseData {
                     status_code: 200,
                     content_type: "application/json",
@@ -762,6 +823,7 @@ fn handle_settings(req: &HttpRequest) -> HTTPResponseData {
     let storage_status = crate::settings::get_storage_diagnostics();
 
     let resp = AdminSettingsResponse {
+        version: PLUGIN_VERSION,
         title: settings.title,
         subtitle: settings.subtitle,
         theme: settings.theme,
@@ -928,7 +990,8 @@ fn handle_stats(_req: &HttpRequest) -> HTTPResponseData {
     let body = serde_json::to_vec(&serde_json::json!({
         "success": true,
         "clicks": settings.click_stats,
-    })).unwrap_or_default();
+    }))
+    .unwrap_or_default();
 
     HTTPResponseData {
         status_code: 200,
@@ -1105,7 +1168,9 @@ mod tests {
         let mut req_all = make_request("GET", "/servers", None);
         req_all.query_params.insert(
             "all".to_string(),
-            crate::proto::QueryParamValues { values: vec!["1".to_string()] },
+            crate::proto::QueryParamValues {
+                values: vec!["1".to_string()],
+            },
         );
         let resp_all = handle_servers(&req_all);
         assert_eq!(resp_all.status_code, 200);
@@ -1116,28 +1181,43 @@ mod tests {
             .iter()
             .map(|s| s["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids_all, vec![1], "?all=1 leaked hidden/blocked servers: {:?}", ids_all);
+        assert_eq!(
+            ids_all,
+            vec![1],
+            "?all=1 leaked hidden/blocked servers: {:?}",
+            ids_all
+        );
 
         // 2. ?action=admin_servers without auth must NOT return hidden/blocked servers
         let mut req_admin_action = make_request("GET", "/servers", None);
         req_admin_action.query_params.insert(
             "action".to_string(),
-            crate::proto::QueryParamValues { values: vec!["admin_servers".to_string()] },
+            crate::proto::QueryParamValues {
+                values: vec!["admin_servers".to_string()],
+            },
         );
         let resp_admin_action = handle_servers(&req_admin_action);
         assert_eq!(resp_admin_action.status_code, 200);
-        let json_admin_action: serde_json::Value = serde_json::from_slice(&resp_admin_action.body).unwrap();
+        let json_admin_action: serde_json::Value =
+            serde_json::from_slice(&resp_admin_action.body).unwrap();
         let ids_admin_action: Vec<u64> = json_admin_action["servers"]
             .as_array()
             .unwrap()
             .iter()
             .map(|s| s["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids_admin_action, vec![1], "?action=admin_servers leaked hidden/blocked servers: {:?}", ids_admin_action);
+        assert_eq!(
+            ids_admin_action,
+            vec![1],
+            "?action=admin_servers leaked hidden/blocked servers: {:?}",
+            ids_admin_action
+        );
 
         // 3. User-Agent: WebMonBot without valid token must NOT return hidden/blocked servers
         let mut req_ua = make_request("GET", "/servers", None);
-        req_ua.headers.insert("User-Agent".to_string(), "WebMonBot/1.0".to_string());
+        req_ua
+            .headers
+            .insert("User-Agent".to_string(), "WebMonBot/1.0".to_string());
         let resp_ua = handle_servers(&req_ua);
         assert_eq!(resp_ua.status_code, 200);
         let json_ua: serde_json::Value = serde_json::from_slice(&resp_ua.body).unwrap();
@@ -1147,7 +1227,12 @@ mod tests {
             .iter()
             .map(|s| s["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids_ua, vec![1], "User-Agent: WebMonBot leaked hidden/blocked servers: {:?}", ids_ua);
+        assert_eq!(
+            ids_ua,
+            vec![1],
+            "User-Agent: WebMonBot leaked hidden/blocked servers: {:?}",
+            ids_ua
+        );
 
         // 4. User-Agent: WebMonBot even when bot_api_token is empty must NOT return hidden/blocked servers
         let mut settings_empty_tok = settings.clone();
@@ -1163,13 +1248,20 @@ mod tests {
             .iter()
             .map(|s| s["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids_ua_empty, vec![1], "User-Agent: WebMonBot with empty token leaked hidden/blocked servers: {:?}", ids_ua_empty);
+        assert_eq!(
+            ids_ua_empty,
+            vec![1],
+            "User-Agent: WebMonBot with empty token leaked hidden/blocked servers: {:?}",
+            ids_ua_empty
+        );
 
         // 5. Positive control: valid bot token or admin context DOES receive all servers
         set_test_settings(settings);
         invalidate_public_cache();
         let mut req_bot = make_request("GET", "/servers", None);
-        req_bot.headers.insert("X-WebMon-Token".to_string(), "secret-bot-token".to_string());
+        req_bot
+            .headers
+            .insert("X-WebMon-Token".to_string(), "secret-bot-token".to_string());
         let resp_bot = handle_servers(&req_bot);
         assert_eq!(resp_bot.status_code, 200);
         let json_bot: serde_json::Value = serde_json::from_slice(&resp_bot.body).unwrap();
@@ -1204,21 +1296,52 @@ mod tests {
         let resp_pub = handle_servers(&make_request("GET", "/servers", None));
         assert_eq!(resp_pub.status_code, 200);
         let body_pub = String::from_utf8(resp_pub.body).unwrap();
-        assert!(!body_pub.contains("gdaemon_host"), "public /servers leaked gdaemon_host: {}", body_pub);
-        assert!(!body_pub.contains("gdaemon_port"), "public /servers leaked gdaemon_port: {}", body_pub);
-        assert!(!body_pub.contains("10.0.0.5"), "public /servers leaked internal IP: {}", body_pub);
-        assert!(!body_pub.contains("192.168.1.10"), "public /servers leaked raw node IP: {}", body_pub);
-        assert!(!body_pub.contains("31717"), "public /servers leaked gdaemon_port value: {}", body_pub);
+        assert!(
+            !body_pub.contains("gdaemon_host"),
+            "public /servers leaked gdaemon_host: {}",
+            body_pub
+        );
+        assert!(
+            !body_pub.contains("gdaemon_port"),
+            "public /servers leaked gdaemon_port: {}",
+            body_pub
+        );
+        assert!(
+            !body_pub.contains("10.0.0.5"),
+            "public /servers leaked internal IP: {}",
+            body_pub
+        );
+        assert!(
+            !body_pub.contains("192.168.1.10"),
+            "public /servers leaked raw node IP: {}",
+            body_pub
+        );
+        assert!(
+            !body_pub.contains("31717"),
+            "public /servers leaked gdaemon_port value: {}",
+            body_pub
+        );
 
         // Authenticated /bot/servers MUST still receive full node info
         let mut req_bot = make_request("GET", "/bot/servers", None);
-        req_bot.headers.insert("X-WebMon-Token".to_string(), "secret-bot-token".to_string());
+        req_bot
+            .headers
+            .insert("X-WebMon-Token".to_string(), "secret-bot-token".to_string());
         let resp_bot = handle_servers(&req_bot);
         assert_eq!(resp_bot.status_code, 200);
         let body_bot = String::from_utf8(resp_bot.body).unwrap();
-        assert!(body_bot.contains("10.0.0.5"), "authenticated /bot/servers should include node gdaemon_host");
-        assert!(body_bot.contains("31717"), "authenticated /bot/servers should include node gdaemon_port");
-        assert!(body_bot.contains("192.168.1.10"), "authenticated /bot/servers should include node ips");
+        assert!(
+            body_bot.contains("10.0.0.5"),
+            "authenticated /bot/servers should include node gdaemon_host"
+        );
+        assert!(
+            body_bot.contains("31717"),
+            "authenticated /bot/servers should include node gdaemon_port"
+        );
+        assert!(
+            body_bot.contains("192.168.1.10"),
+            "authenticated /bot/servers should include node ips"
+        );
 
         crate::servers_client::set_test_nodes(None);
         invalidate_public_cache();
@@ -1229,7 +1352,8 @@ mod tests {
         let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let mut settings = PluginSettings::default();
         settings.title = "My GameAP Servers </head>".to_string();
-        settings.custom_css = "body { color: red; } </style><script>alert(1)</script> </STYLE>".to_string();
+        settings.custom_css =
+            "body { color: red; } </style><script>alert(1)</script> </STYLE>".to_string();
         let mut srv = make_server_dto(1, "Evil</script><script>alert(1)</script>", false);
         srv.map = Some("de_dust2</script><img src=x onerror=alert(2)>".to_string());
         settings.cached_servers = vec![srv];

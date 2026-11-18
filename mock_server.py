@@ -10,12 +10,28 @@ import html
 import http.server
 import json
 import os
+import re
 import socketserver
 import time
 import urllib.parse
 
 PORT = 8050
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
+
+
+def _read_plugin_version():
+    cargo_toml = os.path.join(os.path.dirname(__file__), "rust-plugin", "Cargo.toml")
+    try:
+        with open(cargo_toml, "r", encoding="utf-8") as f:
+            m = re.search(r'^version\s*=\s*"([^"]+)"', f.read(), re.MULTILINE)
+            if m:
+                return m.group(1)
+    except OSError:
+        pass
+    return "1.1.1"
+
+
+PLUGIN_VERSION = _read_plugin_version()
 
 MOCK_SERVERS = [
     {
@@ -418,7 +434,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             client_ip = self.headers.get("X-Gameap-Client-Ip") or self.headers.get("X-Forwarded-For") or self.client_address[0]
             diag = {
                 "plugin_id": "monitoring",
-                "version": "1.1.0",
+                "version": PLUGIN_VERSION,
                 "client_ip": client_ip,
                 "trusted_header_detected": bool(self.headers.get("X-Gameap-Client-Ip")),
                 "servers_count": len(MOCK_SERVERS),
@@ -707,7 +723,7 @@ class MockMonitoringHandler(http.server.SimpleHTTPRequestHandler):
             initial_data = {
                 "servers": MOCK_SERVERS,
                 "nodes": nodes_public,
-                "version": "1.1.0",
+                "version": PLUGIN_VERSION,
                 "refresh_interval": refresh_interval,
                 "title": title,
                 "subtitle": subtitle,

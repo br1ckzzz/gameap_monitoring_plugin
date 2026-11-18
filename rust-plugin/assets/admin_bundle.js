@@ -5,7 +5,7 @@ const { ref, computed, onMounted, onUnmounted, h } = window.Vue || Vue;
 export const webMonitoringPlugin = {
     id: 'monitoring',
     name: 'GameAP WebMonitoring',
-    version: '1.1.0',
+    version: '1.1.1',
     description: 'Публичная страница для отображения работающих серверов / Public online game server monitoring',
     author: 'GameAP Community',
     menuItems: [
@@ -30,7 +30,7 @@ export const webMonitoringPlugin = {
                     const i18n = {
                         ru: {
                             pluginTitle: 'Настройка веб-мониторинга серверов',
-                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP v1.1.0',
+                            pluginSubtitle: 'Публичный плагин онлайн-мониторинга для GameAP',
                             openMonitoring: 'Открыть мониторинг',
                             publicUrlLabel: 'Публичный URL:',
                             publicUrlHint: 'Поддерживаются оба формата адреса: прямой /api/plugins/monitoring и классический /view',
@@ -166,7 +166,7 @@ export const webMonitoringPlugin = {
                         },
                         en: {
                             pluginTitle: 'GameAP WebMonitoring Settings',
-                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP v1.1.0',
+                            pluginSubtitle: 'Public online game server monitoring plugin for GameAP',
                             openMonitoring: 'Open Monitoring',
                             publicUrlLabel: 'Public URL:',
                             publicUrlHint: 'Both URL formats are supported: direct /api/plugins/monitoring and legacy /view',
@@ -306,6 +306,7 @@ export const webMonitoringPlugin = {
                         localStorage.getItem('web_monitoring_admin_lang') || 
                         ((navigator.language && navigator.language.toLowerCase().startsWith('ru')) ? 'ru' : 'en')
                     );
+                    const pluginVersion = ref(webMonitoringPlugin.version);
 
                     const setLang = (lang) => {
                         currentLang.value = lang;
@@ -1582,6 +1583,7 @@ export const webMonitoringPlugin = {
                                     if (data.theme) theme.value = data.theme;
                                     if (data.refresh_interval) refreshInterval.value = data.refresh_interval;
                                     if (data.custom_css !== undefined) customCss.value = data.custom_css;
+                                    if (data.version) pluginVersion.value = data.version;
                                     if (data.custom_header_html !== undefined) customHeaderHtml.value = data.custom_header_html;
                                     if (data.address_key !== undefined) addressKey.value = data.address_key;
                                     if (data.logo_url !== undefined) logoUrl.value = data.logo_url;
@@ -1842,7 +1844,7 @@ export const webMonitoringPlugin = {
                                         h('i', { class: 'fas fa-chart-line', style: 'color: var(--wm-primary);' }),
                                         t('pluginTitle')
                                     ]),
-                                    h('p', { style: 'color: var(--wm-text-muted); font-size: 13px; margin: 6px 0 0 0;' }, t('pluginSubtitle'))
+                                    h('p', { style: 'color: var(--wm-text-muted); font-size: 13px; margin: 6px 0 0 0;' }, `${t('pluginSubtitle')} v${pluginVersion.value}`)
                                 ]),
                                 h('div', { style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;' }, [
                                     // Language Switcher

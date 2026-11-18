@@ -13,7 +13,7 @@ import time
 import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from mock_server import MockMonitoringHandler, SETTINGS_CACHE
+from mock_server import MockMonitoringHandler, SETTINGS_CACHE, PLUGIN_VERSION
 
 TEST_PORT = 8059
 
@@ -42,15 +42,15 @@ def run_tests():
         req = urllib.request.Request(f"{base_url}/")
         with urllib.request.urlopen(req) as resp:
             content = resp.read().decode("utf-8")
-            assert_test("Public monitoring view 200 OK with v1.1.0 & INITIAL_DATA",
-                        resp.status == 200 and "1.1.0" in content and "window.INITIAL_DATA" in content)
+            assert_test(f"Public monitoring view 200 OK with v{PLUGIN_VERSION} & INITIAL_DATA",
+                        resp.status == 200 and PLUGIN_VERSION in content and "window.INITIAL_DATA" in content)
 
         # 2. Diagnostic endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/diagnostic")
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            assert_test("Diagnostic endpoint 200 OK with version 1.1.0",
-                        resp.status == 200 and data.get("version") == "1.1.0")
+            assert_test(f"Diagnostic endpoint 200 OK with version {PLUGIN_VERSION}",
+                        resp.status == 200 and data.get("version") == PLUGIN_VERSION)
 
         # 3. Servers endpoint
         req = urllib.request.Request(f"{base_url}/plugins/web-monitoring/servers")
