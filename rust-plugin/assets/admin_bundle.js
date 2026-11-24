@@ -89,7 +89,9 @@ export const webMonitoringPlugin = {
                             botApiTokenLabel: 'Секретный токен доступа (API Token)',
                             botApiTokenPlaceholder: 'Нажмите «Сгенерировать» или введите токен',
                             botApiTokenHelp: 'Бот передаёт этот ключ в HTTP-заголовке X-WebMon-Token или параметре ?token=. Храните его в секрете!',
-                            botDevNotice: '🤖 Discord-бот GameAP WebMonBot находится в разработке (скоро релиз!)',
+                            botCompanionTitle: '🤖 Официальный Discord-бот компаньон — GameAP_WebMonBot',
+                            botCompanionDesc: 'Прямой опрос протоколов (A2S, Minecraft, SAMP, Quake, FiveM), интерактивные карточки, статус нод (/mon nodes) и алерты.',
+                            botCompanionLinkBtn: 'Открыть на GitHub',
                             generateTokenBtn: 'Сгенерировать токен',
                             copyTokenBtn: 'Копировать токен',
                             copiedToken: '✓ Скопировано!',
@@ -225,7 +227,9 @@ export const webMonitoringPlugin = {
                             botApiTokenLabel: 'Secret Access Token (API Token)',
                             botApiTokenPlaceholder: 'Click Generate or enter your token',
                             botApiTokenHelp: 'The bot transmits this key in the X-WebMon-Token header or ?token= param. Keep it secret!',
-                            botDevNotice: '🤖 GameAP WebMonBot (Discord bot) is currently in development (release coming soon!)',
+                            botCompanionTitle: '🤖 Official Companion Discord Bot — GameAP_WebMonBot',
+                            botCompanionDesc: 'Direct protocol queries (A2S, Minecraft, SAMP, Quake, FiveM), live server embeds, host nodes status (/mon nodes), and alerts.',
+                            botCompanionLinkBtn: 'View on GitHub',
                             generateTokenBtn: 'Generate Token',
                             copyTokenBtn: 'Copy Token',
                             copiedToken: '✓ Copied!',
@@ -394,6 +398,7 @@ export const webMonitoringPlugin = {
                     const defaultOpenSections = {
                         general: false,
                         announcement: false,
+                        promo: false,
                         branding: false,
                         botApi: false,
                         autoHide: false,
@@ -2439,6 +2444,24 @@ export const webMonitoringPlugin = {
                             botApiEnabled.value,
                             [
                                 h('div', { style: 'display: flex; flex-direction: column; gap: 14px;' }, [
+                                    h('div', {
+                                        style: 'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 16px; border-radius: var(--wm-radius-control); background: var(--wm-primary-soft); border: 1px solid var(--wm-primary);'
+                                    }, [
+                                        h('div', { style: 'display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 220px;' }, [
+                                            h('span', { style: 'font-size: 13.5px; font-weight: 700; color: var(--wm-text);' }, t('botCompanionTitle')),
+                                            h('span', { style: 'font-size: 12px; color: var(--wm-text-secondary); line-height: 1.45;' }, t('botCompanionDesc'))
+                                        ]),
+                                        h('a', {
+                                            href: 'https://github.com/br1ckzzz/GameAP_WebMonBot',
+                                            target: '_blank',
+                                            rel: 'noopener noreferrer',
+                                            class: 'wm-btn-open',
+                                            style: 'padding: 8px 14px; font-size: 12.5px; white-space: nowrap;'
+                                        }, [
+                                            h('i', { class: 'fas fa-external-link-alt' }),
+                                            t('botCompanionLinkBtn')
+                                        ])
+                                    ]),
                                     h('label', {
                                         style: 'display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;'
                                     }, [
@@ -2502,12 +2525,6 @@ export const webMonitoringPlugin = {
                                             ])
                                         ]),
                                         h('p', { style: 'font-size: 11.5px; color: var(--wm-text-muted); margin: 2px 0 0 0;' }, t('botApiTokenHelp')),
-                                        h('div', {
-                                            style: 'display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--wm-primary-soft-text); background: var(--wm-primary-soft-bg); border: 1px solid var(--wm-primary-soft-border); padding: 6px 12px; border-radius: 8px; margin-top: 6px; width: fit-content;'
-                                        }, [
-                                            h('i', { class: 'fas fa-tools', style: 'color: var(--wm-primary);' }),
-                                            h('span', t('botDevNotice'))
-                                        ]),
                                         h('div', { style: 'display: flex; align-items: center; gap: 12px; margin-top: 10px;' }, [
                                             h('button', {
                                                 type: 'button',

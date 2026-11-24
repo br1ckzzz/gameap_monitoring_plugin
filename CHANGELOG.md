@@ -11,8 +11,15 @@
   - В `PluginSettings` и `MonitoringResponse` добавлена конфигурация `promo` (`PromoConfig`, `PromoCardConfig`) с валидацией и санитацией при сохранении (`position`, `style`, hex `accent_color`, лимит до 4 карточек).
   - В админ-панели (`admin_bundle.js`, RU/EN) добавлен аккордеон «Промо-блок / Тарифы хостинга»: выбор позиции (**Сверху** / **Снизу**), 4 стиля оформления (`glass`, `gradient`, `neon`, `minimal`), выбор акцентного цвета, поля Hero-баннера (бейдж, заголовок, описание, картинка, промокод с копированием, 2 CTA-кнопки) и конструктор до 4 карточек тарифов/преимуществ.
   - На публичной странице (`index.html`, `app.js`, `styles.css`) добавлены слоты `#promo-slot-top` и `#promo-slot-bottom` с автоматическим скрытием пустых полей, экранированием HTML и проверкой URL-схем.
+- **Карточка и ссылка на бота-компаньона в админ-панели:**
+  - В раздел Bot API админ-панели (`admin_bundle.js`, RU/EN) добавлена карточка с прямой ссылкой на репозиторий `GameAP_WebMonBot` вместо устаревшего уведомления «в разработке» и исправлены CSS-переменные плашки (`--wm-primary-soft`, `--wm-primary`).
 
 ### Безопасность (Security)
+- **Укрепление фронтенда от обхода кавычек и небезопасных ссылок:**
+  - В `app.js` устранён риск обхода кавычек в inline `onclick` при копировании промокодов и адресов серверов — переведено на безопасное делегирование через `data-copy` / `data-server-id`.
+  - В `renderAnnouncement` (`app.js`) проверка `announcementData.link` унифицирована через `sanitizeAssetUrl` (блокирует `javascript:`, `data:`, `vbscript:`), а также добавлена EN-локализация («Learn more», единица `d` в таймере) и EN-локализация `formatUptime`.
+- **Сохранение `hidden_servers` при резервном восстановлении настроек:**
+  - В `settings.rs` (`recover_settings_from_value`) расширено восстановление при `storage_recovered`: теперь сохраняются `hidden_servers`, `server_order`, `server_categories`, `address_key`, `server_address_overrides`, `logo_url`, `favicon_url`, `click_stats` и `open_sections`.
 - **Закрыт неаутентифицированный доступ к настройкам и диагностике:** маршруты `/settings` и `/diagnostic` теперь требуют авторизации администратора (`requires_auth: true, admin_only: true` в `service.rs` и проверка `require_admin` в `handlers.rs`).
 - **Маскирование секретов и диагностических данных:** в `/diagnostic` токен `bot_api_token` маскируется (`"***"`), а в `get_raw_servers_diagnostic` исключены сырые переменные `vars` и чувствительные ключи метаданных (`password`, `rcon`, `secret`, `token`, `key`, `auth`).
 - **Защита приёма телеметрии (`/servers/query-update` и `/bot/servers`):** эндпоинты теперь требуют одновременно включённого `bot_api_enabled = true` и непустого `bot_api_token` с constant-time проверкой токена.

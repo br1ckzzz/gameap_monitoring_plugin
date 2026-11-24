@@ -4,7 +4,7 @@
   "description": "GameAP WebMonitoring & DiscordGSM Public Games Catalog Manifest (297 Games)",
   "node_info": {
     "name": "GameAP WebMonitoring DiscordGSM Public Node",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "total_games": 297,
     "endpoint": "/api/v1/games"
   },

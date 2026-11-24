@@ -805,7 +805,7 @@ function renderPromoBlock() {
             ${renderCta(ctaText, ctaUrl, 'promo-btn promo-btn-primary')}
             ${renderCta(secText, secUrl, 'promo-btn promo-btn-secondary')}
             ${promoCode ? `
-              <button type="button" class="promo-code-pill" onclick="window.copyToClipboard('${escapeHtml(promoCode)}')" title="${escapeHtml(copyLabel)}">
+              <button type="button" class="promo-code-pill" data-copy="${escapeHtml(promoCode)}" title="${escapeHtml(copyLabel)}">
                 <span class="promo-code-label">${escapeHtml(copyLabel)}:</span>
                 <code class="promo-code-value">${escapeHtml(promoCode)}</code>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -887,13 +887,14 @@ function renderAnnouncement() {
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((diff / 1000 / 60) % 60);
     const seconds = Math.floor((diff / 1000) % 60);
-    const dStr = days > 0 ? `${days}д ` : '';
+    const dStr = days > 0 ? `${days}${currentLang === 'en' ? 'd' : 'д'} ` : '';
     return `⏳ ${dStr}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   const countdownText = getCountdownText();
 
-  const safeLink = (announcementData.link && !/^javascript:/i.test(announcementData.link.trim())) ? announcementData.link.trim() : null;
+  const safeLink = sanitizeAssetUrl(announcementData.link || '') || null;
+  const learnMoreText = currentLang === 'en' ? 'Learn more' : 'Подробнее';
 
   announcementBar.className = `announcement-bar banner-${type}`;
   announcementBar.innerHTML = `
@@ -901,7 +902,7 @@ function renderAnnouncement() {
       <span class="announcement-icon">${typeIcon}</span>
       <div class="announcement-text-wrap">
         <span class="announcement-text">${escapeHtml(announcementData.text)}</span>
-        ${safeLink ? `<a href="${escapeHtml(safeLink)}" target="_blank" rel="noopener" class="announcement-link">Подробнее &rarr;</a>` : ''}
+        ${safeLink ? `<a href="${escapeHtml(safeLink)}" target="_blank" rel="noopener noreferrer" class="announcement-link">${learnMoreText} &rarr;</a>` : ''}
       </div>
       ${countdownText ? `<span class="announcement-timer" id="announcement-timer-ticker">${countdownText}</span>` : ''}
     </div>
@@ -1034,6 +1035,11 @@ function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
+  if (currentLang === 'en') {
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
   if (d > 0) return `${d}д ${h}ч`;
   if (h > 0) return `${h}ч ${m}м`;
   return `${m}м`;
@@ -1398,7 +1404,7 @@ function createServerCard(server) {
     <div class="card-body">
       <h3 class="server-title" title="${escapeHtml(server.name)}">${escapeHtml(server.name)}</h3>
 
-      <div class="address-pill" onclick="window.copyToClipboard('${escapeHtml(addressStr)}')" title="${t('copyBtn')}">
+      <div class="address-pill" data-copy="${escapeHtml(addressStr)}" data-server-id="${Number(server.id)}" title="${t('copyBtn')}">
         <span class="address-text">${escapeHtml(addressStr)}</span>
         <button class="btn-copy-mini" type="button">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -1450,7 +1456,7 @@ function createServerCard(server) {
             </div>
           ` : ''}
           <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">${t('consoleCommandHint')}</div>
-          <div class="spoiler-command-box" onclick="window.copyToClipboard('connect ${escapeHtml(addressStr)}')" title="${t('copyCommandBtn')}">
+          <div class="spoiler-command-box" data-copy="connect ${escapeHtml(addressStr)}" data-server-id="${Number(server.id)}" title="${t('copyCommandBtn')}">
             <code>connect ${escapeHtml(addressStr)}</code>
             <span>📋</span>
           </div>
@@ -1812,7 +1818,7 @@ if (retryBtn) {
 }
 
 document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.btn-copy, .btn-copy-sm');
+  const btn = e.target.closest('[data-copy], .btn-copy, .btn-copy-sm');
   if (btn) {
     e.preventDefault();
     e.stopPropagation();

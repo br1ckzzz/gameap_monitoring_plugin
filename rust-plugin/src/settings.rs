@@ -90,6 +90,111 @@ pub(crate) fn set_test_settings(s: PluginSettings) {
     }
 }
 
+/// Recovers critical plugin settings field-by-field when typed deserialization fails.
+fn recover_settings_from_value(val: &serde_json::Value) -> PluginSettings {
+    let mut recovered = PluginSettings::default();
+    if let Some(t) = val.get("title").and_then(|v| v.as_str()) {
+        recovered.title = t.to_string();
+    }
+    if let Some(st) = val.get("subtitle").and_then(|v| v.as_str()) {
+        recovered.subtitle = st.to_string();
+    }
+    if let Some(th) = val.get("theme").and_then(|v| v.as_str()) {
+        recovered.theme = th.to_string();
+    }
+    if let Some(ri) = val.get("refresh_interval").and_then(|v| v.as_u64()) {
+        recovered.refresh_interval = ri as u32;
+    }
+    if let Some(css) = val.get("custom_css").and_then(|v| v.as_str()) {
+        recovered.custom_css = css.to_string();
+    }
+    if let Some(html) = val.get("custom_header_html").and_then(|v| v.as_str()) {
+        recovered.custom_header_html = html.to_string();
+    }
+    if let Some(hs) = val.get("hidden_servers") {
+        if let Ok(ids) = serde_json::from_value::<Vec<u64>>(hs.clone()) {
+            recovered.hidden_servers = ids;
+        } else if let Some(arr) = hs.as_array() {
+            recovered.hidden_servers = arr.iter().filter_map(|v| v.as_u64()).collect();
+        }
+    }
+    if let Some(so) = val.get("server_order") {
+        if let Ok(ids) = serde_json::from_value::<Vec<u64>>(so.clone()) {
+            recovered.server_order = ids;
+        } else if let Some(arr) = so.as_array() {
+            recovered.server_order = arr.iter().filter_map(|v| v.as_u64()).collect();
+        }
+    }
+    if let Some(sc) = val.get("server_categories") {
+        if let Ok(cats) = serde_json::from_value(sc.clone()) {
+            recovered.server_categories = cats;
+        }
+    }
+    if let Some(ak) = val.get("address_key").and_then(|v| v.as_str()) {
+        if !ak.is_empty() {
+            recovered.address_key = Some(ak.to_string());
+        }
+    }
+    if let Some(sao) = val.get("server_address_overrides") {
+        if let Ok(overrides) = serde_json::from_value(sao.clone()) {
+            recovered.server_address_overrides = overrides;
+        }
+    }
+    if let Some(lu) = val.get("logo_url").and_then(|v| v.as_str()) {
+        if !lu.is_empty() {
+            recovered.logo_url = Some(lu.to_string());
+        }
+    }
+    if let Some(fu) = val.get("favicon_url").and_then(|v| v.as_str()) {
+        if !fu.is_empty() {
+            recovered.favicon_url = Some(fu.to_string());
+        }
+    }
+    if let Some(cs) = val.get("click_stats") {
+        if let Ok(stats) = serde_json::from_value(cs.clone()) {
+            recovered.click_stats = stats;
+        }
+    }
+    if let Some(os) = val.get("open_sections") {
+        if let Ok(sections) = serde_json::from_value(os.clone()) {
+            recovered.open_sections = sections;
+        }
+    }
+    if let Some(token) = val.get("bot_api_token").and_then(|v| v.as_str()) {
+        recovered.bot_api_token = token.to_string();
+    }
+    if let Some(enabled) = val.get("bot_api_enabled").and_then(|v| v.as_bool()) {
+        recovered.bot_api_enabled = enabled;
+    }
+    if let Some(ae) = val.get("announcement_enabled").and_then(|v| v.as_bool()) {
+        recovered.announcement_enabled = ae;
+    }
+    if let Some(at) = val.get("announcement_text").and_then(|v| v.as_str()) {
+        recovered.announcement_text = at.to_string();
+    }
+    if let Some(al) = val.get("announcement_link").and_then(|v| v.as_str()) {
+        recovered.announcement_link = al.to_string();
+    }
+    if let Some(atype) = val.get("announcement_type").and_then(|v| v.as_str()) {
+        recovered.announcement_type = atype.to_string();
+    }
+    if let Some(ad) = val.get("announcement_deadline").and_then(|v| v.as_str()) {
+        recovered.announcement_deadline = ad.to_string();
+    }
+    if let Some(aho) = val.get("auto_hide_offline").and_then(|v| v.as_bool()) {
+        recovered.auto_hide_offline = aho;
+    }
+    if let Some(ahom) = val.get("auto_hide_offline_minutes").and_then(|v| v.as_u64()) {
+        recovered.auto_hide_offline_minutes = ahom as u32;
+    }
+    if let Some(promo_val) = val.get("promo") {
+        if let Ok(p) = serde_json::from_value::<crate::types::PromoConfig>(promo_val.clone()) {
+            recovered.promo = p;
+        }
+    }
+    recovered
+}
+
 /// Retrieves active settings from memory cache or database storage.
 pub fn get_settings() -> PluginSettings {
     // If in-memory settings are already loaded/saved, return directly
@@ -142,57 +247,7 @@ pub fn get_settings() -> PluginSettings {
                             diag.last_error = Some(format!("serde decode failed: {}", err));
                             // 2. Resilient fallback: parse into Value and extract critical settings
                             if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&payload) {
-                                let mut recovered = PluginSettings::default();
-                                if let Some(t) = val.get("title").and_then(|v| v.as_str()) {
-                                    recovered.title = t.to_string();
-                                }
-                                if let Some(st) = val.get("subtitle").and_then(|v| v.as_str()) {
-                                    recovered.subtitle = st.to_string();
-                                }
-                                if let Some(th) = val.get("theme").and_then(|v| v.as_str()) {
-                                    recovered.theme = th.to_string();
-                                }
-                                if let Some(ri) = val.get("refresh_interval").and_then(|v| v.as_u64()) {
-                                    recovered.refresh_interval = ri as u32;
-                                }
-                                if let Some(css) = val.get("custom_css").and_then(|v| v.as_str()) {
-                                    recovered.custom_css = css.to_string();
-                                }
-                                if let Some(html) = val.get("custom_header_html").and_then(|v| v.as_str()) {
-                                    recovered.custom_header_html = html.to_string();
-                                }
-                                if let Some(token) = val.get("bot_api_token").and_then(|v| v.as_str()) {
-                                    recovered.bot_api_token = token.to_string();
-                                }
-                                if let Some(enabled) = val.get("bot_api_enabled").and_then(|v| v.as_bool()) {
-                                    recovered.bot_api_enabled = enabled;
-                                }
-                                if let Some(ae) = val.get("announcement_enabled").and_then(|v| v.as_bool()) {
-                                    recovered.announcement_enabled = ae;
-                                }
-                                if let Some(at) = val.get("announcement_text").and_then(|v| v.as_str()) {
-                                    recovered.announcement_text = at.to_string();
-                                }
-                                if let Some(al) = val.get("announcement_link").and_then(|v| v.as_str()) {
-                                    recovered.announcement_link = al.to_string();
-                                }
-                                if let Some(atype) = val.get("announcement_type").and_then(|v| v.as_str()) {
-                                    recovered.announcement_type = atype.to_string();
-                                }
-                                if let Some(ad) = val.get("announcement_deadline").and_then(|v| v.as_str()) {
-                                    recovered.announcement_deadline = ad.to_string();
-                                }
-                                if let Some(aho) = val.get("auto_hide_offline").and_then(|v| v.as_bool()) {
-                                    recovered.auto_hide_offline = aho;
-                                }
-                                if let Some(ahom) = val.get("auto_hide_offline_minutes").and_then(|v| v.as_u64()) {
-                                    recovered.auto_hide_offline_minutes = ahom as u32;
-                                }
-                                if let Some(promo_val) = val.get("promo") {
-                                    if let Ok(p) = serde_json::from_value::<crate::types::PromoConfig>(promo_val.clone()) {
-                                        recovered.promo = p;
-                                    }
-                                }
+                                let recovered = recover_settings_from_value(&val);
                                 diag.db_saved = true;
                                 diag.source = "storage_recovered".to_string();
                                 if let Ok(mut d_guard) = STORAGE_DIAGNOSTICS.lock() {
@@ -369,5 +424,39 @@ mod tests {
         let after_cleared = get_settings();
         assert!(after_cleared.bot_api_token.is_empty(), "clear_bot_api_token should clear token");
         assert!(!after_cleared.bot_api_enabled);
+    }
+
+    #[test]
+    fn test_recover_settings_preserves_hidden_servers_and_metadata() {
+        let val = serde_json::json!({
+            "title": "Recovered Title",
+            "refresh_interval": "invalid-string-triggers-fallback",
+            "hidden_servers": [2, 5, 9],
+            "server_order": [9, 1, 2],
+            "server_categories": {"1": "Main"},
+            "address_key": "public_ip",
+            "server_address_overrides": {"1": "play.example.com"},
+            "logo_url": "https://example.com/logo.png",
+            "favicon_url": "https://example.com/favicon.ico",
+            "click_stats": {"1": 42},
+            "open_sections": {"botApi": true},
+            "bot_api_enabled": true,
+            "bot_api_token": "wm_secret"
+        });
+
+        let recovered = recover_settings_from_value(&val);
+        assert_eq!(recovered.title, "Recovered Title");
+        assert_eq!(recovered.refresh_interval, 15);
+        assert_eq!(recovered.hidden_servers, vec![2, 5, 9]);
+        assert_eq!(recovered.server_order, vec![9, 1, 2]);
+        assert_eq!(recovered.server_categories.get(&1).map(String::as_str), Some("Main"));
+        assert_eq!(recovered.address_key.as_deref(), Some("public_ip"));
+        assert_eq!(recovered.server_address_overrides.get(&1).map(String::as_str), Some("play.example.com"));
+        assert_eq!(recovered.logo_url.as_deref(), Some("https://example.com/logo.png"));
+        assert_eq!(recovered.favicon_url.as_deref(), Some("https://example.com/favicon.ico"));
+        assert_eq!(recovered.click_stats.get(&1), Some(&42));
+        assert_eq!(recovered.open_sections.get("botApi"), Some(&true));
+        assert!(recovered.bot_api_enabled);
+        assert_eq!(recovered.bot_api_token, "wm_secret");
     }
 }

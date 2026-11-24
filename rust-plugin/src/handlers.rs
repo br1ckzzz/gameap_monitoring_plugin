@@ -598,9 +598,11 @@ fn handle_view() -> HTTPResponseData {
 
     let v_tag = format!("v{}", PLUGIN_VERSION);
     let q_ver = format!("?v={}", PLUGIN_VERSION);
-    page_content = page_content.replace("?v=1.1.0", &q_ver);
+    page_content = page_content
+        .replace("?v=1.1.0", &q_ver)
+        .replace("?v=1.1.1", &q_ver);
     for old_v in [
-        "v1.0.0", "v1.0.9", "v1.0.10", "v1.0.11", "v1.0.12", "v1.1.0",
+        "v1.0.0", "v1.0.9", "v1.0.10", "v1.0.11", "v1.0.12", "v1.1.0", "v1.1.1",
     ] {
         page_content = page_content.replacen(old_v, &v_tag, 1);
     }
